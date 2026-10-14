@@ -107,6 +107,25 @@
   color: #fff;
 }
 
+.auto-format-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.auto-format-control input {
+  accent-color: var(--accent-emerald);
+  margin: 0;
+}
+
 .fix-ai-tool-btn {
   background: rgba(99, 102, 241, 0.15) !important;
   color: #a5b4fc !important;
