@@ -1,4 +1,6 @@
 import { formatMermaidCode } from '../utils/mermaid-formatter.js';
+import { testMermaidSyntax } from '../utils/ai-syntax-fixer.js';
+import { isGraphvizDot } from '../utils/mermaid-renderer.js';
 
 export class EditorController {
   constructor(options) {
@@ -8,9 +10,13 @@ export class EditorController {
     this.statusText = options.statusText;
     this.statsEl = options.statsEl;
     this.typeBadgeEl = options.typeBadgeEl;
+    this.autoFormatToggle = options.autoFormatToggle || null;
     this.onChange = options.onChange || (() => {});
+    this.autoFormatDelay = options.autoFormatDelay ?? 800;
+    this.autoFormatEnabled = this.readAutoFormatPreference();
 
     this.debounceTimer = null;
+    this.autoFormatTimer = null;
     this.history = [];
     this.historyIndex = -1;
 
@@ -21,6 +27,12 @@ export class EditorController {
     this.updateLineNumbers();
     this.updateStats();
     this.updateTypeBadge();
+    if (this.autoFormatToggle) {
+      this.autoFormatToggle.checked = this.autoFormatEnabled;
+      this.autoFormatToggle.addEventListener('change', () => {
+        this.setAutoFormatEnabled(this.autoFormatToggle.checked);
+      });
+    }
 
     // Sync scroll
     this.textarea.addEventListener('scroll', () => {
@@ -81,6 +93,61 @@ export class EditorController {
     this.debounceTimer = setTimeout(() => {
       this.onChange(this.getValue());
     }, 200);
+
+    clearTimeout(this.autoFormatTimer);
+    if (this.autoFormatEnabled) {
+      this.autoFormatTimer = setTimeout(() => this.autoFormatIfValid(), this.autoFormatDelay);
+    }
+  }
+
+  readAutoFormatPreference() {
+    try {
+      return window.localStorage.getItem('nodeflow:auto-format') === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  setAutoFormatEnabled(enabled) {
+    this.autoFormatEnabled = Boolean(enabled);
+    try {
+      window.localStorage.setItem('nodeflow:auto-format', String(this.autoFormatEnabled));
+    } catch {
+      // The editor still works when browser storage is unavailable.
+    }
+    if (this.autoFormatToggle) this.autoFormatToggle.checked = this.autoFormatEnabled;
+    if (!this.autoFormatEnabled) clearTimeout(this.autoFormatTimer);
+  }
+
+  async autoFormatIfValid() {
+    if (!this.autoFormatEnabled) return { formatted: false, reason: 'disabled' };
+
+    const original = this.getValue();
+    if (!original.trim() || isGraphvizDot(original)) return { formatted: false, reason: 'unsupported-format' };
+
+    const validation = await testMermaidSyntax(original);
+    if (!validation.valid || original !== this.getValue() || !this.autoFormatEnabled) {
+      return { formatted: false, reason: validation.error ? 'invalid-syntax' : 'stale-input' };
+    }
+
+    const formatted = formatMermaidCode(original);
+    if (formatted === original) return { formatted: false, reason: 'already-formatted' };
+
+    const formattedValidation = await testMermaidSyntax(formatted);
+    if (!formattedValidation.valid || original !== this.getValue() || !this.autoFormatEnabled) {
+      return { formatted: false, reason: 'format-rejected' };
+    }
+
+    const start = this.textarea.selectionStart || 0;
+    const end = this.textarea.selectionEnd || start;
+    this.textarea.value = formatted;
+    this.textarea.selectionStart = mapCursor(original, formatted, start);
+    this.textarea.selectionEnd = mapCursor(original, formatted, end);
+    this.updateLineNumbers();
+    this.updateStats();
+    this.updateTypeBadge();
+    this.onChange(formatted);
+    return { formatted: true };
   }
 
   getValue() {
@@ -109,10 +176,29 @@ export class EditorController {
     this.handleInputDebounced();
   }
 
-  formatCode() {
+  async formatCode() {
     const raw = this.textarea.value;
+    if (!raw.trim() || isGraphvizDot(raw)) {
+      this.setStatus('error', 'Formatter supports Mermaid diagrams');
+      return { formatted: false, reason: 'unsupported-format' };
+    }
+
+    const validation = await testMermaidSyntax(raw);
+    if (!validation.valid || raw !== this.getValue()) {
+      this.setStatus('error', validation.error || 'Syntax changed; try formatting again');
+      return { formatted: false, reason: 'invalid-syntax', error: validation.error };
+    }
+
     const formatted = formatMermaidCode(raw);
+    const formattedValidation = await testMermaidSyntax(formatted);
+    if (!formattedValidation.valid || raw !== this.getValue()) {
+      this.setStatus('error', formattedValidation.error || 'Formatted output failed validation');
+      return { formatted: false, reason: 'format-rejected', error: formattedValidation.error };
+    }
+
     this.setValue(formatted);
+    this.setStatus('', formatted === raw ? 'Already formatted' : 'Formatted and syntax checked');
+    return { formatted: formatted !== raw, code: formatted };
   }
 
   updateTypeBadge() {
@@ -188,4 +274,20 @@ export class EditorController {
       this.statusText.textContent = message;
     }
   }
+}
+
+function mapCursor(before, after, position) {
+  let prefix = 0;
+  while (prefix < before.length && prefix < after.length && before[prefix] === after[prefix]) prefix++;
+
+  let suffix = 0;
+  while (
+    suffix < before.length - prefix &&
+    suffix < after.length - prefix &&
+    before[before.length - 1 - suffix] === after[after.length - 1 - suffix]
+  ) suffix++;
+
+  if (position <= prefix) return position;
+  if (position >= before.length - suffix) return Math.max(prefix, Math.min(after.length, position + after.length - before.length));
+  return Math.min(after.length - suffix, prefix + Math.min(position - prefix, after.length - prefix - suffix));
 }
