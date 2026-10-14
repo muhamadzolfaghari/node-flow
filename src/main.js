@@ -175,6 +175,7 @@ async function initApp() {
     statusText: statusTextEl,
     statsEl: editorStatsEl,
     typeBadgeEl: diagramTypeBadgeEl,
+    autoFormatToggle: $('autoFormatToggle'),
     onChange: handleCodeChange,
   });
 
@@ -382,7 +383,8 @@ async function handleCodeChange(code) {
     visitorAnalytics.trackAction('diagram_render', { desc: `Rendered ${activeDiagramTitle || 'Diagram'}` });
   } else {
     showAlert(result.error);
-    editorCtrl.setStatus('error', 'Syntax error');
+    const detail = String(result.error || 'Syntax error').split('\n')[0];
+    editorCtrl.setStatus('error', detail.length > 72 ? `${detail.slice(0, 69)}…` : detail);
     setSavedIndicator(true);
   }
 }

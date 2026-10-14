@@ -94,6 +94,76 @@ try {
   passed++;
 }
 
+// Test Group 3b: Shared syntax validator and safe apply gate
+console.log('\n--- Test Group 3b: Shared Syntax Validator & Safe Apply ---');
+try {
+  const { testMermaidSyntax, applyMermaidIfValid, fixMermaidSyntax } = await import('./src/utils/ai-syntax-fixer.js');
+  const { AIAssistant } = await import('./src/components/ai-assistant.js');
+  const validCandidate = 'flowchart TD\n  A --> B';
+  const invalidCandidate = 'flowchart TD\n  A --> [broken';
+  const validResult = await testMermaidSyntax(validCandidate);
+  const invalidResult = await testMermaidSyntax(invalidCandidate);
+  let applyCount = 0;
+
+  if (validResult.valid && !invalidResult.valid) {
+    console.log('✅ Shared syntax validator accepts valid Mermaid and rejects malformed Mermaid.');
+    passed++;
+  } else {
+    console.error('❌ Shared syntax validator returned unexpected results:', { validResult, invalidResult });
+    failed++;
+  }
+
+  const rejectedApply = await applyMermaidIfValid(invalidCandidate, () => { applyCount++; });
+  const acceptedApply = await applyMermaidIfValid(validCandidate, (code) => {
+    if (code === validCandidate) applyCount++;
+  });
+  if (!rejectedApply.applied && acceptedApply.applied && applyCount === 1) {
+    console.log('✅ Safe apply gate blocks invalid Mermaid and applies valid Mermaid once.');
+    passed++;
+  } else {
+    console.error('❌ Safe apply gate returned unexpected results:', { rejectedApply, acceptedApply, applyCount });
+    failed++;
+  }
+
+  const aiAssistant = Object.create(AIAssistant.prototype);
+  const appliedCandidates = [];
+  aiAssistant.onApplyCode = async (code, title) => appliedCandidates.push({ code, title });
+  const invalidStatus = document.createElement('div');
+  await aiAssistant.applyCandidate(invalidCandidate, 'Invalid candidate', invalidStatus, document.createElement('button'));
+  const validStatus = document.createElement('div');
+  await aiAssistant.applyCandidate(validCandidate, 'Valid candidate', validStatus, document.createElement('button'));
+
+  if (
+    appliedCandidates.length === 1 &&
+    appliedCandidates[0].code === validCandidate &&
+    invalidStatus.dataset.state === 'error' &&
+    validStatus.dataset.state === 'success'
+  ) {
+    console.log('✅ AI assistant apply flow rejects invalid output and reports validation status.');
+    passed++;
+  } else {
+    console.error('❌ AI assistant apply flow did not enforce candidate validation:', { appliedCandidates, invalidStatus: invalidStatus.textContent, validStatus: validStatus.textContent });
+    failed++;
+  }
+
+  const repair = await fixMermaidSyntax('graph TD\n  A -> B');
+  if (
+    repair.success &&
+    repair.method === 'deterministic' &&
+    repair.fixedCode.includes('A --> B') &&
+    (await testMermaidSyntax(repair.fixedCode)).valid
+  ) {
+    console.log('✅ Syntax fixer repairs a common arrow error and revalidates its output.');
+    passed++;
+  } else {
+    console.error('❌ Syntax fixer failed to repair and validate a common arrow error:', repair);
+    failed++;
+  }
+} catch (err) {
+  console.error('❌ Shared syntax validator tests failed:', err);
+  failed++;
+}
+
 // Test Group 4: Inspect production bundle dist/
 console.log('\n--- Test Group 4: Production Dist Inspection ---');
 if (!fs.existsSync('./dist/index.html')) {
@@ -252,6 +322,41 @@ try {
     passed++;
   } else {
     console.error('❌ [Pro Formatter] formatMermaidCode() failed:', formatted);
+    failed++;
+  }
+
+  // 1b. Editor auto-format only applies parseable Mermaid and preserves invalid drafts.
+  const { EditorController } = await import('./src/components/editor.js');
+  const editorTextarea = dom.window.document.createElement('textarea');
+  const editorLines = dom.window.document.createElement('div');
+  const autoFormatToggle = dom.window.document.createElement('input');
+  autoFormatToggle.type = 'checkbox';
+  let editorChanges = 0;
+  const editor = new EditorController({
+    textarea: editorTextarea,
+    lineNumbersEl: editorLines,
+    autoFormatToggle,
+    autoFormatDelay: 5,
+    onChange: () => { editorChanges++; },
+  });
+  editor.setAutoFormatEnabled(true);
+  editorTextarea.value = 'flowchart TD\nA-->B';
+  editorTextarea.setSelectionRange(editorTextarea.value.length, editorTextarea.value.length);
+  const autoFormatResult = await editor.autoFormatIfValid();
+  const validAutoFormat = autoFormatResult.formatted && editorTextarea.value.includes('A --> B') && editorChanges === 1;
+
+  editorTextarea.value = 'flowchart TD\nA --> [broken';
+  const invalidDraft = editorTextarea.value;
+  const invalidAutoFormatResult = await editor.autoFormatIfValid();
+  const invalidDraftPreserved = !invalidAutoFormatResult.formatted && editorTextarea.value === invalidDraft;
+  const manualInvalidFormatResult = await editor.formatCode();
+  const manualInvalidDraftPreserved = !manualInvalidFormatResult.formatted && editorTextarea.value === invalidDraft;
+  editor.setAutoFormatEnabled(false);
+  if (validAutoFormat && invalidDraftPreserved && manualInvalidDraftPreserved) {
+    console.log('✅ [Editor] Automatic and manual formatting validate input and preserve invalid drafts.');
+    passed++;
+  } else {
+    console.error('❌ [Editor] Format safety check failed:', { autoFormatResult, invalidAutoFormatResult, manualInvalidFormatResult, value: editorTextarea.value });
     failed++;
   }
 
@@ -621,6 +726,41 @@ try {
   } else {
     console.error('❌ [FreeMind / OPML Converter] failed:', convertedFm);
     failed++;
+  }
+
+  // Validate the actual Mermaid output for each advertised importer, not just its shape.
+  const convertedSamples = [
+    ['XMind', xmindResult.mermaidCode],
+    ['PlantUML', convertedPuml],
+    ['Markdown outline', convertedOutline],
+    ['CSV', convertedCsv],
+    ['Graphviz DOT conversion', convertedDot],
+    ['D2', convertedD2],
+    ['SQL DDL', convertedSql],
+    ['Draw.io', convertedDrawio],
+    ['OpenAPI', convertedOpenapi],
+    ['GraphQL', convertedGql],
+    ['BPMN', convertedBpmn],
+    ['C4 DSL', convertedC4],
+    ['Terraform', convertedTf],
+    ['AsyncAPI', convertedAsync],
+    ['FreeMind / OPML', convertedFm],
+  ];
+
+  for (const [format, mermaidCode] of convertedSamples) {
+    try {
+      const validation = await mermaid.parse(mermaidCode);
+      if (validation !== false) {
+        console.log(`✅ [${format} Output Validation] Converted source parses as Mermaid.`);
+        passed++;
+      } else {
+        console.error(`❌ [${format} Output Validation] Mermaid parser rejected converted source.`);
+        failed++;
+      }
+    } catch (error) {
+      console.error(`❌ [${format} Output Validation] Mermaid parser rejected converted source: ${error.message.split('\n')[0]}`);
+      failed++;
+    }
   }
 
 } catch (err) {

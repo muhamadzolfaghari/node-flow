@@ -13,6 +13,7 @@ import { parseCodeToClassDiagram } from '../utils/importers/code-to-uml.js';
 import { analyzeDiagram } from '../utils/diagram-insights.js';
 import { generateOnboardingFlow, buildErDiagram } from '../utils/onboarding-generator.js';
 import { describeToDiagram, SUPPORTED_DIAGRAM_TYPES } from '../utils/importers/describe-to-diagram.js';
+import { applyMermaidIfValid, testMermaidSyntax } from '../utils/ai-syntax-fixer.js';
 
 export const QWEN_MODEL_ID = 'Qwen2.5-Coder-0.5B-Instruct-q4f16_1-MLC';
 
@@ -541,6 +542,7 @@ export class AIAssistant {
             </div>
           </div>
           <pre id="aiResultCode" class="ai-result-code"></pre>
+          <div id="aiResultValidation" class="ai-validation-status" role="status" aria-live="polite"></div>
         </div>
 
         <!-- ──────── Deterministic Converters Section ──────── -->
@@ -736,6 +738,7 @@ export class AIAssistant {
               </div>
             </div>
             <pre id="convResultCode" class="ai-result-code"></pre>
+            <div id="convResultValidation" class="ai-validation-status" role="status" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -819,11 +822,11 @@ export class AIAssistant {
     });
 
     // Apply button
-    this.container.querySelector('#aiApplyBtn').addEventListener('click', () => {
+    this.container.querySelector('#aiApplyBtn').addEventListener('click', async (event) => {
       if (this.generatedCode) {
         const rawPrompt = this.promptInput.value.trim();
         const title = rawPrompt ? (rawPrompt.length > 36 ? rawPrompt.slice(0, 34) + '…' : rawPrompt) : 'AI Generated Diagram';
-        this.onApplyCode(this.generatedCode, title);
+        await this.applyCandidate(this.generatedCode, title, this.container.querySelector('#aiResultValidation'), event.currentTarget);
       }
     });
 
@@ -1125,10 +1128,10 @@ export class AIAssistant {
       }
     });
 
-    this.container.querySelector('#convApplyBtn').addEventListener('click', () => {
+    this.container.querySelector('#convApplyBtn').addEventListener('click', async (event) => {
       if (this.convGeneratedCode) {
         const tag = this.convResultTag?.textContent || 'Converted Diagram';
-        this.onApplyCode(this.convGeneratedCode, tag);
+        await this.applyCandidate(this.convGeneratedCode, tag, this.container.querySelector('#convResultValidation'), event.currentTarget);
       }
     });
   }
@@ -1441,6 +1444,14 @@ export class AIAssistant {
       return;
     }
     const targetType = this.container.querySelector('#aiDiagramTypeSelect')?.value || 'auto';
+    this.generatedCode = '';
+    const applyButton = this.container.querySelector('#aiApplyBtn');
+    const validationStatus = this.container.querySelector('#aiResultValidation');
+    if (applyButton) applyButton.disabled = true;
+    if (validationStatus) {
+      validationStatus.dataset.state = 'pending';
+      validationStatus.textContent = 'Generating diagram…';
+    }
 
     if (this.engineMode === 'qwen') {
       await this.handleGenerateQwen(prompt, targetType);
@@ -1507,6 +1518,7 @@ export class AIAssistant {
       const extracted = this.extractMermaidCode(rawText);
       this.generatedCode = extracted || rawText.trim();
       this.resultCode.textContent = this.generatedCode;
+      await this.validateGeneratedCandidate(this.generatedCode);
     } catch (err) {
       const isEOF = err?.message?.toLowerCase().includes('eof') ||
                     err?.message?.toLowerCase().includes('stream');
@@ -1518,6 +1530,7 @@ export class AIAssistant {
           this.generatedCode = extracted;
           this.resultCode.textContent = extracted;
           this.resultEngineTag.textContent = 'Qwen (stream recovered ✓)';
+          await this.validateGeneratedCandidate(extracted);
           this.qwenEngine = null;
           this.qwenLoaded = false;
           this.qwenReadySection.style.display = 'none';
@@ -1537,6 +1550,7 @@ export class AIAssistant {
       this.generatedCode = fallback;
       this.resultCode.textContent = fallback;
       this.resultEngineTag.textContent = '⚠️ Instant Generator Fallback (Qwen reset)';
+      await this.validateGeneratedCandidate(fallback);
     } finally {
       this.generateBtn.disabled = false;
       this.generateBtn.innerHTML = `
@@ -1653,6 +1667,7 @@ export class AIAssistant {
       this.generatedCode = extracted || rawText.trim();
       this.resultCode.textContent = this.generatedCode;
       this.resultEngineTag.textContent = `✓ ${this.ollamaModel} via Ollama`;
+      await this.validateGeneratedCandidate(this.generatedCode);
     } catch (err) {
       console.error('Ollama generation error:', err);
 
@@ -1662,6 +1677,7 @@ export class AIAssistant {
           this.generatedCode = extracted;
           this.resultCode.textContent = extracted;
           this.resultEngineTag.textContent = `⚠️ ${this.ollamaModel} (stream recovered)`;
+          await this.validateGeneratedCandidate(extracted);
           return;
         }
       }
@@ -1670,6 +1686,7 @@ export class AIAssistant {
       this.generatedCode = fallback;
       this.resultCode.textContent = fallback;
       this.resultEngineTag.textContent = '⚠️ Instant Fallback (Ollama unreachable)';
+      await this.validateGeneratedCandidate(fallback);
     } finally {
       try { reader?.cancel(); } catch { /* ignore */ }
       this.generateBtn.disabled = false;
@@ -1691,6 +1708,55 @@ export class AIAssistant {
     return text.replace(/```(?:mermaid)?/gi, '').trim();
   }
 
+  async applyCandidate(code, title, statusEl, button) {
+    if (button) button.disabled = true;
+    if (statusEl) {
+      statusEl.dataset.state = 'pending';
+      statusEl.textContent = 'Checking Mermaid syntax…';
+    }
+
+    try {
+      const result = await applyMermaidIfValid(code, async (validatedCode) => {
+        await this.onApplyCode(validatedCode, title);
+      });
+      if (statusEl) {
+        statusEl.dataset.state = result.applied ? 'success' : 'error';
+        statusEl.textContent = result.applied
+          ? 'Syntax is valid. Diagram applied to the canvas.'
+          : `Diagram was not applied: ${result.error || 'invalid Mermaid syntax.'}`;
+      }
+      return result;
+    } catch (error) {
+      if (statusEl) {
+        statusEl.dataset.state = 'error';
+        statusEl.textContent = `Diagram was not applied: ${error?.message || 'validation failed.'}`;
+      }
+      return { valid: false, applied: false, error: error?.message || 'validation failed.' };
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async validateGeneratedCandidate(code) {
+    const button = this.container.querySelector('#aiApplyBtn');
+    const statusEl = this.container.querySelector('#aiResultValidation');
+    if (button) button.disabled = true;
+    if (statusEl) {
+      statusEl.dataset.state = 'pending';
+      statusEl.textContent = 'Validating Mermaid syntax…';
+    }
+
+    const result = await testMermaidSyntax(code);
+    if (button) button.disabled = !result.valid;
+    if (statusEl) {
+      statusEl.dataset.state = result.valid ? 'success' : 'error';
+      statusEl.textContent = result.valid
+        ? 'Syntax valid. Ready to apply.'
+        : `Syntax invalid: ${result.error || 'the generated output is not valid Mermaid.'}`;
+    }
+    return result;
+  }
+
   async handleGenerateHeuristic(prompt, targetType = 'auto') {
     this.generateBtn.disabled = true;
     this.generateBtn.innerHTML = `
@@ -1705,6 +1771,7 @@ export class AIAssistant {
       this.generatedCode = res.code;
       this.resultEngineTag.textContent = `Generated with Instant Engine (${res.typeLabel})`;
       this.resultCode.textContent = res.code;
+      await this.validateGeneratedCandidate(res.code);
       this.resultContainer.style.display = 'block';
       this.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (e) {
@@ -1712,6 +1779,7 @@ export class AIAssistant {
       this.generatedCode = code;
       this.resultEngineTag.textContent = 'Generated with Instant Heuristic Engine';
       this.resultCode.textContent = code;
+      await this.validateGeneratedCandidate(code);
       this.resultContainer.style.display = 'block';
       this.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } finally {

@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/muhamadzolfaghari/diagram-atlas.git"
+    "url": "git+https://github.com/muhamadzolfaghari/node-flow.git"
   },
   "author": "Mohammad Zolfaghari",
   "license": "MIT",
