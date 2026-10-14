@@ -109,6 +109,25 @@ export async function testMermaidSyntax(code) {
 }
 
 /**
+ * Apply Mermaid source only after it passes the same parser used by the renderer.
+ * This prevents model output or converted files from replacing the current canvas
+ * with invalid syntax.
+ */
+export async function applyMermaidIfValid(code, onApply) {
+  if (typeof onApply !== 'function') {
+    return { valid: false, applied: false, error: 'No apply callback provided.' };
+  }
+
+  const validation = await testMermaidSyntax(code);
+  if (!validation.valid) {
+    return { ...validation, applied: false };
+  }
+
+  await onApply(code);
+  return { ...validation, valid: true, applied: true };
+}
+
+/**
  * Strips ```mermaid ... ``` or conversational artifacts
  */
 function stripMarkdownFences(text) {
