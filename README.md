@@ -40,6 +40,8 @@ Converters target useful subsets of these formats; they do not guarantee full-fi
 - **Local Qwen model:** Qwen2.5-Coder 0.5B runs in the browser using WebLLM. The model is downloaded from a CDN (about 380 MB) and cached; inference runs locally after loading and requires a compatible browser and WebGPU support.
 - **Ollama:** optional connection to a model running on the user’s own machine.
 - **Syntax repair:** tries deterministic fixes first, then a loaded local model when available. Every proposed repair is parsed before it is returned.
+- **Live diagnostics:** the editor checks syntax as you work and shows parser errors in the status bar; use **Fix with AI** to request a validated repair.
+- **Safe auto-format:** enable **Auto-format** to format valid Mermaid after a short pause. Invalid drafts and Graphviz DOT are left untouched; manual formatting also validates before applying.
 - **Apply protection:** generated and converted Mermaid is checked before it can replace the canvas. Invalid syntax is rejected with an error message, and the current rendered diagram is retained.
 
 The first Qwen download requires an internet connection. NodeFlow does not need a hosted AI API for local inference.
