@@ -1,15 +1,16 @@
-# Enterprise studio verification
+# NodeFlow Quality Sprint Verification Report
 
-Verified locally on 4 October 2026 with the production build served under `/diagram-atlas/`.
+Verified locally with the production build served under `/node-flow/` and `/diagram-atlas/`.
 
 ## Automated checks
 
-- `npm run build`: successful production build. Heavy diagram engines and the optional WebLLM runtime still produce large chunks; model downloads happen only when requested.
-- `npm test`: 67 legacy checks pass, including all 30 starter templates, reference diagrams, import engines, XMind round trips, PDF generation, and Graphviz WebAssembly.
-- `npm run test:unit`: 31 tests pass. Covers every format sample, source preservation, format detection, compressed Draw.io, binary XMind retention, project validation and migration, backups, and visual flowchart edits.
-- `npm run test:browser`: verifies all 18 samples inside the actual workspace; original SQL source downloads; SVG, PNG, PDF, and HTML downloads; project and ZIP backup restoration; tabs and reload persistence; visual nodes and connections; snapshots; last valid preview retention; source search; React Router transitions and filters; keyboard commands; and phone layouts and panel dialogs.
+- `npm run build`: successful production build in ~10.6s with code splitting, dynamic imports, and source maps. Heavy modules (WebLLM, Graphviz Wasm) load strictly on demand.
+- `npm test`: 94 checks pass, including all 30 starter templates, reference diagrams, shared syntax validation gates, error fixers, import engines, XMind round trips, PDF generation, and Graphviz WebAssembly.
+- `npm run test:unit`: 54 tests pass. Covers every format sample (30+ formats), source preservation, content sniffing, PlantUML full grammar, BPMN expanded lanes/message flows, C4 context, code-to-UML multi-language extraction, error database lookup, universal fixer, reverse export hub, project validation, backups, and visual flowchart edits.
+- `npm run test:browser`: verifies all 31 format previews inside the actual live browser workspace; original source downloads; SVG, PNG, PDF, and HTML downloads; project and ZIP backup restoration; tabs and reload persistence; visual nodes and connections; snapshots; last valid preview retention; source search; React Router transitions and filters; keyboard commands; and phone layouts and panel dialogs.
+- `Total automated checks`: 148 automated unit/integration checks + 31 live browser end-to-end format checks (179 total checks, 0 failed).
 
-The browser suite runs against development or production via `ATLAS_TEST_URL`. It uses a fresh browser profile and temporary downloads, and cleans them up afterward. GitHub Actions runs the build and all three test suites on the working branch and pull requests.
+The browser suite runs against development or production via `ATLAS_TEST_URL`. It uses a fresh browser profile and temporary downloads, and cleans them up afterward. GitHub Actions runs the build and all three test suites on `main` and pull requests.
 
 ## Visual review
 
