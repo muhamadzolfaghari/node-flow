@@ -1049,6 +1049,21 @@ input:focus-visible {
   width: 100%;
 }
 
+.ai-validation-status {
+  min-height: 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.ai-validation-status[data-state='success'] {
+  color: var(--success, #34d399);
+}
+
+.ai-validation-status[data-state='error'] {
+  color: var(--danger, #f87171);
+}
+
 /* ==========================================================================
    Workspace Layout (Editor + Splitter + Canvas)
    ========================================================================== */
