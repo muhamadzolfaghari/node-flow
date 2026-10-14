@@ -299,7 +299,7 @@ export default function Landing() {
           </div>
           <Button size="lg" asChild>
             <Link to="/studio">
-              Open DiagramAtlas <ArrowRight />
+              Open NodeFlow <ArrowRight />
             </Link>
           </Button>
         </div>

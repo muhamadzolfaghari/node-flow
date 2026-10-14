@@ -56,10 +56,10 @@ export default function Navbar() {
             </span>
             <span className="leading-none">
               <span className="block text-base font-bold tracking-tight text-white">
-                Diagram<span className="text-blue-300">Atlas</span>
+                Node<span className="text-blue-300">Flow</span>
               </span>
               <span className="mt-1.5 block text-[10px] font-medium tracking-widest text-muted-foreground uppercase">
-                Diagram workspace
+                Visual studio
               </span>
             </span>
           </Link>
@@ -93,7 +93,7 @@ export default function Navbar() {
               </kbd>
             </button>
             <a
-              href="https://github.com/muhamadzolfaghari/diagram-atlas"
+              href="https://github.com/muhamadzolfaghari/node-flow"
               target="_blank"
               rel="noreferrer"
               className="hidden rounded-md p-2 text-muted-foreground hover:text-white sm:block"

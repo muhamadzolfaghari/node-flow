@@ -39,11 +39,11 @@ export class AnalyticsModal {
             </div>
             <div>
               <h2 style="font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text);">
-                <span>Real-Time Visitor &amp; Studio Analytics</span>
-                <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.35); font-size: 10px; padding: 2px 8px; border-radius: 999px;">LIVE NETWORK</span>
+                <span>Local Studio &amp; Workspace Analytics</span>
+                <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.35); font-size: 10px; padding: 2px 8px; border-radius: 999px;">LOCAL-FIRST / ZERO-NETWORK</span>
               </h2>
               <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
-                Global visitor presence, diagram usage telemetry, and AI synthesis metrics
+                In-browser workspace metrics and cross-tab sync with 0 third-party network requests
               </p>
             </div>
           </div>

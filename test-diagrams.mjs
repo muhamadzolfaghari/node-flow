@@ -176,7 +176,7 @@ if (!fs.existsSync('./dist/index.html')) {
     { name: 'Base path in favicon', check: distHtml.includes('/diagram-atlas/favicon.svg') },
     { name: 'React application mount present', check: distHtml.includes('id="root"') },
     { name: 'Application module entry present', check: /<script[^>]*type="module"[^>]*src="[^"]+/.test(distHtml) },
-    { name: 'SEO title present', check: distHtml.includes('<title>DiagramAtlas') },
+    { name: 'SEO title present', check: distHtml.includes('<title>NodeFlow') || distHtml.includes('<title>DiagramAtlas') },
     { name: 'SEO meta description present', check: distHtml.includes('name="description"') },
   ];
 

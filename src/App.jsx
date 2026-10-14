@@ -27,7 +27,7 @@ const PAGE_TITLES = {
 function AppLayout() {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.title = `DiagramAtlas — ${PAGE_TITLES[pathname] || "Page not found"}`;
+    document.title = `NodeFlow — ${PAGE_TITLES[pathname] || "Page not found"}`;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
 

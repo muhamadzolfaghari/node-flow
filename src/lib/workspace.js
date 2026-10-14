@@ -153,11 +153,11 @@ export function addDocuments(project, documents) {
   return { ...next, updatedAt: new Date().toISOString() };
 }
 export function serializeProject(project) {
-  return JSON.stringify({ app: "DiagramAtlas", version: 1, project }, null, 2);
+  return JSON.stringify({ app: "NodeFlow", version: 1, project }, null, 2);
 }
 export function parseProject(source) {
   const data = JSON.parse(source);
-  if (data.app !== "DiagramAtlas" || data.version !== 1)
-    throw new Error("This is not a supported DiagramAtlas project backup.");
+  if (data.app !== "NodeFlow" && data.app !== "DiagramAtlas" || data.version !== 1)
+    throw new Error("This is not a supported NodeFlow project backup.");
   return validateProject(data.project);
 }

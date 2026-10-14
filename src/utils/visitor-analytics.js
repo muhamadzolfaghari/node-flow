@@ -1,12 +1,11 @@
 /**
- * Real-Time Online Visitor & Studio Analytics Engine
- * Connects to real global P2P presence mesh (0.peerjs.com) + local cross-tab BroadcastChannel + GeoIP.
- * 100% privacy-compliant, zero-PII, client-side decentralized telemetry.
+ * Local-First Studio Analytics Engine
+ * Tracks workspace usage locally in localStorage with cross-tab BroadcastChannel sync.
+ * 100% privacy-compliant, zero third-party network requests, zero telemetry transmitted.
  */
 
 const STORAGE_KEY = 'mermaid_studio_analytics_v1';
 const PRESENCE_CHANNEL = 'mermaid_studio_presence_channel_v2';
-const PEERJS_SERVER = 'wss://0.peerjs.com/peerjs';
 
 const COUNTRY_FLAGS = {
   US: { name: 'United States', flag: '🇺🇸' },
@@ -36,50 +35,43 @@ class RealVisitorAnalyticsEngine {
     this.subscribers = new Set();
     this.sessionStartTime = Date.now();
     this.tabId = 'tab_' + Math.random().toString(36).substring(2, 9);
-    this.peerId = 'mermaid_peer_' + Math.random().toString(36).substring(2, 10);
     
-    // Real User Geo Info
-    this.userGeo = {
-      country: 'US',
-      name: 'United States',
-      flag: '🇺🇸',
-      ipDetected: false,
-    };
+    // Inferred strictly from browser locale, NO network requests
+    this.userGeo = this.detectLocalLocale();
 
-    // Real Online Peers Tracked
+    // Active local tabs tracked across browser windows via BroadcastChannel
     this.activeTabs = new Set([this.tabId]);
-    this.activePeers = new Map(); // peerId -> { lastSeen, country, flag, action }
+    this.activePeers = new Map();
     this.recentActivities = [];
     this.wsConnected = false;
-    this.connectionState = 'connecting';
+    this.connectionState = 'local-offline';
 
-    this.initGeoIP();
     this.initBroadcastChannel();
-    this.initGlobalPresenceWebSocket();
     this.startHeartbeatLoop();
     this.recordLocalSession();
   }
 
-  async initGeoIP() {
+  detectLocalLocale() {
     try {
-      const res = await fetch('https://api.country.is/');
-      if (res.ok) {
-        const data = await res.json();
-        const code = (data.country || 'US').toUpperCase();
-        const meta = COUNTRY_FLAGS[code] || { name: code, flag: '🌍' };
-        this.userGeo = {
-          country: code,
-          name: meta.name,
-          flag: meta.flag,
-          ipDetected: true,
-        };
-        this.recordUserCountry(code, meta.name, meta.flag);
-        this.notify();
-      }
-    } catch (e) {
-      // Graceful fallback
-      console.warn('GeoIP fetch notice (using browser locale fallback):', e.message);
+      const lang = (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
+      const parts = lang.split('-');
+      const code = (parts.length > 1 ? parts[1] : 'US').toUpperCase();
+      const meta = COUNTRY_FLAGS[code] || { name: 'Local Environment', flag: '💻' };
+      return {
+        country: code,
+        name: meta.name,
+        flag: meta.flag,
+        ipDetected: false,
+        localInferred: true,
+      };
+    } catch {
+      return { country: 'LOCAL', name: 'Local Offline', flag: '💻', ipDetected: false, localInferred: true };
     }
+  }
+
+  initGeoIP() {
+    // Zero-network: local locale inference only
+    this.notify();
   }
 
   loadStorage() {
@@ -168,65 +160,20 @@ class RealVisitorAnalyticsEngine {
   }
 
   initGlobalPresenceWebSocket() {
-    if (typeof WebSocket === 'undefined') return;
-
-    try {
-      const token = Math.random().toString(36).substring(2);
-      const url = `${PEERJS_SERVER}?key=peerjs&id=${this.peerId}&token=${token}`;
-      this.ws = new WebSocket(url);
-
-      this.ws.onopen = () => {
-        this.wsConnected = true;
-        this.connectionState = 'connected';
-        this.broadcastPresencePing();
-        this.notify();
-      };
-
-      this.ws.onmessage = (msg) => {
-        try {
-          const data = JSON.parse(msg.data);
-          if (data.type === 'HEARTBEAT' || data.type === 'PING') {
-            const peer = data.peerId || data.src;
-            if (peer && peer !== this.peerId) {
-              this.activePeers.set(peer, {
-                lastSeen: Date.now(),
-                country: data.country || 'Global',
-                flag: data.flag || '🌍',
-                action: data.action || 'Online in Studio',
-              });
-              this.notify();
-            }
-          }
-        } catch (e) {}
-      };
-
-      this.ws.onclose = () => {
-        this.wsConnected = false;
-        this.connectionState = 'reconnecting';
-        setTimeout(() => this.initGlobalPresenceWebSocket(), 8000);
-      };
-
-      this.ws.onerror = () => {
-        this.wsConnected = false;
-        this.connectionState = 'offline';
-      };
-    } catch (e) {
-      console.warn('Global presence mesh connection notice:', e);
-    }
+    // 100% offline & local-first: no remote WebSocket connections established
+    this.wsConnected = false;
+    this.connectionState = 'local-offline';
   }
 
-  broadcastPresencePing(actionDesc = 'Active in Mermaid Studio') {
-    if (this.ws && this.ws.readyState === 1) {
+  broadcastPresencePing(actionDesc = 'Active in NodeFlow Studio') {
+    if (this.channel) {
       try {
-        const payload = {
-          type: 'HEARTBEAT',
-          peerId: this.peerId,
-          country: this.userGeo.country,
-          flag: this.userGeo.flag,
+        this.channel.postMessage({
+          type: 'PING',
+          tabId: this.tabId,
           action: actionDesc,
           timestamp: Date.now(),
-        };
-        this.ws.send(JSON.stringify(payload));
+        });
       } catch (e) {}
     }
   }

@@ -4,9 +4,9 @@ export default function Footer() {
     <footer className="border-t">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-5 py-7 sm:px-8">
         <div>
-          <p className="text-sm font-medium">DiagramAtlas</p>
+          <p className="text-sm font-medium">NodeFlow</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Open source diagram IDE · MIT licensed
+            Open source diagram studio · MIT licensed
           </p>
         </div>
         <nav
@@ -24,7 +24,7 @@ export default function Footer() {
           </Link>
           <a
             className="hover:text-foreground"
-            href="https://github.com/muhamadzolfaghari/diagram-atlas"
+            href="https://github.com/muhamadzolfaghari/node-flow"
             target="_blank"
             rel="noreferrer"
           >
