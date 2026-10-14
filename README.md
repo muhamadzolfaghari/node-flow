@@ -1,8 +1,8 @@
 # NodeFlow — Visual Diagram & Mind Map Studio
 
-**Create, edit, and convert diagrams in your browser.** NodeFlow combines a live Mermaid editor and canvas with import and export tools for formats including XMind, Draw.io, PlantUML, D2, SQL DDL, OpenAPI, and Graphviz. It also includes an optional local AI assistant.
+**Create, edit, validate, and convert diagrams in your browser.** NodeFlow combines a Mermaid editor and canvas with focused converters for common diagram and technical formats.
 
-**[Open the live demo](https://muhamadzolfaghari.github.io/mermaid-studio/)** · **[View the source](https://github.com/muhamadzolfaghari/diagram-atlas)**
+**[Open the live demo](https://muhamadzolfaghari.github.io/mermaid-studio/)** · **[View the source](https://github.com/muhamadzolfaghari/node-flow)**
 
 ![NodeFlow landing page](./screenshots/ui/01-landing-hero.png)
 
@@ -10,168 +10,74 @@
 | :---: | :---: |
 | ![NodeFlow editor](./screenshots/ui/10-studio-split-view.png) | ![NodeFlow AI assistant](./screenshots/ui/19-studio-ai-drawer.png) |
 
----
+## Format coverage
 
-## 💰 Expensive Formats & Paid Software Breakdown
+NodeFlow converts supported source formats into Mermaid diagrams. Graphviz DOT can also be rendered directly with the WebAssembly renderer.
 
-Many industry diagram tools lock essential export capabilities, format conversions, and advanced editors behind high annual paywalls. **NodeFlow eliminates these paywalls entirely** by providing 100% client-side, zero-cost support:
+| Input format | Current behavior |
+| --- | --- |
+| Mermaid | Edit, validate, and render Mermaid diagrams |
+| Graphviz DOT | Render with WebAssembly or convert to Mermaid |
+| XMind | Import and export `.xmind` files |
+| Draw.io / diagrams.net XML | Convert diagram nodes and edges to Mermaid |
+| PlantUML | Convert supported sequence, class, and state diagrams |
+| D2 | Convert D2 source to Mermaid |
+| SQL DDL | Convert table definitions and relationships to Mermaid ER diagrams |
+| OpenAPI / Swagger JSON | Convert REST endpoints to Mermaid sequence diagrams |
+| AsyncAPI JSON | Convert channels and events to Mermaid sequence diagrams |
+| GraphQL SDL | Convert types and relationships to Mermaid class diagrams |
+| BPMN 2.0 XML | Convert supported events, tasks, gateways, and flows |
+| C4 / Structurizr DSL | Convert supported declarations to Mermaid C4 context diagrams |
+| Terraform HCL | Convert supported resources and dependencies |
+| CSV / tabular data | Convert rows to relationship diagrams |
+| Markdown outlines, FreeMind, and OPML | Convert hierarchical content to Mermaid mind maps or flowcharts |
 
-| Format & Extension | Expensive Industry Tool | SaaS Subscription Cost | Features Locked Behind Paywall | ⚡ NodeFlow Free Engine (100% Free / MIT) |
-| :--- | :--- | :--- | :--- | :--- |
-| **`.xmind`** | **XMind Pro / MindManager** | **$59.99 – $179 / yr** | Pitch presentation mode, vector PDF export, theme customization, multi-sheet workbooks | **✓ 100% Free**: Bi-directional `.xmind` parser & exporter (XMind ZEN JSON & XMind 8 XML) with zero paywall. |
-| **`.drawio` / `mxGraph`** | **Lucidchart / Visio Plan 2** | **$95.40 – $240 / yr** | Shape caps (60 max), high-res export, revision history, team permission paywalls | **✓ 100% Free**: Direct Draw.io XML conversion to Mermaid flowcharts, 4K Retina PNG, and Vector PDF. |
-| **`.puml` / `.plantuml`** | **PlantText Cloud / Confluence Plugin** | **$36 – $120 / yr** | Cloud render rate limits, server hosting fees, commercial team licenses | **✓ 100% Free**: Client-side sequence, class, and state diagram conversion with zero external server calls. |
-| **`.d2`** | **Terrastruct D2 Studio** | **$144 – $240 / yr** | TALA layout engine, cloud collaboration, visual editing suite | **✓ 100% Free**: Built-in D2 architecture syntax to Mermaid converter running instantly in your browser. |
-| **`.sql` (DDL)** | **dbdiagram.io Pro / DataGrip** | **$108 – $229 / yr** | Unlimited ER schemas, PDF/SVG vector export, relationship visualizer | **✓ 100% Free**: Direct SQL `CREATE TABLE` DDL parser to Mermaid `erDiagram` with foreign-key relationships. |
-| **`.json` (OpenAPI/Swagger)**| **SwaggerHub / Postman Pro** | **$168 – $360 / yr** | Visual interactive sequences, API architecture diagrams, endpoint mockups | **✓ 100% Free**: Automatic OpenAPI REST JSON endpoint parser to interactive sequence flows. |
-| **`.dot` / `.gv`** | **Graphviz Commercial Tools** | **$49 – $99 / yr** | Modern interactive UI, CAD pan/zoom canvas, responsive web embedding | **✓ 100% Free**: Graphviz DOT digraph to Mermaid flowchart converter with CAD canvas navigation. |
-| **Markdown / Outlines** | **Whimsical / Miro Pro** | **$96 – $120 / yr** | Board caps, AI diagramming credits, high-resolution vector exports | **✓ 100% Free**: Indented outline to Mindmap/Flowchart converter + Dual WebGPU local AI generator. |
-| **`.graphql` (GraphQL SDL)**| **Apollo Studio / Inigo** | **$499 – $1,188 / yr** | Schema entity relationship visualizer, type hierarchy, team permission paywalls | **✓ 100% Free**: Direct GraphQL SDL parser to Mermaid `classDiagram` with entity relations. |
-| **`.bpmn` (BPMN 2.0 XML)** | **Camunda / Signavio** | **$588 – $1,200+ / yr** | Workflow modeler, decision table exports, enterprise BPMN paywalls | **✓ 100% Free**: Full BPMN 2.0 XML parser mapping tasks, gateways, and flows to Mermaid. |
-| **`.dsl` / `.c4` (C4 DSL)** | **Structurizr Cloud** | **$180 – $360 / yr** | Software architecture modeling, container views, cloud team seats | **✓ 100% Free**: Structurizr & C4-PlantUML DSL parser to native Mermaid `C4Context`. |
-| **`.tf` (Terraform HCL)** | **Brainboard / Cloudcraft** | **$588 – $1,188 / yr** | Cloud infrastructure diagramming, dependency topology, export lock-in | **✓ 100% Free**: Terraform HCL resource & dependency parser to cloud architecture flowcharts. |
-| **`.json` (AsyncAPI)** | **Postman Event / Solace** | **$240 – $480 / yr** | Kafka & RabbitMQ event sequence tracking, channel choreography | **✓ 100% Free**: AsyncAPI channel & event payload parser to Mermaid sequence flows. |
+Converters target useful subsets of these formats; they do not guarantee full-fidelity round trips for every dialect or feature. XMind is the current bidirectional file workflow. The verification suite tests representative fixtures for each converter.
 
----
+## AI and syntax validation
 
-## 🌟 Key Features
+- **Instant generator:** creates diagrams without downloading a model.
+- **Local Qwen model:** Qwen2.5-Coder 0.5B runs in the browser using WebLLM. The model is downloaded from a CDN (about 380 MB) and cached; inference runs locally after loading and requires a compatible browser and WebGPU support.
+- **Ollama:** optional connection to a model running on the user’s own machine.
+- **Syntax repair:** tries deterministic fixes first, then a loaded local model when available. Every proposed repair is parsed before it is returned.
+- **Apply protection:** generated and converted Mermaid is checked before it can replace the canvas. Invalid syntax is rejected with an error message, and the current rendered diagram is retained.
 
-- **Universal Multi-Format Importer (100% Free & Offline)**:
-  - **XMind (.xmind) Bi-Directional**: Reads and generates native `.xmind` files in-browser. Converts XMind ZEN and legacy XMind 8 into Mermaid Mindmaps, and exports mindmaps back to native `.xmind` workbooks.
-  - **Draw.io (.drawio / XML)**: Converts `mxGraphModel` XML cells, vertices, and edges into Mermaid flowcharts.
-  - **GraphQL Schema (SDL)**: Converts `.graphql` / `.gql` types, fields, and interfaces to Mermaid `classDiagram`.
-  - **BPMN 2.0 XML**: Converts enterprise `.bpmn` Camunda/Signavio workflow definitions to Mermaid flowcharts.
-  - **C4 Model & Structurizr DSL**: Converts `.dsl` and `.c4` architecture specifications to native Mermaid `C4Context`.
-  - **Terraform HCL (.tf)**: Parses cloud resources and dependencies into visual architecture flowcharts.
-  - **AsyncAPI Spec**: Converts Kafka/RabbitMQ channels and event payloads to Mermaid sequence diagrams.
-  - **PlantUML (.puml)**: Converts `@startuml` sequence, class, and state diagrams into Mermaid syntax in 1 click.
-  - **D2 Lang (.d2)**: Translates declarative D2 architecture code into clean Mermaid flowcharts.
-  - **SQL DDL to ER Diagram**: Parses SQL `CREATE TABLE` statements and foreign keys into Mermaid `erDiagram`.
-  - **OpenAPI / Swagger JSON**: Generates clean architectural sequence diagrams from REST API endpoints.
-  - **Markdown Outlines & OPML**: Transforms indented bullet lists into hierarchical Mindmaps or Flowcharts.
-  - **CSV / Tabular Data**: Converts CSV data rows into Flowchart relationship graphs or ER schemas.
-  - **Drag-and-Drop Everywhere**: Drop `.xmind`, `.drawio`, `.puml`, `.d2`, `.sql`, `.graphql`, `.bpmn`, `.tf`, or `.mmd` files directly onto the editor or canvas.
-- **Complete UML 2.5 Specification (All 14 Official Diagrams)**:
-  - **Structure Diagrams**: Class Diagram, Object Diagram, Component Diagram, Deployment Diagram, Package Diagram, Composite Structure Diagram, Profile Diagram.
-  - **Behavior Diagrams**: Use Case Diagram, Activity Diagram, State Machine Diagram.
-  - **Interaction Diagrams**: Sequence Diagram, Timing Diagram, Communication Diagram, Interaction Overview Diagram.
-- **Product Management & Design Thinking Diagrams**:
-  - **User Journey Maps** (`journey`): Multi-actor phases with emotional satisfaction curves (1–5).
-  - **Agile Kanban Boards** (`kanban`): Story point estimation, columns, and task priority cards.
-  - **Feature Prioritization Quadrant** (`quadrantChart`): Value vs Effort and Eisenhower decision matrices.
-  - **Gantt Delivery Roadmaps** (`gantt`): Critical path milestones and QA delivery sequences.
-  - **Ideation Mindmaps** (`mindmap`): Multi-tier brainstorming and strategic OKRs.
-  - **Root Cause Analysis** (`flowchart`): 6M Fishbone / Ishikawa engineering diagrams.
-  - **Conversion Funnels** (`sankey-beta`): User acquisition, retention, and drop-off flow visualization.
-  - **Product Timelines** (`timeline`): Multi-quarter release roadmaps and version schedules.
-- **Enterprise Architecture & Systems**:
-  - **C4 Model Architecture** (`C4Context`): Context, containers, and external banking dependencies.
-  - **Kubernetes Cluster Topology** (`graphviz` DOT): Native WebAssembly C engine rendering.
-  - **Hardware Bus & Chip Architecture** (`block-beta`): CPU, memory interconnects, and DMA controllers.
-  - **API Latency & SLA Performance Metrics** (`xychart-beta`): Percentile response time distributions.
-- **Dual In-Browser AI Diagram Assistant**:
-  - **Instant Heuristic Engine**: 0 MB download, runs instantly anywhere with natural language prompts.
-  - **Local Qwen2.5-Coder (0.5B) LLM**: 100% private, executes in your browser via WebGPU and WebAssembly. No API keys or paid subscriptions required!
-- **CAD / Figma-Style Interactive Canvas**:
-  - Smooth panning with velocity tracking and kinetic momentum release.
-  - Cursor-centered wheel zooming and 2-finger trackpad panning / pinch-to-zoom.
-  - 1-click **Fit to View** (`F`), **Recenter** (`C`), and **100% Reset** (`0`).
-  - Interactive live **Minimap navigation** and laser pointer for presentations.
-  - Wheel mode toggle: switch mouse wheel between **Zoom** and **Pan**.
-  - Immersive **Full Screen** mode (`Shift + F` or `F11`).
-  - Radial dot grid, line grid, or clean blank canvas backgrounds.
-- **Pro Export Studio & Embeds**:
-  - **Clean Vector SVG**: Scalable vector graphics with accurate bounding boxes.
-  - **High-DPI PNG (2x & 4x Retina)**: Crisp, high-resolution rasterization.
-  - **Vector PDF Export**: Single-click PDF export with sharp typography and zero blur.
-  - **XMind (.xmind) Export**: Download diagrams as true native XMind workbooks for XMind 2024 / mobile.
-  - **Standalone Interactive HTML**: Self-contained single-file HTML bundle with embedded pan/zoom controls.
-  - **Presentation Mode**: Distraction-free meeting mode with laser pointer (`L`).
-- **Resilient Live Code Editor**:
-  - Split-view editor with draggable splitter and responsive mobile tabs.
-  - Monospaced editor with synchronized line numbers and 2-space tab indentation.
-  - **Non-destructive syntax error handling**: When diagram code has an error, a floating banner details the error while **keeping the previous valid diagram on canvas** (no blank screens or flashing).
-  - Revision snapshots and version history (`v0.1`, `v0.2`, etc.).
-- **100% Free & Private**:
-  - No account, login, backend server, or paid APIs required.
-  - All diagram parsing, AI generation, and exports happen 100% client-side inside your browser.
+The first Qwen download requires an internet connection. NodeFlow does not need a hosted AI API for local inference.
 
----
+## Other capabilities
 
-## 📊 Platform Capabilities Matrix
+- Interactive canvas with pan, zoom, minimap, fit-to-view, and presentation controls.
+- Export diagrams as SVG, PNG, PDF, standalone HTML, and XMind files.
+- Browser-based drafts and revision snapshots.
+- Client-side conversion and rendering; no NodeFlow account or application server is required.
 
-| Feature / Capability | ⚡ **NodeFlow** | **Mermaid Live Editor** | **XMind Pro** | **Lucidchart / Visio** | **Eraser.io / Miro** |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Pricing Model** | **100% Free / MIT** | Free / Open Source | $59.99 / yr | $95 – $240 / yr | Freemium ($120/yr) |
-| **Account Required** | **None (Instant Access)** | None | Yes | Yes | Yes |
-| **XMind (.xmind) Bi-directional** | **✓ Full Import & Export** | ✗ No | Native app only | ✗ No | ✗ No |
-| **Draw.io (.drawio XML) Import** | **✓ Built-in** | ✗ No | ✗ No | Import only | ✗ No |
-| **PlantUML & D2 Converters** | **✓ Built-in** | ✗ No | ✗ No | ✗ No | ✗ No |
-| **SQL DDL to ER Diagram** | **✓ Built-in** | ✗ No | ✗ No | Paid Add-on | Paid Tier |
-| **Local In-Browser AI** | **✓ Dual (Instant + Qwen LLM)** | ✗ None | Cloud AI (Paid) | Cloud AI (Paid) | Cloud AI (Paid) |
-| **CAD Canvas Controls** | **✓ Kinetic Pan, Minimap, Pinch** | ✗ Basic CSS zoom | Proprietary map | Good | Good |
-| **Vector PDF & 4K PNG Export** | **✓ Yes (Print-Ready)** | ✗ No | Paid Tier Only | Paid Tier Only | Paid Tier Only |
-| **Interactive Standalone HTML** | **✓ Yes (Self-Contained)** | ✗ No | ✗ No | ✗ No | ✗ No |
-| **Presentation Mode + Laser** | **✓ Yes** | ✗ No | Pitch Mode (Paid) | Paid Presenter | Good |
-| **Data Privacy** | **100% Client-Side / Offline** | Client-Side | Local app | Hosted Cloud | Hosted Cloud |
+## Run locally
 
----
+### Requirements
 
-## ⌨️ Keyboard Shortcuts & Canvas Controls
+- Node.js 18 or later
+- npm 9 or later
 
-| Action | Shortcut / Control | Description |
-| :--- | :--- | :--- |
-| **Pan Canvas** | **Drag** or **Arrow Keys** | Smooth panning with kinetic momentum physics |
-| **Fast Pan** | `Shift` + **Arrow Keys** | Large step panning across expansive diagrams |
-| **Trackpad Pan** | **2-Finger Scroll** | Multi-directional trackpad pan |
-| **Zoom In / Out** | `+` / `−` keys or HUD buttons | Step zoom centered on canvas |
-| **Cursor Zoom** | **Mouse Wheel** or **Pinch** | Zoom centered precisely at the cursor location |
-| **Fit to View** | `F` key or **Fit** button | Scale and center the diagram within the viewport |
-| **Recenter** | `C` key or **Center** button | Center canvas without changing current zoom level |
-| **Reset 100%** | `0` key or **100%** button | Reset zoom scale to 1:1 |
-| **Wheel Mode** | **Wheel: Zoom / Pan** button | Toggle mouse wheel behavior between zooming and panning |
-| **Full Screen** | `Shift + F` or `F11` | Expand workspace to full screen |
-| **Save Diagram** | `Ctrl + S` / `Cmd + S` | Save current diagram to browser library |
-| **Open File / Importer** | `Ctrl + O` / `Cmd + O` or `Ctrl + I` | Open universal importer or local file |
-| **Indent / Dedent** | `Tab` / `Shift + Tab` | Indent or unindent 2 spaces in the editor |
-| **Shortcuts Help** | `?` key or ⌨️ button | Open keyboard shortcuts dialog |
+### Install and start
 
----
-
-## 🛠️ Local Development & Build
-
-### Prerequisites
-- Node.js (v18+)
-- npm (v9+)
-
-### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/muhamadzolfaghari/mermaid-studio.git
-cd mermaid-studio
-
-# Install dependencies
-npm install
-```
-
-### Run Locally (Dev Server)
-```bash
+git clone https://github.com/muhamadzolfaghari/node-flow.git
+cd node-flow
+npm ci
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Run Verification Suite (42 Unit Tests)
+Vite prints the local development URL after startup.
+
+### Verify and build
+
 ```bash
 npm test
-```
-
-### Build for Production
-```bash
 npm run build
 ```
-The compiled static assets are generated in `dist/` with base path `/mermaid-studio/`.
 
----
+The verification suite covers diagram templates, syntax repair and apply validation, representative converter outputs, exports, and WebAssembly utilities. Production assets are written to `dist/`. GitHub Pages currently serves the app at the legacy `/mermaid-studio/` path.
 
-## 📄 License
-MIT License. Free to use, adapt, and share.
+## License
+
+MIT
