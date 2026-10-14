@@ -115,8 +115,8 @@ See [verification results and limits](docs/VERIFICATION.md) and the [desktop and
 Use Node.js 22 or newer and npm.
 
 ```sh
-git clone https://github.com/muhamadzolfaghari/diagram-atlas.git
-cd diagram-atlas
+git clone https://github.com/muhamadzolfaghari/node-flow.git
+cd node-flow
 npm ci
 npm run dev
 ```
@@ -128,7 +128,7 @@ npm run test:unit
 npm run test:browser
 ```
 
-Production files are generated in `dist/`, with the GitHub Pages base path `/diagram-atlas/`. The browser suite starts its own local server, exercises all 18 source formats and workspace workflows, and closes it afterward. Set `ATLAS_TEST_URL` to use an existing server.
+Production files are generated in `dist/`, with the GitHub Pages base path `/node-flow/` (or `/diagram-atlas/`, configurable via `VITE_BASE_URL`). The browser suite starts its own local server, exercises source formats and workspace workflows, and closes it afterward. Set `ATLAS_TEST_URL` to use an existing server.
 
 ## License
 

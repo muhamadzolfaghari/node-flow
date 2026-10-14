@@ -1,7 +1,7 @@
 {
-  "name": "diagram-atlas",
+  "name": "node-flow",
   "version": "1.0.0",
-  "description": "DiagramAtlas — Free universal visual diagramming studio supporting Mermaid, XMind, Draw.io, PlantUML, Graphviz, D2, SQL DDL, and Markdown.",
+  "description": "NodeFlow — Free universal visual diagramming and architecture studio supporting Mermaid, XMind, Draw.io, PlantUML, Graphviz, D2, SQL DDL, and Markdown.",
   "type": "module",
   "scripts": {
     "dev": "vite",
