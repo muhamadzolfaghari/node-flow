@@ -326,6 +326,41 @@ try {
     failed++;
   }
 
+  // 1b. Editor auto-format only applies parseable Mermaid and preserves invalid drafts.
+  const { EditorController } = await import('./src/components/editor.js');
+  const editorTextarea = dom.window.document.createElement('textarea');
+  const editorLines = dom.window.document.createElement('div');
+  const autoFormatToggle = dom.window.document.createElement('input');
+  autoFormatToggle.type = 'checkbox';
+  let editorChanges = 0;
+  const editor = new EditorController({
+    textarea: editorTextarea,
+    lineNumbersEl: editorLines,
+    autoFormatToggle,
+    autoFormatDelay: 5,
+    onChange: () => { editorChanges++; },
+  });
+  editor.setAutoFormatEnabled(true);
+  editorTextarea.value = 'flowchart TD\nA-->B';
+  editorTextarea.setSelectionRange(editorTextarea.value.length, editorTextarea.value.length);
+  const autoFormatResult = await editor.autoFormatIfValid();
+  const validAutoFormat = autoFormatResult.formatted && editorTextarea.value.includes('A --> B') && editorChanges === 1;
+
+  editorTextarea.value = 'flowchart TD\nA --> [broken';
+  const invalidDraft = editorTextarea.value;
+  const invalidAutoFormatResult = await editor.autoFormatIfValid();
+  const invalidDraftPreserved = !invalidAutoFormatResult.formatted && editorTextarea.value === invalidDraft;
+  const manualInvalidFormatResult = await editor.formatCode();
+  const manualInvalidDraftPreserved = !manualInvalidFormatResult.formatted && editorTextarea.value === invalidDraft;
+  editor.setAutoFormatEnabled(false);
+  if (validAutoFormat && invalidDraftPreserved && manualInvalidDraftPreserved) {
+    console.log('✅ [Editor] Automatic and manual formatting validate input and preserve invalid drafts.');
+    passed++;
+  } else {
+    console.error('❌ [Editor] Format safety check failed:', { autoFormatResult, invalidAutoFormatResult, manualInvalidFormatResult, value: editorTextarea.value });
+    failed++;
+  }
+
   // 2. Pure PDF 1.4 Synthesizer test
   const dummyJpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xd9]);
   const pdfBytes = Exporter.synthesizePdfFromJpeg(dummyJpegBytes, 200, 100, { pageSize: 'fit', title: 'Test Diagram' });
