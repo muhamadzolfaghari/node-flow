@@ -1,6 +1,6 @@
 /**
- * CSV / Tabular Data to Mermaid Converter
- * Supports Flowchart (From, To, Label) and ER Diagram tables.
+ * CSV / TSV / semicolon / pipe tabular data to Mermaid (expanded).
+ * Header synonyms: from/source/src, to/target/dst, label/action/event/edge.
  */
 
 export function parseCsvToMermaid(csvText) {
@@ -8,53 +8,67 @@ export function parseCsvToMermaid(csvText) {
     throw new Error('Please provide CSV data to convert.');
   }
 
-  const lines = csvText
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(line => line.length > 0 && !line.startsWith('#'));
+  const rawLines = csvText.split(/\r?\n/).map(l => l.trimEnd()).filter(l => l.trim().length > 0 && !l.trim().startsWith('#'));
+  if (rawLines.length < 2) throw new Error('CSV requires at least a header row and one data row.');
 
-  if (lines.length < 2) {
-    throw new Error('CSV requires at least a header row and one data row.');
-  }
-
-  // Detect delimiter: comma, semicolon, tab
-  const headerLine = lines[0];
+  // Detect delimiter from header
+  const headerLine = rawLines[0];
+  const counts = { ',': headerLine.split(',').length, ';': headerLine.split(';').length, '\t': headerLine.split('\t').length, '|': headerLine.split('|').length };
   let delimiter = ',';
-  if (headerLine.includes('\t')) delimiter = '\t';
-  else if (headerLine.includes(';')) delimiter = ';';
+  let best = 0;
+  for (const [d, c] of Object.entries(counts)) if (c > best) { best = c; delimiter = d; }
 
-  const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
-  const rows = lines.slice(1).map(line => line.split(delimiter).map(cell => cell.trim()));
+  const splitRow = (line) => {
+    // minimal quoted-field support
+    const cells = []; let cur = ''; let q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { q = !q; continue; }
+      if (ch === delimiter && !q) { cells.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    cells.push(cur.trim());
+    return cells;
+  };
 
-  // 1. Check if ER Diagram format (Entity / Table / Column / Type)
-  if (headers.some(h => h.includes('table') || h.includes('entity')) &&
-      headers.some(h => h.includes('col') || h.includes('field') || h.includes('prop'))) {
+  const headers = splitRow(headerLine).map(h => h.trim().toLowerCase());
+  const rows = rawLines.slice(1, 101).map(splitRow);
+
+  // ER mode
+  if (headers.some(h => /table|entity/.test(h)) && headers.some(h => /col|field|prop|attr/.test(h))) {
     return generateErFromCsv(headers, rows);
   }
 
-  // 2. Default to Graph / Flowchart (From, To, [Label/Action])
   return generateFlowchartFromCsv(headers, rows);
 }
 
+function colIdx(headers, ...names) {
+  for (const n of names) {
+    const i = headers.findIndex(h => h === n || h.includes(n));
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+
 function generateFlowchartFromCsv(headers, rows) {
+  const fromI = colIdx(headers, 'from', 'source', 'src', 'start');
+  const toI = colIdx(headers, 'to', 'target', 'dst', 'dest', 'end');
+  const labelI = colIdx(headers, 'label', 'action', 'event', 'edge', 'name', 'verb');
+  const fi = fromI === -1 ? 0 : fromI;
+  const ti = toI === -1 ? 1 : toI;
   const output = ['flowchart LR'];
-
+  const safe = (s) => (s || '').replace(/"/g, "'").slice(0, 60);
   rows.forEach(cols => {
-    if (cols.length < 2) return;
-    const from = cols[0].replace(/[^\w\d_-]/g, '_') || 'A';
-    const to = cols[1].replace(/[^\w\d_-]/g, '_') || 'B';
-    const label = cols[2] ? cols[2].replace(/"/g, "'") : '';
-
-    const fromLabel = cols[0].replace(/"/g, "'");
-    const toLabel = cols[1].replace(/"/g, "'");
-
-    if (label) {
-      output.push(`  ${from}["${fromLabel}"] -->|"${label}"| ${to}["${toLabel}"]`);
-    } else {
-      output.push(`  ${from}["${fromLabel}"] --> ${to}["${toLabel}"]`);
-    }
+    if (cols.length < 2 && fi === 0 && ti === 1 && cols.length < 2) return;
+    const from = (cols[fi] || '').trim(); const to = (cols[ti] || '').trim();
+    if (!from || !to) return;
+    const fromId = from.replace(/[^\w\d_-]/g, '_').slice(0, 24) || 'A';
+    const toId = to.replace(/[^\w\d_-]/g, '_').slice(0, 24) || 'B';
+    const label = labelI !== -1 ? safe(cols[labelI]) : safe(cols[2] || '');
+    if (label) output.push(`  ${fromId}["${safe(from)}"] -->|"${label}"| ${toId}["${safe(to)}"]`);
+    else output.push(`  ${fromId}["${safe(from)}"] --> ${toId}["${safe(to)}"]`);
   });
-
+  if (output.length < 2) throw new Error('No valid source,target rows found.');
   return output.join('\n') + '\n';
 }
 
@@ -63,28 +77,20 @@ function generateErFromCsv(headers, rows) {
   const colIdx = headers.findIndex(h => h.includes('col') || h.includes('field') || h.includes('prop'));
   const typeIdx = headers.findIndex(h => h.includes('type'));
   const keyIdx = headers.findIndex(h => h.includes('key') || h.includes('constraint'));
-
-  const tables = {}; // { tableName: [ { col, type, key } ] }
-
+  const tables = {};
   rows.forEach(cols => {
     const tableName = (cols[tableIdx] || 'ENTITY').replace(/[^\w\d_]/g, '_').toUpperCase();
     const colName = (cols[colIdx] || 'id').replace(/[^\w\d_]/g, '_');
     const colType = (typeIdx !== -1 && cols[typeIdx]) ? cols[typeIdx].replace(/[^\w\d_]/g, '_') : 'string';
     const key = (keyIdx !== -1 && cols[keyIdx]) ? cols[keyIdx].toUpperCase() : '';
-
     if (!tables[tableName]) tables[tableName] = [];
     tables[tableName].push({ colName, colType, key });
   });
-
   const output = ['erDiagram'];
   for (const [tableName, fields] of Object.entries(tables)) {
     output.push(`  ${tableName} {`);
-    fields.forEach(f => {
-      const keySuffix = f.key ? ` ${f.key}` : '';
-      output.push(`    ${f.colType} ${f.colName}${keySuffix}`);
-    });
+    fields.forEach(f => output.push(`    ${f.colType} ${f.colName}${f.key ? ` ${f.key}` : ''}`));
     output.push('  }');
   }
-
   return output.join('\n') + '\n';
 }

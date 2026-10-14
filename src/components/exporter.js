@@ -111,8 +111,9 @@ export class Exporter {
     if (!svgEl) throw new Error('No diagram found to render.');
 
     const svgString = this.getCleanSvgString(svgEl, { background: 'transparent', padding });
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    // A data URL keeps HTML labels in foreignObject origin-clean when drawn to canvas.
+    // Blob-backed SVG images with foreignObject taint the canvas in Chromium.
+    const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
 
     const box = svgEl.viewBox?.baseVal;
     let baseW = box?.width || svgEl.clientWidth || 1200;
@@ -147,16 +148,13 @@ export class Exporter {
           ctx.scale(scale, scale);
           ctx.drawImage(img, 0, 0, totalW, totalH);
 
-          URL.revokeObjectURL(url);
           resolve({ canvas, width: canvas.width, height: canvas.height });
         } catch (err) {
-          URL.revokeObjectURL(url);
           reject(err);
         }
       };
 
       img.onerror = () => {
-        URL.revokeObjectURL(url);
         reject(new Error('Failed to rasterize diagram SVG into canvas.'));
       };
 
@@ -266,7 +264,7 @@ export class Exporter {
   }
 
   /**
-   * Standalone Print-Ready Vector PDF Export
+   * Standalone PDF export with a high-resolution raster diagram
    * Synthesizes a compliant PDF 1.4 document client-side with 0 external dependencies.
    */
   static async downloadPdf(container, title = 'diagram', options = {}) {
@@ -402,7 +400,7 @@ export class Exporter {
     const safeTitle = (title || 'Mermaid Diagram').replace(/[()\\]/g, '');
     const dateStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     addString(
-      `6 0 obj\n<< /Title (${safeTitle}) /Creator (NodeFlow) /Producer (NodeFlow PDF Engine) /CreationDate (D:${dateStr}Z) >>\nendobj\n`
+      `6 0 obj\n<< /Title (${safeTitle}) /Creator (DiagramAtlas) /Producer (DiagramAtlas PDF Engine) /CreationDate (D:${dateStr}Z) >>\nendobj\n`
     );
 
     // 8. Cross-Reference Table
@@ -447,7 +445,7 @@ export class Exporter {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(safeTitle)} — Interactive NodeFlow View</title>
+  <title>${escapeHtml(safeTitle)} — Interactive DiagramAtlas View</title>
   <style>
     :root {
       --bg: #080c14;
@@ -489,7 +487,7 @@ export class Exporter {
   <header id="header">
     <div class="title-row">
       <span>${escapeHtml(safeTitle)}</span>
-      <span class="badge">NodeFlow Standalone</span>
+      <span class="badge">DiagramAtlas Standalone</span>
     </div>
     <div class="nav-actions">
       <button id="toggleThemeBtn" type="button">🌓 Theme</button>

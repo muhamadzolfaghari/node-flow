@@ -137,7 +137,7 @@ function applyRuleBasedFixes(code, errorMsg = '') {
 
   // A. Check for missing diagram type header
   const firstNonEmpty = lines.find((l) => l.trim().length > 0) || '';
-  const hasHeader = /^(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|stateDiagram-v2|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|journey|xychart|block)\b/i.test(
+  const hasHeader = /^(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|stateDiagram-v2|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|journey|xychart|xychart-beta|sankey|sankey-beta|kanban|block|block-beta|C4|C4Context)\b/i.test(
     firstNonEmpty.trim()
   );
 
@@ -185,6 +185,111 @@ function applyRuleBasedFixes(code, errorMsg = '') {
   let inFlowchart = /^(?:flowchart|graph)\b/i.test(lines[0]);
   let inSequence = /^sequenceDiagram\b/i.test(lines[0]);
   let inState = /^stateDiagram\b/i.test(lines[0]);
+  const headLower = (lines[0] || '').trim().toLowerCase();
+
+  // D0. Normalize beta headers & diagram-specific headers
+  if (/^sankey\b/i.test(lines[0].trim())) { lines[0] = 'sankey-beta'; fixes.push('Normalized sankey header to sankey-beta'); }
+  if (/^xychart\b(?!-beta)/i.test(lines[0].trim())) { lines[0] = lines[0].trim().replace(/^xychart\b/i, 'xychart-beta'); fixes.push('Normalized xychart header to xychart-beta'); }
+  if (/^block\b(?!-beta)/i.test(lines[0].trim())) { lines[0] = lines[0].trim().replace(/^block\b/i, 'block-beta'); fixes.push('Normalized block header to block-beta'); }
+  if (/^statediagram\s*$/i.test(lines[0].trim())) { lines[0] = 'stateDiagram-v2'; fixes.push('Upgraded stateDiagram to stateDiagram-v2'); }
+  if (/^c4context/i.test(lines[0].trim()) && !/^C4Context/.test(lines[0].trim())) { lines[0] = lines[0].trim().replace(/^c4context/i, 'C4Context'); fixes.push('Fixed C4Context casing'); }
+  if (/^c4\b/i.test(lines[0].trim())) { lines[0] = 'C4Context'; fixes.push('Expanded C4 header to C4Context'); }
+
+  // D0b. Diagram-specific quick repairs (gantt/journey/pie/quadrant/kanban/timeline/gitgraph/mindmap/er/class)
+  if (/^gantt/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*dateFormat/i.test(l))) { lines.splice(1, 0, '    dateFormat YYYY-MM-DD'); fixes.push('Added missing gantt dateFormat'); }
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || /^\s*(dateFormat|title|axisFormat|section|tickInterval|excludes|includes)\b/i.test(l) || !l.trim()) return l;
+      if (!l.includes(':')) {
+        const m2 = l.trim().match(/^(.+?)\s+(\d{4}-\d{2}-\d{2}|after\b.*|\d+d|\d+w)$/i);
+        if (m2) { fixes.push(`Added task id/colon on gantt line ${idx + 1}`); return `    ${m2[1].trim()} :t${idx}, ${m2[2]}`; }
+      }
+      return l;
+    });
+  }
+  if (/^journey/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*title\b/i.test(l))) { lines.splice(1, 0, '    title User Journey'); fixes.push('Added missing journey title'); }
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || /^\s*(title|section)\b/i.test(l) || !l.trim()) return l;
+      if (!/:\s*[1-5]\s*:/.test(l)) { fixes.push(`Added journey score on line ${idx + 1}`); return `${l.trim()}: 4: User`; }
+      return l;
+    });
+  }
+  if (/^pie/i.test(headLower)) {
+    if (!/^\s*pie(\s+title\b|\s*$)/i.test(lines[0])) { lines[0] = 'pie title Distribution'; fixes.push('Normalized pie header'); }
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      const m3 = l.trim().match(/^"?([^":]+)"?\s*:\s*(\d+(?:\.\d+)?)\s*$/);
+      if (m3) return `    "${m3[1].trim()}" : ${m3[2]}`;
+      if (!l.includes(':')) { fixes.push(`Added pie value on line ${idx + 1}`); return `    "${l.trim().replace(/"/g, '')}" : 25`; }
+      return l;
+    });
+  }
+  if (/^quadrantchart/i.test(headLower)) {
+    ['x-axis Low Effort --> High Effort', 'y-axis Low Impact --> High Impact', 'quadrant-1 Quick Wins', 'quadrant-2 Major Bets', 'quadrant-3 Fill-ins', 'quadrant-4 Re-evaluate'].forEach((req) => {
+      const key = req.split(' ')[0];
+      if (!lines.some((l) => new RegExp(`^\\s*${key}`, 'i').test(l))) { lines.splice(1, 0, `    ${req}`); fixes.push(`Added missing ${key} declaration`); }
+    });
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || /^\s*(title|x-axis|y-axis|quadrant-)/i.test(l) || !l.trim()) return l;
+      if (!/\[.*,.+\]/.test(l)) { fixes.push(`Added quadrant coordinates on line ${idx + 1}`); return `${l.trim().replace(/:\s*$/, '')}: [0.5, 0.5]`; }
+      return l;
+    });
+  }
+  if (/^kanban/i.test(headLower)) {
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      if (/^\S/.test(l)) return `  ${l.trim()}`;
+      if (/^\s{2}\S/.test(l) && !/^\s{2}\[.+/.test(l) && idx > 1 && /^\s{2}\S/.test(lines[idx - 1] || '')) return l;
+      return l;
+    });
+    if (!lines.some((l) => /^\s{4}\[.+/.test(l))) fixes.push('Kanban needs [cards] under columns — add indented [Task] rows');
+  }
+  if (/^timeline/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*title\b/i.test(l))) { lines.splice(1, 0, '    title Roadmap'); fixes.push('Added missing timeline title'); }
+  }
+  if (/^gitgraph/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*commit\b/i.test(l))) { lines.splice(1, 0, '    commit'); fixes.push('Added missing gitGraph commit'); }
+  }
+  if (/^mindmap/i.test(headLower)) {
+    if (!lines.some((l) => /root\(\(?/i.test(l))) {
+      const first = lines.slice(1).find((l) => l.trim());
+      lines.splice(1, 0, `  root(("${(first || 'Topic').trim().slice(0, 30)}"))`);
+      fixes.push('Added missing mindmap root');
+    }
+  }
+  if (/^erdiagram/i.test(headLower)) {
+    lines = lines.map((l) => l.replace(/(\w+)\s+varchar\((\d+)\)/gi, '$1 String').replace(/(\w+)\((\d+)\)/g, '$1'));
+    if (lines.some((l) => /varchar\(\d+\)/i.test(l))) fixes.push('Stripped SQL length params from ER types');
+  }
+  if (/^classdiagram/i.test(headLower)) {
+    lines = lines.map((l) => l.replace(/List<(\w+)>/g, 'List~$1~').replace(/Map<([^>]+)>/g, (mm, inner) => `Map~${inner.replace(/,\s*/g, '_')}~`));
+  }
+  if (/^xychart-beta/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*x-axis/i.test(l))) { lines.splice(1, 0, '    x-axis [a, b, c]'); fixes.push('Added missing x-axis'); }
+    if (!lines.some((l) => /^\s*y-axis/i.test(l))) { lines.splice(1, 0, '    y-axis "value" 0 --> 10'); fixes.push('Added missing y-axis'); }
+  }
+  if (/^sankey-beta/i.test(headLower)) {
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      if (!/,/.test(l)) {
+        const parts = l.trim().split(/\s+/);
+        if (parts.length >= 3) { fixes.push(`Fixed sankey commas on line ${idx + 1}`); return `    ${parts[0]},${parts[1]},${parts[2]}`; }
+      }
+      return l;
+    });
+  }
+  if (/^block-beta/i.test(headLower)) {
+    if (!lines.some((l) => /^\s*columns\s+\d+/i.test(l))) { lines.splice(1, 0, '    columns 3'); fixes.push('Added missing block columns'); }
+  }
+  if (/^c4context/i.test(headLower)) {
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      const fixed = l.replace(/^\s*person\(/i, '    Person(').replace(/^\s*system\(/i, '    System(').replace(/^\s*container\(/i, '    Container(').replace(/^\s*rel\(/i, '    Rel(');
+      if (fixed !== l) fixes.push(`Fixed C4 keyword casing on line ${idx + 1}`);
+      return fixed;
+    });
+  }
 
   lines = lines.map((line, idx) => {
     let l = line;
@@ -298,6 +403,19 @@ function applyAggressiveFixes(code, errorMsg = '') {
     }
     return l;
   });
+
+  // Cross-type sanitizers: generics, ER parens, C4 casing, beta headers
+  let joined = lines.join('\n');
+  const beforeAll = joined;
+  if (/^classDiagram/im.test(joined)) {
+    joined = joined.replace(/List<(\w+)>/g, 'List~$1~').replace(/Map<([^>\n]+)>/g, (mm, inner) => `Map~${inner.replace(/,\s*/g, '_')}~`);
+    if (joined !== beforeAll) fixes.push('Converted Java generics <T> to Mermaid ~T~');
+  }
+  if (/^erDiagram/im.test(joined)) {
+    const noParen = joined.replace(/(\w+)\s+\w+\(\d+\)/g, (mm, a) => mm.replace(/\(\d+\)/, ''));
+    if (noParen !== joined) { joined = noParen; fixes.push('Stripped length params from ER column types'); }
+  }
+  if (joined !== beforeAll) lines = joined.split('\n');
 
   return { fixed: fixes.length > 0, code: lines.join('\n'), fixes };
 }
