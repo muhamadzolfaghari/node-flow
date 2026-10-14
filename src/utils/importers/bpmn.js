@@ -50,9 +50,9 @@ export function parseBpmnToMermaid(bpmnXmlText) {
     const lowerTag = rawTag.toLowerCase();
 
     if (lowerTag.includes('startevent')) {
-      nodeSyntax = `${safeId}(([🟢 ${cleanLabel || 'Start'}]))`;
+      nodeSyntax = `${safeId}((🟢 ${cleanLabel || 'Start'}))`;
     } else if (lowerTag.includes('endevent')) {
-      nodeSyntax = `${safeId}(([🛑 ${cleanLabel || 'End'}]))`;
+      nodeSyntax = `${safeId}((🛑 ${cleanLabel || 'End'}))`;
     } else if (lowerTag.includes('gateway')) {
       nodeSyntax = `${safeId}{"🔷 ${cleanLabel || 'Decision'}"}`;
     } else if (lowerTag.includes('usertask')) {
