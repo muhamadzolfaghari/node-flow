@@ -1,0 +1,117 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
+
+const dom = new JSDOM("<!doctype html><body></body>");
+global.window = dom.window;
+global.document = dom.window.document;
+global.DOMParser = dom.window.DOMParser;
+global.XMLSerializer = dom.window.XMLSerializer;
+const { default: mermaid } = await import("mermaid");
+mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+
+const { compileDocument, detectFormat, FORMATS } = await import("../src/lib/formats.js");
+
+test("registry covers 30+ formats", () => {
+  assert.ok(FORMATS.length >= 30, `expected 30+ formats, got ${FORMATS.length}`);
+  for (const id of ["jsonschema", "dbml", "prisma", "protobuf", "xmi", "sysml", "archimate", "dmn", "yaml", "erd", "visio", "gliffy", "excalidraw"]) {
+    assert.ok(FORMATS.some(f => f.id === id), `missing format ${id}`);
+  }
+});
+
+test("all format samples compile and parse", async () => {
+  for (const f of FORMATS) {
+    const r = await compileDocument({ format: f.id, source: f.sample });
+    assert.ok(r.code && r.code.split("\n").length >= 2, `${f.id} produced no code`);
+    if (f.id !== "graphviz") assert.notEqual(await mermaid.parse(r.code), false, `${f.id} sample did not parse`);
+  }
+});
+
+test("content sniffing for new formats", () => {
+  assert.equal(detectFormat("s.schema.json", '{"properties":{"a":{"type":"string"}}}'), "jsonschema");
+  assert.equal(detectFormat("m.dbml", "Table a {\n id int [pk]\n}\nRef: b.a > a.id"), "dbml");
+  assert.equal(detectFormat("s.prisma", "model User {\n id String @id\n}"), "prisma");
+  assert.equal(detectFormat("a.proto", 'syntax = "proto3";\nmessage A {\n string id = 1;\n}'), "protobuf");
+  assert.equal(detectFormat("m.xmi", '<xmi:XMI xmlns:uml="x"><uml:Class xmi:id="c" name="A"/></xmi:XMI>'), "xmi");
+  assert.equal(detectFormat("s.sysml", "part Vehicle\nrequirement Range"), "sysml");
+  assert.equal(detectFormat("d.dmn", '<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"><decision id="d" name="D"/></definitions>'), "dmn");
+  assert.equal(detectFormat("e.excalidraw", '{"type":"excalidraw","elements":[{"type":"rectangle","id":"a","x":0,"y":0,"width":10,"height":10}]}'), "excalidraw");
+  assert.equal(detectFormat("g.gliffy", '{"stage":{"objects":[{"id":0,"text":"A"}]}}'), "gliffy");
+  assert.equal(detectFormat("v.vdx", '<VisioDocument><Shape ID="1" Name="A"><Text>Hi</Text></Shape></VisioDocument>'), "visio");
+  assert.equal(detectFormat("c.yaml", "apiVersion: v1\nkind: Pod\nmetadata:\n name: x"), "yaml");
+});
+
+test("plantuml full grammar: activity/usecase/deployment", async () => {
+  const { parsePlantUmlToMermaid } = await import("../src/utils/importers/plantuml.js");
+  const act = parsePlantUmlToMermaid("@startuml\nstart\n:Order food;\nif (paid?) then (yes)\n:Ship;\nstop\n@enduml");
+  assert.match(act, /flowchart TD/);
+  assert.notEqual(await mermaid.parse(act), false);
+  const uc = parsePlantUmlToMermaid('@startuml\nactor Customer\n(Customer) -- (Checkout)\n@enduml');
+  assert.match(uc, /flowchart/);
+});
+
+test("bpmn expanded: lanes + message flows", async () => {
+  const { parseBpmnToMermaid } = await import("../src/utils/importers/bpmn.js");
+  const xml = `<definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="p"><bpmn:laneSet><bpmn:lane name="Sales"><bpmn:flowNodeRef>t1</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:userTask id="t1" name="Call"/><bpmn:serviceTask id="t2" name="Ship"/><bpmn:sequenceFlow id="f" sourceRef="t1" targetRef="t2"/><bpmn:messageFlow id="m" sourceRef="t1" targetRef="t2" name="notify"/></bpmn:process></definitions>`;
+  const out = parseBpmnToMermaid(xml);
+  assert.match(out, /Sales/);
+  assert.match(out, /-\.->/);
+});
+
+test("c4 expanded + openapi schemas-only + asyncapi v3", async () => {
+  const { parseC4DslToMermaid } = await import("../src/utils/importers/c4-dsl.js");
+  const c4 = parseC4DslToMermaid('Person(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses")\nComponent(c, "C")\nRel(b, c, "Has")');
+  assert.match(c4, /Component/);
+  const { parseOpenApiToMermaid } = await import("../src/utils/importers/openapi.js");
+  const cls = parseOpenApiToMermaid(JSON.stringify({ info: { title: "T" }, paths: {}, components: { schemas: { User: { properties: { id: { type: "string" } } } } } }));
+  assert.match(cls, /classDiagram/);
+  const { parseAsyncApiToMermaid } = await import("../src/utils/importers/asyncapi.js");
+  const seq = parseAsyncApiToMermaid(JSON.stringify({ info: { title: "E" }, channels: { "o.c": { address: "o/c", messages: { m1: { name: "M1" } } } }, operations: { sendO: { action: "send" } } }));
+  assert.match(seq, /sequenceDiagram/);
+});
+
+test("code-to-uml: kotlin/swift/php/ruby/cpp", async () => {
+  const { parseCodeToClassDiagram } = await import("../src/utils/importers/code-to-uml.js");
+  const src = `data class User(val id: String)\nclass Admin : User\ninterface Repo\nstruct Point {\n x: Float\n}`;
+  const out = parseCodeToClassDiagram(src);
+  assert.match(out, /classDiagram/);
+  assert.match(out, /User/);
+});
+
+test("error DB has 60+ entries and lookup works", async () => {
+  const { ERROR_DB, lookupErrors } = await import("../src/utils/syntax-error-db.js");
+  assert.ok(ERROR_DB.length >= 60, `got ${ERROR_DB.length}`);
+  const hits = lookupErrors("flowchart TD\n  A -> B", "mermaid");
+  assert.ok(hits.some(h => h.id === "mermaid-flow-single-arrow"));
+});
+
+test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
+  const { fixAnySyntax } = await import("../src/utils/universal-fixer.js");
+  const f1 = await fixAnySyntax("flowchart TD\n  A -> B", "mermaid");
+  assert.equal(f1.success, true);
+  assert.match(f1.fixedCode, /-->/);
+  const f2 = await fixAnySyntax("Alice -> Bob: hi", "plantuml");
+  assert.match(f2.fixedCode, /@startuml/);
+  const f3 = await fixAnySyntax("just text", "csv");
+  assert.match(f3.fixedCode, /source,target/);
+  const f4 = await fixAnySyntax("gantt\n  T :a, 2026-01-01, 3d", "mermaid");
+  assert.equal(f4.success, true);
+});
+
+test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml", async () => {
+  const mod = await import("../src/utils/exporters/mermaid-export.js");
+  const seq = "sequenceDiagram\n  A->>B: GET /items";
+  assert.match(mod.mermaidToPlantUml(seq), /@startuml/);
+  const flow = "flowchart TD\n  A[Hi] --> B[There]";
+  assert.match(mod.mermaidToDot(flow), /digraph/);
+  assert.match(mod.mermaidToD2(flow), /direction/);
+  const er = "erDiagram\n  USERS ||--o{ ORDERS : places\n  USERS {\n    string id PK\n  }\n  ORDERS {\n    string id PK\n  }";
+  assert.match(mod.mermaidErToSql(er), /CREATE TABLE/);
+  assert.match(mod.mermaidErToDbml(er), /Table/);
+  const cls = "classDiagram\n  class User {\n    +String id\n  }";
+  assert.match(mod.mermaidClassToTypeScript(cls), /class User/);
+  assert.match(mod.mermaidClassToXmi(cls), /xmi:XMI/);
+  const mm = "mindmap\n  root((R))\n    A\n    B";
+  assert.match(mod.mermaidMindmapToMarkdown(mm), /- A/);
+  assert.match(mod.mermaidMindmapToOpml(mm), /<opml/);
+});

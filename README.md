@@ -17,7 +17,7 @@ An open source, browser-based IDE for diagrams, data models, architecture, and c
 
 ## Supported source formats
 
-All 18 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry.
+All 32 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry. Full matrix: [docs/FORMATS-ALL.md](docs/FORMATS-ALL.md). Syntax-error database: [docs/SYNTAX-ERROR-DB.md](docs/SYNTAX-ERROR-DB.md). 50-phase plan: [docs/UNIVERSAL-50-PHASE-PLAN.md](docs/UNIVERSAL-50-PHASE-PLAN.md).
 
 | Format | Input | Editing and preview scope |
 | --- | --- | --- |
@@ -38,7 +38,11 @@ All 18 entries are available in the new-file dialog, file inspector, and import 
 | FreeMind | `.mm`, detected `.xml` | Topic hierarchy to a mindmap. |
 | OPML | `.opml`, detected `.xml` | Outline hierarchy to a mindmap. |
 | XMind | `.xmind` | First sheet of ZEN or legacy workbooks becomes an editable Mermaid mindmap. The imported workbook is retained separately; current mindmaps export to a new XMind workbook. |
-| Source code | `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.java`, `.cs`, `.go`, `.rs` | Best-effort class/struct extraction to UML. Imported code is not executed. |
+| Source code | `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.java`, `.cs`, `.go`, `.rs`, `.kt`, `.swift`, `.php`, `.rb`, `.cpp`, `.c` | Best-effort class/struct/enum extraction to UML. Imported code is not executed. |
+| JSON Schema / DBML / Prisma / Protobuf / ERD text / YAML | `.schema.json`, `.dbml`, `.prisma`, `.proto`, `.erd`, `.yaml`, `.yml` (+ content detection) | Schemas and models to class/ER diagrams. |
+| UML XMI / SysML v2 / ArchiMate / DMN / Visio / Gliffy / Excalidraw | `.xmi`, `.uml`, `.sysml`, `.dmn`, `.vdx`, `.gliffy`, `.excalidraw` (+ content detection) | Vendor UML/BPMN/whiteboard sources to editable Mermaid. |
+
+Reverse export: Mermaid class → PlantUML/TypeScript/UML-XMI, ER → SQL/DBML, sequence → PlantUML/OpenAPI stub, flowchart → DOT/D2, mindmap → Markdown/OPML/XMind.
 
 Derived previews are models of supported syntax, not lossless vendor renderers. Exporting original source preserves the source as edited; exporting Mermaid downloads the derived view. Unrecognized JSON/XML is rejected with an explanation instead of silently treated as Mermaid.
 

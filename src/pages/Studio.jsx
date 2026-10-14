@@ -60,6 +60,7 @@ import {
 } from "../components/ui.jsx";
 import CodeEditor from "../components/CodeEditor.jsx";
 import CanvasStage, { GridToggle } from "../components/CanvasStage.jsx";
+import DiagnosticsPanel from "../components/DiagnosticsPanel.jsx";
 import { DIAGRAM_TEMPLATES, getTemplateById } from "../components/templates.js";
 import {
   FORMATS,
@@ -414,6 +415,22 @@ export default function Studio() {
       else if (kind === "html")
         Exporter.downloadStandaloneHtml(el, preview.code, title);
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
+      else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md") {
+        const mod = await import("../utils/exporters/mermaid-export.js");
+        const map = {
+          plantuml: ["mermaidToPlantUml", "puml"],
+          dot: ["mermaidToDot", "dot"],
+          d2: ["mermaidToD2", "d2"],
+          sql: ["mermaidErToSql", "sql"],
+          dbml: ["mermaidErToDbml", "dbml"],
+          xmi: ["mermaidClassToXmi", "xmi"],
+          ts: ["mermaidClassToTypeScript", "ts"],
+          opml: ["mermaidMindmapToOpml", "opml"],
+          md: ["mermaidMindmapToMarkdown", "md"],
+        };
+        const [fn, ext] = map[kind];
+        download(mod[fn](preview.code, title), `${title}.${ext}`);
+      }
       else if (kind === "xmind") {
         if (!/^\s*mindmap/m.test(preview.code))
           throw new Error("XMind export requires a mindmap.");
@@ -1134,6 +1151,27 @@ export default function Studio() {
                 </Item>
               ))}
               <DropdownMenuSeparator />
+              <DropdownMenuLabel>Derived UML / code targets</DropdownMenuLabel>
+              {[
+                ["plantuml", "PlantUML (.puml)"],
+                ["dot", "Graphviz DOT (.dot)"],
+                ["d2", "D2 (.d2)"],
+                ["sql", "SQL DDL (.sql)"],
+                ["dbml", "DBML (.dbml)"],
+                ["xmi", "UML XMI (.xmi)"],
+                ["ts", "TypeScript stub (.ts)"],
+                ["opml", "OPML outline (.opml)"],
+                ["md", "Markdown outline (.md)"],
+              ].map(([id, text]) => (
+                <Item
+                  key={id}
+                  onSelect={() => doExport(id)}
+                  disabled={!!preview.error || preview.status.state !== "ok"}
+                >
+                  {text}
+                </Item>
+              ))}
+              <DropdownMenuSeparator />
               <Item onSelect={projectBackup}>Project backup (.atlas)</Item>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1388,12 +1426,20 @@ export default function Studio() {
               </span>
             </div>
             {preview.error ? (
-              <p
-                role="alert"
-                className="mt-2 text-xs leading-5 text-destructive"
-              >
-                {preview.error}
-              </p>
+              <>
+                <p
+                  role="alert"
+                  className="mt-2 text-xs leading-5 text-destructive"
+                >
+                  {preview.error}
+                </p>
+                <DiagnosticsPanel
+                  document={document}
+                  error={preview.error}
+                  code={preview.code}
+                  onApplyFix={(fixed) => updateSource(document.id, fixed)}
+                />
+              </>
             ) : (
               preview.warnings.map((warning, i) => (
                 <p
