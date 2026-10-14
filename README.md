@@ -1,11 +1,14 @@
-# NodeFlow — Universal Visual Diagram & Mindmap Studio ⚡✨
+# NodeFlow — Visual Diagram & Mind Map Studio
 
-> **Live Application**: [https://muhamadzolfaghari.github.io/mermaid-studio/](https://muhamadzolfaghari.github.io/mermaid-studio/)  
-> *(Hosted on GitHub Pages • 100% Free, Client-Side, and Zero-Telemetry)*
+**Create, edit, and convert diagrams in your browser.** NodeFlow combines a live Mermaid editor and canvas with import and export tools for formats including XMind, Draw.io, PlantUML, D2, SQL DDL, OpenAPI, and Graphviz. It also includes an optional local AI assistant.
 
-A free, universal, browser-based visual diagramming and mindmapping studio. Built as a high-performance, privacy-first alternative to expensive SaaS platforms ($60–$240+/year), **NodeFlow** brings CAD-grade canvas controls, local in-browser AI generation (WebGPU Qwen2.5-Coder), and universal importers for **XMind**, **Draw.io**, **PlantUML**, **D2 Lang**, **SQL DDL**, **OpenAPI**, and **Mermaid**.
+**[Open the live demo](https://muhamadzolfaghari.github.io/mermaid-studio/)** · **[View the source](https://github.com/muhamadzolfaghari/diagram-atlas)**
 
-![NodeFlow Preview](./public/favicon.svg)
+![NodeFlow landing page](./screenshots/ui/01-landing-hero.png)
+
+| Diagram editor | AI assistant |
+| :---: | :---: |
+| ![NodeFlow editor](./screenshots/ui/10-studio-split-view.png) | ![NodeFlow AI assistant](./screenshots/ui/19-studio-ai-drawer.png) |
 
 ---
 
