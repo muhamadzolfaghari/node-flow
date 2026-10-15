@@ -95,11 +95,42 @@ export function addFlowchartNode(source, label, shapeType = "rectangle") {
   while (new RegExp(`\\bnode${number}\\b`).test(source)) number++;
   return `${source.trimEnd()}\n  node${number}${shape.open}"${safeLabel(label)}"${shape.close}\n`;
 }
-export function connectFlowchartNodes(source, from, to, label = "") {
+export const ARROW_STYLES = {
+  solid: { symbol: "-->", label: "Solid arrow (-->)" },
+  dotted: { symbol: "-.->", label: "Dotted arrow (-.->)" },
+  thick: { symbol: "==>", label: "Thick arrow (==>)" },
+  open: { symbol: "---", label: "Open line (---)" },
+  dottedOpen: { symbol: "-.-", label: "Dotted line (-.-)" },
+  thickOpen: { symbol: "===", label: "Thick line (===)" },
+};
+
+export function connectFlowchartNodes(source, from, to, label = "", arrowType = "solid") {
   const nodes = flowchartNodes(source);
   if (!nodes.some((n) => n.id === from) || !nodes.some((n) => n.id === to))
     throw new Error("Choose two existing nodes.");
-  return `${source.trimEnd()}\n  ${from} -->${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
+  const arrow = ARROW_STYLES[arrowType]?.symbol || "-->";
+  return `${source.trimEnd()}\n  ${from} ${arrow}${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
+}
+
+export function addFlowchartChild(
+  source,
+  parentId,
+  label = "New step",
+  arrowType = "solid",
+  shapeType = "rectangle",
+) {
+  const nodes = flowchartNodes(source);
+  if (!nodes.some((n) => n.id === parentId)) {
+    throw new Error(`Node ${parentId} does not exist.`);
+  }
+  let number = nodes.length + 1;
+  while (new RegExp(`\\bnode${number}\\b`).test(source)) number++;
+  const childId = `node${number}`;
+  const arrow = ARROW_STYLES[arrowType]?.symbol || "-->";
+  const shape = SHAPES[shapeType] || SHAPES.rectangle;
+  const childDecl = `${childId}${shape.open}"${safeLabel(label)}"${shape.close}`;
+  const updated = `${source.trimEnd()}\n  ${parentId} ${arrow} ${childDecl}\n`;
+  return { source: updated, childId, childLabel: label };
 }
 
 export function deleteFlowchartNode(source, id) {

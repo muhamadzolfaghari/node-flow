@@ -24,6 +24,8 @@ const CanvasStage = forwardRef(function CanvasStage(
     status,
     documentId,
     onSelect,
+    onQuickAdd,
+    onDeleteSelected,
     presentation = false,
   },
   ref,
@@ -38,8 +40,20 @@ const CanvasStage = forwardRef(function CanvasStage(
     [minimap, setMinimap] = useState(true),
     [wheelMode, setWheelMode] = useState("zoom"),
     [laser, setLaser] = useState(null);
-  const callbacks = useRef({ onSelect, presentation, wheelMode });
-  callbacks.current = { onSelect, presentation, wheelMode };
+  const callbacks = useRef({
+    onSelect,
+    onQuickAdd,
+    onDeleteSelected,
+    presentation,
+    wheelMode,
+  });
+  callbacks.current = {
+    onSelect,
+    onQuickAdd,
+    onDeleteSelected,
+    presentation,
+    wheelMode,
+  };
   const dimensions = () => {
     const svg = containerRef.current?.querySelector("svg");
     const box = svg?.viewBox?.baseVal;
@@ -219,7 +233,20 @@ const CanvasStage = forwardRef(function CanvasStage(
         )
       )
         return;
-      const key = e.key.toLowerCase();
+      if (key === "tab" || key === "enter") {
+        if (callbacks.current.onQuickAdd) {
+          e.preventDefault();
+          callbacks.current.onQuickAdd();
+          return;
+        }
+      }
+      if (key === "delete" || key === "backspace") {
+        if (callbacks.current.onDeleteSelected) {
+          e.preventDefault();
+          callbacks.current.onDeleteSelected();
+          return;
+        }
+      }
       if (
         [
           "f",

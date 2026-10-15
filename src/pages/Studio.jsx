@@ -35,6 +35,7 @@ import {
   FileCode2,
   Pencil,
   Trash2,
+  Plus,
 } from "lucide-react";
 import {
   Button,
@@ -95,6 +96,8 @@ import {
   SHAPES,
   COLOR_PRESETS,
   styleFlowchartNode,
+  ARROW_STYLES,
+  addFlowchartChild,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -153,6 +156,7 @@ export default function Studio() {
     [edgeFrom, setEdgeFrom] = useState(""),
     [edgeTo, setEdgeTo] = useState(""),
     [edgeLabel, setEdgeLabel] = useState(""),
+    [edgeArrow, setEdgeArrow] = useState("solid"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -408,7 +412,11 @@ export default function Studio() {
         throw new Error(
           "Switch to Canvas or Split view before exporting an image.",
         );
-      if (kind === "svg") Exporter.downloadSvg(el, title);
+      if (kind === "svg")
+        Exporter.downloadSvg(el, title, {
+          source: document.source,
+          format: document.format,
+        });
       else if (kind === "png")
         await Exporter.downloadPng(el, title, { scale: 2 });
       else if (kind === "png4")
@@ -799,6 +807,34 @@ export default function Studio() {
                   Apply label
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-1.5 w-full text-xs"
+                  disabled={!isFlowchart(document) || !nodeId}
+                  onClick={() => {
+                    try {
+                      const res = addFlowchartChild(
+                        document.source,
+                        nodeId,
+                        "Next step",
+                        edgeArrow,
+                      );
+                      updateSource(document.id, res.source);
+                      setSelected({
+                        id: `flowchart-${res.childId}-0`,
+                        label: res.childLabel,
+                      });
+                      setLabel(res.childLabel);
+                      say(`Added connected step ${res.childId}`);
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  <Plus className="size-3.5" />
+                  Add connected step
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   className="mt-1.5 w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -816,6 +852,7 @@ export default function Studio() {
                     }
                   }}
                 >
+                  <Trash2 className="size-3.5" />
                   Delete node
                 </Button>
               </div>
@@ -882,6 +919,18 @@ export default function Studio() {
                       ))}
                     </select>
                   ))}
+                  <select
+                    aria-label="Arrow style"
+                    className="h-8 w-full rounded-md border bg-background px-2 text-xs"
+                    value={edgeArrow}
+                    onChange={(e) => setEdgeArrow(e.target.value)}
+                  >
+                    {Object.entries(ARROW_STYLES).map(([key, style]) => (
+                      <option key={key} value={key}>
+                        {style.label}
+                      </option>
+                    ))}
+                  </select>
                   <Input
                     aria-label="Connection label"
                     className="h-8 text-xs"
@@ -902,6 +951,7 @@ export default function Studio() {
                             edgeFrom,
                             edgeTo,
                             edgeLabel,
+                            edgeArrow,
                           ),
                         );
                         setEdgeLabel("");
@@ -1464,6 +1514,39 @@ export default function Studio() {
                     documentId={document.id}
                     grid={grid}
                     onSelect={chooseNode}
+                    onQuickAdd={() => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        const res = addFlowchartChild(
+                          document.source,
+                          nodeId,
+                          "Next step",
+                          edgeArrow,
+                        );
+                        updateSource(document.id, res.source);
+                        setSelected({
+                          id: `flowchart-${res.childId}-0`,
+                          label: res.childLabel,
+                        });
+                        setLabel(res.childLabel);
+                        say(`Added connected step ${res.childId}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onDeleteSelected={() => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        updateSource(
+                          document.id,
+                          deleteFlowchartNode(document.source, nodeId),
+                        );
+                        setSelected(null);
+                        say("Node removed");
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
                     presentation={presentation}
                   />
                   {preview.error && (

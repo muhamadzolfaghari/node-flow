@@ -396,6 +396,7 @@ export const FILE_ACCEPT = [
       "yml",
       "xml",
       "atlas",
+      "svg",
     ]),
   ),
 ]
@@ -646,6 +647,22 @@ export async function importDocument(file) {
       source: parsed.mermaidCode,
       format: "xmind",
       original: { name: file.name, base64: btoa(binary) },
+    };
+  }
+  if (file.name.toLowerCase().endsWith(".svg")) {
+    const svgText = await file.text();
+    const { extractSourceFromSvg } = await import("../utils/importers/svg-metadata.js");
+    const extracted = extractSourceFromSvg(svgText);
+    if (!extracted) {
+      throw new Error(
+        `${file.name} does not contain embedded NodeFlow or Mermaid source metadata. Check that the SVG was exported with source metadata, or import a diagram source file.`,
+      );
+    }
+    const targetExt = getFormat(extracted.format)?.ext || "mmd";
+    return {
+      name: file.name.replace(/\.svg$/i, `.${targetExt}`),
+      source: extracted.source,
+      format: extracted.format,
     };
   }
   const source = await file.text();

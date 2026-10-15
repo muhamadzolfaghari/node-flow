@@ -5,6 +5,7 @@ import {
   renameFlowchartNode,
   addFlowchartNode,
   connectFlowchartNodes,
+  addFlowchartChild,
   deleteFlowchartNode,
   changeFlowchartNodeShape,
   getFlowchartNodeShape,
@@ -27,10 +28,23 @@ test("adding and connecting nodes use unique ids and escaped labels", () => {
     connectFlowchartNodes(next, "node1", "node2", "continue"),
     /node1 -->\|"continue"\| node2/,
   );
+  assert.match(
+    connectFlowchartNodes(next, "node1", "node2", "async", "dotted"),
+    /node1 -\.->\|"async"\| node2/,
+  );
+  assert.match(
+    connectFlowchartNodes(next, "node1", "node2", "", "thick"),
+    /node1 ==> node2/,
+  );
   assert.throws(
     () => connectFlowchartNodes(next, "missing", "node2"),
     /existing nodes/,
   );
+
+  const childResult = addFlowchartChild(next, "node1", "Validate token", "thick", "rounded");
+  assert.equal(childResult.childId, "node3");
+  assert.equal(childResult.childLabel, "Validate token");
+  assert.match(childResult.source, /node1 ==> node3\("Validate token"\)/);
 });
 test("deleting a node removes declaration, connected edges, and styles", () => {
   const source = "flowchart LR\n  A[Client] --> B[Server]\n  B --> C[Database]\n  D[Standalone]\n  style B fill:#064e3b";

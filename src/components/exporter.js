@@ -10,6 +10,8 @@
  * - Embed snippets (GitHub Markdown, HTML, SVG Data URI)
  */
 
+import { embedSourceInSvg } from '../utils/importers/svg-metadata.js';
+
 export class Exporter {
   static sanitizeFilename(name) {
     return (name || 'diagram')
@@ -93,6 +95,9 @@ export class Exporter {
 
     if (!svgString.startsWith('<?xml')) {
       svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+    }
+    if (options.source) {
+      svgString = embedSourceInSvg(svgString, options.source, options.format || 'mermaid');
     }
     return svgString;
   }
