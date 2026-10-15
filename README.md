@@ -62,6 +62,20 @@ The library contains **30 starter templates**, including all **14 UML categories
 
 Additional templates cover ER schemas, C4 context, cloud topology, product journeys, Kanban, Gantt, mindmaps, prioritization matrices, timelines, Sankey funnels, hardware blocks, Git graphs, and XY charts.
 
+### Visual modeling suite
+
+DiagramAtlas provides interactive, bidirectional visual modeling panels in the Inspector tab for all major diagram families:
+- **Flowcharts**: 8 shape presets (process, round, subroutine, database, circle, decision, asymmetric, hexagon), 7 curated color styles, 6 arrow connector styles, layout direction switcher (TD, LR, BT, RL), duplication with style cloning, quick-add child step, cascading node deletion, and edge inspection with targeted disconnection.
+- **Sequence Diagrams**: Participant & actor declaration with custom aliases, typed message passing (`->>`, `-->>`, `-x`, `--)`), and safe participant deletion.
+- **Class Diagrams**: Class creation, typed attributes and methods (`+`, `-`, `#`, `~`), UML relationships (`<|--`, `*--`, `o--`, `-->`, `..>`), and cascading class deletion.
+- **State Diagrams**: Composite states, transition events with descriptive labels, and state removal.
+- **Entity Relationship (ER) Diagrams**: Entities, typed attributes with PK/FK/UK constraints, relationship cardinalities (`||--o{`, `}|--|{`, etc.), and entity removal.
+- **Mindmaps**: Visual topic hierarchy traversal, subtree branch insertion with 6 node shapes, and safe branch subtree deletion.
+- **Git Graphs**: Branch creation, branch switching / checkout, commits with messages, tags, and types (`NORMAL`, `REVERSE`, `HIGHLIGHT`), and branch merging with semantic release tags.
+- **Pie Charts**: Real-time chart title updates, slice additions with positive numerical weights, and slice deletion.
+- **User Journey Maps**: Journey stage / section organization, task addition with satisfaction scores (1–5) and multiple participating actors, and task deletion.
+- **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
+
 ## Exports
 
 - Original editable source in its file format.

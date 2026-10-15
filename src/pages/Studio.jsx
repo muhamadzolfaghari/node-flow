@@ -38,6 +38,8 @@ import {
   Trash2,
   Plus,
   Palette,
+  PieChart,
+  Compass,
 } from "lucide-react";
 import {
   Button,
@@ -147,6 +149,16 @@ import {
   addGitBranch,
   checkoutGitBranch,
   mergeGitBranch,
+  isPie,
+  pieData,
+  addPieSlice,
+  deletePieSlice,
+  setPieTitle,
+  isJourney,
+  journeySections,
+  addJourneySection,
+  addJourneyTask,
+  deleteJourneyTask,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -250,6 +262,16 @@ export default function Studio() {
     [gitCheckoutTarget, setGitCheckoutTarget] = useState(""),
     [gitMergeBranch, setGitMergeBranch] = useState(""),
     [gitMergeTag, setGitMergeTag] = useState(""),
+    // Pie chart modeling state
+    [pieTitleInput, setPieTitleInput] = useState(""),
+    [pieSliceLabel, setPieSliceLabel] = useState(""),
+    [pieSliceVal, setPieSliceVal] = useState(""),
+    // Journey modeling state
+    [journeySecName, setJourneySecName] = useState(""),
+    [journeyTaskName, setJourneyTaskName] = useState(""),
+    [journeyScore, setJourneyScore] = useState("5"),
+    [journeyActors, setJourneyActors] = useState("User"),
+    [journeyTargetSec, setJourneyTargetSec] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -275,6 +297,12 @@ export default function Studio() {
   }, [document?.source]);
   const gitBranches = useMemo(() => {
     return isGitGraph(document) ? gitGraphBranches(document.source) : [];
+  }, [document?.source]);
+  const pieInfo = useMemo(() => {
+    return isPie(document) ? pieData(document.source) : { title: "", slices: [] };
+  }, [document?.source]);
+  const journeySecs = useMemo(() => {
+    return isJourney(document) ? journeySections(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -2398,6 +2426,332 @@ export default function Studio() {
                         </Button>
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {isPie(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <PieChart className="size-3.5 text-primary" />
+                  <span>Pie chart tools</span>
+                </div>
+
+                <div className="mt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">
+                    Chart title
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Pie chart title"
+                      className="h-8 text-xs flex-1"
+                      placeholder={pieInfo.title || "e.g. Browser Market Share"}
+                      value={pieTitleInput}
+                      onChange={(e) => setPieTitleInput(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            setPieTitle(
+                              document.source,
+                              pieTitleInput || pieInfo.title || "Key Metrics",
+                            ),
+                          );
+                          setPieTitleInput("");
+                          say("Pie title updated");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      Set title
+                    </Button>
+                  </div>
+                </div>
+
+                {pieInfo.slices.length > 0 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Slices ({pieInfo.slices.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-36 overflow-auto">
+                      {pieInfo.slices.map((s, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <span className="truncate font-medium">{s.label}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {s.value}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                updateSource(
+                                  document.id,
+                                  deletePieSlice(document.source, s.label),
+                                );
+                                say(`Removed slice "${s.label}"`);
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add slice
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Slice label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Slice label (e.g. Chrome)"
+                        value={pieSliceLabel}
+                        onChange={(e) => setPieSliceLabel(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Slice value"
+                        type="number"
+                        min="1"
+                        step="any"
+                        className="h-8 text-xs w-20 shrink-0 font-mono"
+                        placeholder="Value"
+                        value={pieSliceVal}
+                        onChange={(e) => setPieSliceVal(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addPieSlice(
+                              document.source,
+                              pieSliceLabel,
+                              pieSliceVal,
+                            ),
+                          );
+                          setPieSliceLabel("");
+                          setPieSliceVal("");
+                          say("Slice added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add slice
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isJourney(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Compass className="size-3.5 text-primary" />
+                  <span>User journey tools</span>
+                </div>
+
+                {journeySecs.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Journey stages & tasks ({journeySecs.length} sections)
+                    </span>
+                    <div className="space-y-2.5 max-h-48 overflow-auto">
+                      {journeySecs.map((sec, sIdx) => (
+                        <div key={sIdx} className="rounded border bg-muted/20 p-2">
+                          <span className="font-semibold text-xs text-foreground block mb-1">
+                            {sec.name}
+                          </span>
+                          {sec.tasks.length === 0 ? (
+                            <span className="text-[11px] text-muted-foreground italic">
+                              No tasks in this section
+                            </span>
+                          ) : (
+                            <div className="space-y-1">
+                              {sec.tasks.map((t, tIdx) => (
+                                <div
+                                  key={tIdx}
+                                  className="flex items-center justify-between gap-1 text-[11px] rounded bg-background/80 px-2 py-0.5 border"
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="truncate">{t.name}</span>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[9px] h-4 px-1 shrink-0 font-mono"
+                                    >
+                                      ★ {t.score}/5
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {t.actors}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-4 w-4 p-0 text-muted-foreground hover:text-destructive"
+                                      onClick={() => {
+                                        updateSource(
+                                          document.id,
+                                          deleteJourneyTask(
+                                            document.source,
+                                            t.name,
+                                          ),
+                                        );
+                                        say(`Removed task "${t.name}"`);
+                                      }}
+                                    >
+                                      <Trash2 className="size-2.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add section stage
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New journey section name"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Stage name (e.g. Onboarding)"
+                      value={journeySecName}
+                      onChange={(e) => setJourneySecName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addJourneySection(
+                              document.source,
+                              journeySecName,
+                            ),
+                          );
+                          setJourneySecName("");
+                          say("Section added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Section
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add journey task
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Target section for task"
+                        className="h-8 rounded-md border bg-background px-2 text-xs flex-1"
+                        value={journeyTargetSec}
+                        onChange={(e) => setJourneyTargetSec(e.target.value)}
+                      >
+                        <option value="">Select section…</option>
+                        {journeySecs.map((s, idx) => (
+                          <option key={idx} value={s.name}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Journey task score"
+                        className="h-8 rounded-md border bg-background px-2 text-xs w-24 shrink-0 font-mono"
+                        value={journeyScore}
+                        onChange={(e) => setJourneyScore(e.target.value)}
+                      >
+                        <option value="5">Score: 5</option>
+                        <option value="4">Score: 4</option>
+                        <option value="3">Score: 3</option>
+                        <option value="2">Score: 2</option>
+                        <option value="1">Score: 1</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Journey task name"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Task name (e.g. Sign up form)"
+                        value={journeyTaskName}
+                        onChange={(e) => setJourneyTaskName(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Journey task actors"
+                        className="h-8 text-xs w-28 shrink-0"
+                        placeholder="Actors (User, Bot)"
+                        value={journeyActors}
+                        onChange={(e) => setJourneyActors(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        try {
+                          const target =
+                            journeyTargetSec ||
+                            (journeySecs[0] ? journeySecs[0].name : "");
+                          updateSource(
+                            document.id,
+                            addJourneyTask(
+                              document.source,
+                              target,
+                              journeyTaskName,
+                              journeyScore,
+                              journeyActors,
+                            ),
+                          );
+                          setJourneyTaskName("");
+                          say("Task added to journey");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add task
+                    </Button>
                   </div>
                 </div>
               </div>

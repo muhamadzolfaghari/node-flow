@@ -50,6 +50,16 @@ import {
   addGitBranch,
   checkoutGitBranch,
   mergeGitBranch,
+  isPie,
+  pieData,
+  addPieSlice,
+  deletePieSlice,
+  setPieTitle,
+  isJourney,
+  journeySections,
+  addJourneySection,
+  addJourneyTask,
+  deleteJourneyTask,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -344,6 +354,73 @@ test("gitGraph visual modeling: branches, commits, checkout, merge", () => {
   branches = gitGraphBranches(git);
   assert.equal(branches.some((b) => b.id === "feature/auth"), true);
 });
+
+test("pie chart visual modeling: title, add/delete slices, parsing", () => {
+  let pie = `pie title Key Metrics
+  "Desktop" : 45
+  "Mobile" : 35
+  "Tablet" : 20`;
+
+  assert.equal(isPie({ format: "mermaid", source: pie }), true);
+  let data = pieData(pie);
+  assert.equal(data.title, "Key Metrics");
+  assert.equal(data.slices.length, 3);
+  assert.equal(data.slices[0].label, "Desktop");
+  assert.equal(data.slices[0].value, 45);
+
+  pie = setPieTitle(pie, "Platform Breakdown");
+  assert.match(pie, /pie title Platform Breakdown/);
+
+  pie = addPieSlice(pie, "Smart TV", 10);
+  assert.match(pie, /"Smart TV" : 10/);
+
+  pie = deletePieSlice(pie, "Tablet");
+  assert.doesNotMatch(pie, /"Tablet"/);
+
+  data = pieData(pie);
+  assert.equal(data.slices.length, 3);
+  assert.equal(data.slices.some((s) => s.label === "Smart TV"), true);
+  assert.equal(data.slices.some((s) => s.label === "Tablet"), false);
+});
+
+test("journey map visual modeling: sections, add/delete tasks, scores", () => {
+  let journey = `journey
+  title Customer Journey
+  section Onboarding
+    Visit site: 5: User
+    Sign up: 3: User, Auth`;
+
+  assert.equal(isJourney({ format: "mermaid", source: journey }), true);
+  let secs = journeySections(journey);
+  assert.equal(secs.length, 1);
+  assert.equal(secs[0].name, "Onboarding");
+  assert.equal(secs[0].tasks.length, 2);
+  assert.equal(secs[0].tasks[0].name, "Visit site");
+  assert.equal(secs[0].tasks[0].score, 5);
+
+  journey = addJourneySection(journey, "Checkout");
+  assert.match(journey, /section Checkout/);
+
+  journey = addJourneyTask(
+    journey,
+    "Checkout",
+    "Enter credit card",
+    2,
+    "User, Stripe",
+  );
+  assert.match(journey, /Enter credit card: 2: User, Stripe/);
+
+  journey = deleteJourneyTask(journey, "Sign up");
+  assert.doesNotMatch(journey, /Sign up:/);
+
+  secs = journeySections(journey);
+  assert.equal(secs.length, 2);
+  const checkoutSec = secs.find((s) => s.name === "Checkout");
+  assert.ok(checkoutSec);
+  assert.equal(checkoutSec.tasks.length, 1);
+  assert.equal(checkoutSec.tasks[0].name, "Enter credit card");
+});
+
 
 
 

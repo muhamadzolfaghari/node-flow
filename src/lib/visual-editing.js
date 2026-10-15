@@ -970,6 +970,153 @@ export function mergeGitBranch(source, branchName, tag = "") {
   return `${source.trimEnd()}\n  merge ${branchName.trim()}${tagPart}\n`;
 }
 
+/* -------------------------------------------------------------------------- */
+/* PIE CHART VISUAL MODELING                                                  */
+/* -------------------------------------------------------------------------- */
+
+export const isPie = (doc) =>
+  doc?.format === "mermaid" && /^\s*pie\b/m.test(doc.source);
+
+export function pieData(source) {
+  const lines = source.split("\n");
+  let title = "";
+  const slices = [];
+  for (const line of lines) {
+    if (/^\s*%%/.test(line)) continue;
+    const inlineTitleMatch = line.match(/^\s*pie\s+title\s+(.+)$/i);
+    if (inlineTitleMatch) title = inlineTitleMatch[1].trim();
+    const titleMatch = line.match(/^\s*title\s+(.+)$/i);
+    if (titleMatch) title = titleMatch[1].trim();
+    const sliceMatch = line.match(/^\s*"([^"]+)"\s*:\s*([0-9.]+)/);
+    if (sliceMatch) {
+      slices.push({ label: sliceMatch[1], value: Number(sliceMatch[2]) });
+    }
+  }
+  return { title, slices };
+}
+
+export function addPieSlice(source, label, value) {
+  if (!label.trim()) throw new Error("Slice label required.");
+  const val = Number(value);
+  if (isNaN(val) || val <= 0)
+    throw new Error("Slice value must be a positive number.");
+  return `${source.trimEnd()}\n  "${safeLabel(label.trim())}" : ${val}\n`;
+}
+
+export function deletePieSlice(source, label) {
+  const lines = source
+    .split("\n")
+    .filter((l) => !l.includes(`"${label.trim()}"`));
+  return lines.join("\n");
+}
+
+export function setPieTitle(source, title) {
+  const cleanTitle = safeLabel(title.trim());
+  if (/^\s*pie\s+title\b/i.test(source)) {
+    return source.replace(/^\s*pie\s+title\s+.*$/m, `pie title ${cleanTitle}`);
+  }
+  if (/^\s*title\s+/im.test(source)) {
+    return source.replace(/^\s*title\s+.*$/m, `  title ${cleanTitle}`);
+  }
+  if (/^\s*pie\b/im.test(source)) {
+    return source.replace(/^(\s*pie\b.*)$/m, `$1\n  title ${cleanTitle}`);
+  }
+  return `pie\n  title ${cleanTitle}\n${source}`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* USER JOURNEY MAP VISUAL MODELING                                           */
+/* -------------------------------------------------------------------------- */
+
+export const isJourney = (doc) =>
+  doc?.format === "mermaid" && /^\s*journey\b/m.test(doc.source);
+
+export function journeySections(source) {
+  const sections = [];
+  let currentSection = { name: "General", tasks: [] };
+  sections.push(currentSection);
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const secMatch = line.match(/^\s*section\s+(.+)$/i);
+    if (secMatch) {
+      currentSection = { name: secMatch[1].trim(), tasks: [] };
+      sections.push(currentSection);
+      continue;
+    }
+    const taskMatch = line.match(
+      /^\s*([^:]+)\s*:\s*([1-5])\s*(?::\s*([^:]+))?$/,
+    );
+    if (taskMatch) {
+      currentSection.tasks.push({
+        name: taskMatch[1].trim(),
+        score: Number(taskMatch[2]),
+        actors: (taskMatch[3] || "User").trim(),
+      });
+    }
+  }
+  return sections.filter((s) => s.name !== "General" || s.tasks.length > 0);
+}
+
+export function addJourneySection(source, sectionName) {
+  if (!sectionName.trim()) throw new Error("Section name required.");
+  return `${source.trimEnd()}\n  section ${safeLabel(sectionName.trim())}\n`;
+}
+
+export function addJourneyTask(
+  source,
+  sectionName,
+  taskName,
+  score = 5,
+  actors = "User",
+) {
+  if (!taskName.trim()) throw new Error("Task name required.");
+  const cleanScore = Math.max(1, Math.min(5, Number(score) || 5));
+  const cleanActors = safeLabel(actors.trim() || "User");
+  const taskLine = `    ${safeLabel(taskName.trim())}: ${cleanScore}: ${cleanActors}`;
+
+  const lines = source.split("\n");
+  if (!sectionName) {
+    return `${source.trimEnd()}\n${taskLine}\n`;
+  }
+
+  let secIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (new RegExp(`^\\s*section\\s+${escapeRegex(sectionName.trim())}\\b`, "i").test(l)) {
+      secIdx = i;
+      break;
+    }
+  }
+
+  if (secIdx === -1) {
+    return `${source.trimEnd()}\n  section ${safeLabel(sectionName.trim())}\n${taskLine}\n`;
+  }
+
+  let insertAt = secIdx + 1;
+  while (insertAt < lines.length) {
+    const l = lines[insertAt];
+    if (/^\s*section\b/i.test(l)) break;
+    insertAt++;
+  }
+  while (insertAt > secIdx + 1 && !lines[insertAt - 1].trim()) {
+    insertAt--;
+  }
+  lines.splice(insertAt, 0, taskLine);
+  return lines.join("\n");
+}
+
+export function deleteJourneyTask(source, taskName) {
+  if (!taskName.trim()) throw new Error("Task name required.");
+  const lines = source
+    .split("\n")
+    .filter(
+      (l) => !new RegExp(`^\\s*${escapeRegex(taskName.trim())}\\s*:`, "i").test(l),
+    );
+  return lines.join("\n");
+}
+
+
 
 
 
