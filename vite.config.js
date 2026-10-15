@@ -5,15 +5,6 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 
-const getBase = () => {
-  if (process.env.VITE_BASE_URL) return process.env.VITE_BASE_URL;
-  if (process.env.GITHUB_REPOSITORY) {
-    const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
-    return `/${repoName}/`;
-  }
-  return process.env.NODE_ENV === 'production' ? '/node-flow/' : '/';
-};
-
 function githubPagesSpaPlugin() {
   return {
     name: 'github-pages-spa',
@@ -37,18 +28,31 @@ function githubPagesSpaPlugin() {
   };
 }
 
-export default defineConfig({
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  plugins: [
-    tailwindcss(),
-    react(),
-    githubPagesSpaPlugin(),
-  ],
-  base: getBase(),
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
-  },
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve';
+  const getBase = () => {
+    if (isDev) return '/';
+    if (process.env.VITE_BASE_URL) return process.env.VITE_BASE_URL;
+    if (process.env.GITHUB_REPOSITORY) {
+      const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+      return `/${repoName}/`;
+    }
+    return process.env.NODE_ENV === 'production' ? '/node-flow/' : '/';
+  };
+
+  return {
+    resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+    plugins: [
+      tailwindcss(),
+      react(),
+      githubPagesSpaPlugin(),
+    ],
+    base: getBase(),
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      sourcemap: true,
+    },
+  };
 });
 
