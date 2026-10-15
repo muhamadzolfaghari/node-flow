@@ -80,6 +80,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **Timelines & Timing Diagrams**: Milestone period organization, event addition with detailed descriptions, and event deletion.
 - **Sankey Diagrams**: Interactive flow funnel modeling with source-target nodes, flow volume weights, and flow link deletion.
 - **XY Metric Charts**: Performance benchmark and metrics modeling with interactive title updates, bar/line series addition, and series deletion.
+- **Block Architecture Diagrams**: Multi-column hardware/system block modeling with configurable grid columns, span controls, block element addition, and block deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

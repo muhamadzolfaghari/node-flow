@@ -1607,6 +1607,128 @@ export function deleteXyChartSeries(source, index) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* BLOCK DIAGRAM VISUAL MODELING                                              */
+/* -------------------------------------------------------------------------- */
+
+export const isBlock = (doc) =>
+  doc?.format === "mermaid" && /^\s*block(?:-beta)?\b/m.test(doc.source);
+
+export function getBlockColumns(source) {
+  const match = source.match(/^\s*columns\s+(\d+)/m);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+export function setBlockColumns(source, columns) {
+  const cols = Math.max(1, parseInt(columns, 10) || 1);
+  const lines = source.split("\n");
+  let found = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*columns\s+\d+/i.test(lines[i])) {
+      lines[i] = `    columns ${cols}`;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*block(?:-beta)?/i.test(lines[i])) {
+        lines.splice(i + 1, 0, `    columns ${cols}`);
+        found = true;
+        break;
+      }
+    }
+  }
+  return lines.join("\n");
+}
+
+export function blockItems(source) {
+  const items = [];
+  for (const line of source.split("\n")) {
+    const trimmed = line.trim();
+    if (
+      !trimmed ||
+      /^\s*%%/.test(trimmed) ||
+      /^\s*block(?:-beta)?/i.test(trimmed) ||
+      /^\s*columns\b/i.test(trimmed) ||
+      /^\s*end\b/i.test(trimmed) ||
+      trimmed.includes("-->") ||
+      trimmed.includes("---")
+    ) {
+      continue;
+    }
+
+    const itemRegex = /([A-Za-z0-9_-]+)(?:\["?(.*?)"?\])?(?::(\d+))?/g;
+    let match;
+    while ((match = itemRegex.exec(trimmed)) !== null) {
+      const id = match[1];
+      if (
+        ["block", "columns", "end", "style", "class"].includes(
+          id.toLowerCase(),
+        )
+      )
+        continue;
+      const label = match[2] !== undefined ? match[2] : id;
+      const span = match[3] ? parseInt(match[3], 10) : 1;
+      items.push({ id, label, span });
+    }
+  }
+  return items;
+}
+
+export function addBlockItem(source, id, label = "", span = 1) {
+  if (!id || !id.trim()) throw new Error("Block ID required.");
+  const cleanId = id.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanLabel = (label || id).trim().replace(/"/g, "'");
+  const numSpan = Math.max(1, parseInt(span, 10) || 1);
+  const itemLine = `    ${cleanId}["${cleanLabel}"]${numSpan > 1 ? `:${numSpan}` : ""}`;
+
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("-->") || lines[i].includes("---")) {
+      insertIdx = i;
+      break;
+    }
+  }
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, itemLine);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${itemLine}\n`;
+}
+
+export function deleteBlockItem(source, id) {
+  if (!id || !id.trim()) throw new Error("Block ID required.");
+  const targetId = id.trim();
+  const tokenRegex = new RegExp(
+    `\\b${escapeRegex(targetId)}(?:\\["?[^"\\]]*"?\\])?(?::\\d+)?`,
+    "g",
+  );
+
+  const lines = [];
+  for (const line of source.split("\n")) {
+    if (line.includes("-->") || line.includes("---")) {
+      const tokens = line.split(/-->|---|==>/).map((s) => s.trim());
+      if (tokens.some((t) => t.startsWith(targetId))) continue;
+      lines.push(line);
+      continue;
+    }
+
+    if (new RegExp(`\\b${escapeRegex(targetId)}\\b`).test(line)) {
+      const cleaned = line.replace(tokenRegex, "").trim();
+      if (cleaned) {
+        lines.push("    " + cleaned);
+      }
+      continue;
+    }
+
+    lines.push(line);
+  }
+  return lines.join("\n");
+}
+
+
 
 
 

@@ -88,6 +88,12 @@ import {
   updateXyChartTitle,
   addXyChartSeries,
   deleteXyChartSeries,
+  isBlock,
+  getBlockColumns,
+  setBlockColumns,
+  blockItems,
+  addBlockItem,
+  deleteBlockItem,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -645,6 +651,48 @@ test("xy chart visual modeling: title, series addition, deletion, validation", (
   assert.throws(() => addXyChartSeries(xy, "bar", []), /numerical value required/);
   assert.throws(() => addXyChartSeries(xy, "bar", ["invalid"]), /numerical value required/);
 });
+
+test("block diagram visual modeling: columns, items, addition, deletion, validation", () => {
+  let blk = `block-beta
+    columns 4
+    CPU["High-Performance CPU"]:2 RAM["DDR5 Memory"]:2
+    NPU["Neural Accelerator"]:2 NVMe["NVMe SSD"]:2
+    CPU --> RAM
+    NPU --> NVMe`;
+
+  assert.equal(isBlock({ format: "mermaid", source: blk }), true);
+  assert.equal(getBlockColumns(blk), 4);
+
+  let items = blockItems(blk);
+  assert.equal(items.length, 4);
+  assert.equal(items[0].id, "CPU");
+  assert.equal(items[0].label, "High-Performance CPU");
+  assert.equal(items[0].span, 2);
+  assert.equal(items[1].id, "RAM");
+
+  blk = setBlockColumns(blk, 6);
+  assert.equal(getBlockColumns(blk), 6);
+  assert.match(blk, /columns 6/);
+
+  blk = addBlockItem(blk, "GPU", "Graphics Engine", 2);
+  assert.match(blk, /GPU\["Graphics Engine"\]:2/);
+
+  items = blockItems(blk);
+  assert.equal(items.length, 5);
+  assert.equal(items.some((i) => i.id === "GPU"), true);
+
+  blk = deleteBlockItem(blk, "NPU");
+  assert.doesNotMatch(blk, /NPU\[/);
+  assert.doesNotMatch(blk, /NPU -->/);
+
+  items = blockItems(blk);
+  assert.equal(items.length, 4);
+  assert.equal(items.some((i) => i.id === "NPU"), false);
+
+  assert.throws(() => addBlockItem(blk, ""), /Block ID required/);
+  assert.throws(() => deleteBlockItem(blk, ""), /Block ID required/);
+});
+
 
 
 

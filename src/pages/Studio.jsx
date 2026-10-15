@@ -46,6 +46,7 @@ import {
   Clock,
   Split,
   LineChart,
+  Boxes,
 } from "lucide-react";
 import {
   Button,
@@ -193,6 +194,12 @@ import {
   updateXyChartTitle,
   addXyChartSeries,
   deleteXyChartSeries,
+  isBlock,
+  getBlockColumns,
+  setBlockColumns,
+  blockItems,
+  addBlockItem,
+  deleteBlockItem,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -333,6 +340,11 @@ export default function Studio() {
     [xySeriesType, setXySeriesType] = useState("bar"),
     [xySeriesVals, setXySeriesVals] = useState(""),
     [xyTitleInput, setXyTitleInput] = useState(""),
+    // Block diagram modeling state
+    [blockIdInput, setBlockIdInput] = useState(""),
+    [blockLabelInput, setBlockLabelInput] = useState(""),
+    [blockSpanInput, setBlockSpanInput] = useState("1"),
+    [blockColsInput, setBlockColsInput] = useState("4"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -382,6 +394,12 @@ export default function Studio() {
   }, [document?.source]);
   const xyInfo = useMemo(() => {
     return isXyChart(document) ? xyChartData(document.source) : null;
+  }, [document?.source]);
+  const blockElements = useMemo(() => {
+    return isBlock(document) ? blockItems(document.source) : [];
+  }, [document?.source]);
+  const blockColumnsCount = useMemo(() => {
+    return isBlock(document) ? getBlockColumns(document.source) : 1;
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3737,6 +3755,151 @@ export default function Studio() {
                       >
                         <Plus className="size-3.5" />
                         Series
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isBlock(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-medium text-xs">
+                    <Boxes className="size-3.5 text-primary" />
+                    <span>Block architecture tools</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-muted-foreground">
+                      Columns:
+                    </span>
+                    <Input
+                      aria-label="Block diagram grid columns"
+                      type="number"
+                      min="1"
+                      max="12"
+                      className="h-6 w-12 text-center text-xs font-mono p-0"
+                      value={blockColsInput || blockColumnsCount}
+                      onChange={(e) => setBlockColsInput(e.target.value)}
+                      onBlur={() => {
+                        if (blockColsInput) {
+                          updateSource(
+                            document.id,
+                            setBlockColumns(document.source, blockColsInput),
+                          );
+                          say(`Columns set to ${blockColsInput}`);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {blockElements.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Blocks ({blockElements.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {blockElements.map((b) => (
+                        <div
+                          key={b.id}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-mono font-medium text-primary text-[11px]">
+                              {b.id}
+                            </span>
+                            <span className="truncate text-muted-foreground">
+                              {b.label !== b.id ? `(${b.label})` : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {b.span > 1 && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-5 px-1.5 font-mono"
+                              >
+                                span {b.span}
+                              </Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                updateSource(
+                                  document.id,
+                                  deleteBlockItem(document.source, b.id),
+                                );
+                                say(`Removed block "${b.id}"`);
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add architecture block
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Block ID"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="ID (e.g. GPU)"
+                        value={blockIdInput}
+                        onChange={(e) => setBlockIdInput(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Block grid span"
+                        type="number"
+                        min="1"
+                        max="8"
+                        className="h-8 w-16 text-center text-xs font-mono"
+                        placeholder="Span"
+                        value={blockSpanInput}
+                        onChange={(e) => setBlockSpanInput(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Block label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Label (e.g. Graphics Processor)"
+                        value={blockLabelInput}
+                        onChange={(e) => setBlockLabelInput(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addBlockItem(
+                                document.source,
+                                blockIdInput,
+                                blockLabelInput,
+                                blockSpanInput,
+                              ),
+                            );
+                            setBlockIdInput("");
+                            setBlockLabelInput("");
+                            setBlockSpanInput("1");
+                            say(`Added block "${blockIdInput}"`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Block
                       </Button>
                     </div>
                   </div>
