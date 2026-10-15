@@ -6,6 +6,8 @@ import {
   addFlowchartNode,
   connectFlowchartNodes,
   deleteFlowchartNode,
+  changeFlowchartNodeShape,
+  getFlowchartNodeShape,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -37,4 +39,15 @@ test("deleting a node removes declaration and connected edges", () => {
   assert.equal(next.includes("A[Client]"), true);
   assert.equal(next.includes("D[Standalone]"), true);
 });
+test("changing node shape updates brackets and preserves label", () => {
+  const source = 'flowchart TD\n  A["Start Process"] --> B["Decision"]';
+  assert.equal(getFlowchartNodeShape(source, "B"), "rectangle");
+  const diamond = changeFlowchartNodeShape(source, "B", "diamond");
+  assert.match(diamond, /B\{"Decision"\}/);
+  assert.equal(getFlowchartNodeShape(diamond, "B"), "diamond");
+  const cylinder = changeFlowchartNodeShape(diamond, "B", "cylinder");
+  assert.match(cylinder, /B\[\("Decision"\)\]/);
+  assert.equal(getFlowchartNodeShape(cylinder, "B"), "cylinder");
+});
+
 

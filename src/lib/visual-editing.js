@@ -5,22 +5,77 @@ const safeLabel = (label) =>
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/[\r\n]/g, " ");
+export const SHAPES = {
+  rectangle: { open: "[", close: "]", label: "Rectangle" },
+  rounded: { open: "(", close: ")", label: "Rounded" },
+  stadium: { open: "([", close: "])", label: "Stadium / Pill" },
+  subroutine: { open: "[[", close: "]]", label: "Subroutine" },
+  cylinder: { open: "[(", close: ")]", label: "Cylinder / DB" },
+  circle: { open: "((", close: "))", label: "Circle" },
+  diamond: { open: "{", close: "}", label: "Diamond / Decision" },
+  hexagon: { open: "{{", close: "}}", label: "Hexagon" },
+};
+
 export const isFlowchart = (doc) =>
   doc?.format === "mermaid" &&
   /^\s*(flowchart|graph)\s+(TD|TB|BT|LR|RL)\b/m.test(doc.source);
+
 export function flowchartNodes(source) {
   const nodes = new Map();
   for (const match of source.matchAll(
-    /\b([A-Za-z_][\w-]*)\s*(\[\[|\(\(|\(\[|\{|\[|\()([^\n]*?)(\]\]|\)\)|\]\)|\}|\]|\))/g,
+    /\b([A-Za-z_][\w-]*)\s*(\[\[|\(\(|\(\[|\[\(|\{\{|\{|\(|\[)([^\n]*?)(\]\]|\)\)|\]\)|\)\]|\}\}|\}|\)|\])/g,
   )) {
-    if (!["subgraph", "classDef", "style"].includes(match[1]))
-      nodes.set(match[1], match[3].replace(/^"|"$/g, ""));
+    if (!["subgraph", "classDef", "style"].includes(match[1])) {
+      const open = match[2];
+      let shape = "rectangle";
+      for (const [key, val] of Object.entries(SHAPES)) {
+        if (val.open === open) {
+          shape = key;
+          break;
+        }
+      }
+      nodes.set(match[1], {
+        id: match[1],
+        label: match[3].replace(/^"|"$/g, ""),
+        shape,
+      });
+    }
   }
-  return [...nodes].map(([id, label]) => ({ id, label }));
+  return [...nodes.values()];
 }
+
+export function getFlowchartNodeShape(source, id) {
+  const pattern = new RegExp(
+    `\\b${escapeRegex(id)}\\s*(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()`,
+  );
+  const match = source.match(pattern);
+  if (!match) return "rectangle";
+  const open = match[1];
+  for (const [key, val] of Object.entries(SHAPES)) {
+    if (val.open === open) return key;
+  }
+  return "rectangle";
+}
+
+export function changeFlowchartNodeShape(source, id, shapeType) {
+  const shape = SHAPES[shapeType];
+  if (!shape) throw new Error("Unsupported shape.");
+  const pattern = new RegExp(
+    `(\\b${escapeRegex(id)}\\s*)(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()([^\\n]*?)(\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))`,
+  );
+  if (!pattern.test(source)) {
+    throw new Error("This node is not declared with an editable shape.");
+  }
+  return source.replace(
+    pattern,
+    (_, prefix, _open, content) =>
+      `${prefix}${shape.open}${content}${shape.close}`,
+  );
+}
+
 export function renameFlowchartNode(source, id, label) {
   const pattern = new RegExp(
-    `(\\b${escapeRegex(id)}\\s*)(\\[\\[|\\(\\(|\\(\\[|\\{|\\[|\\()([^\\n]*?)(\\]\\]|\\)\\)|\\]\\)|\\}|\\]|\\))`,
+    `(\\b${escapeRegex(id)}\\s*)(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()([^\\n]*?)(\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))`,
   );
   if (!pattern.test(source))
     throw new Error(
@@ -32,11 +87,13 @@ export function renameFlowchartNode(source, id, label) {
       `${prefix}${open}"${safeLabel(label)}"${close}`,
   );
 }
-export function addFlowchartNode(source, label) {
+
+export function addFlowchartNode(source, label, shapeType = "rectangle") {
   if (!label.trim()) throw new Error("Enter a node label.");
+  const shape = SHAPES[shapeType] || SHAPES.rectangle;
   let number = 1;
   while (new RegExp(`\\bnode${number}\\b`).test(source)) number++;
-  return `${source.trimEnd()}\n  node${number}["${safeLabel(label)}"]\n`;
+  return `${source.trimEnd()}\n  node${number}${shape.open}"${safeLabel(label)}"${shape.close}\n`;
 }
 export function connectFlowchartNodes(source, from, to, label = "") {
   const nodes = flowchartNodes(source);

@@ -90,6 +90,9 @@ import {
   addFlowchartNode,
   connectFlowchartNodes,
   deleteFlowchartNode,
+  changeFlowchartNodeShape,
+  getFlowchartNodeShape,
+  SHAPES,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -144,6 +147,7 @@ export default function Studio() {
     [selected, setSelected] = useState(null),
     [label, setLabel] = useState(""),
     [nodeLabel, setNodeLabel] = useState(""),
+    [newShape, setNewShape] = useState("rectangle"),
     [edgeFrom, setEdgeFrom] = useState(""),
     [edgeTo, setEdgeTo] = useState(""),
     [edgeLabel, setEdgeLabel] = useState(""),
@@ -724,6 +728,28 @@ export default function Studio() {
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                 />
+                <select
+                  aria-label="Node shape"
+                  className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                  value={nodeId ? getFlowchartNodeShape(document.source, nodeId) : "rectangle"}
+                  onChange={(e) => {
+                    try {
+                      updateSource(
+                        document.id,
+                        changeFlowchartNodeShape(document.source, nodeId, e.target.value),
+                      );
+                      say(`Shape changed to ${SHAPES[e.target.value]?.label || e.target.value}`);
+                    } catch (err) {
+                      say(err.message);
+                    }
+                  }}
+                >
+                  {Object.entries(SHAPES).map(([key, val]) => (
+                    <option key={key} value={key}>
+                      {val.label}
+                    </option>
+                  ))}
+                </select>
                 <Button
                   variant="outline"
                   size="sm"
@@ -775,24 +801,38 @@ export default function Studio() {
                   value={nodeLabel}
                   onChange={(e) => setNodeLabel(e.target.value)}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 w-full text-xs"
-                  onClick={() => {
-                    try {
-                      updateSource(
-                        document.id,
-                        addFlowchartNode(document.source, nodeLabel),
-                      );
-                      setNodeLabel("");
-                    } catch (e) {
-                      say(e.message);
-                    }
-                  }}
-                >
-                  Add node
-                </Button>
+                <div className="mt-2 flex gap-2">
+                  <select
+                    aria-label="New node shape"
+                    className="h-8 rounded-md border bg-background px-2 text-xs"
+                    value={newShape}
+                    onChange={(e) => setNewShape(e.target.value)}
+                  >
+                    {Object.entries(SHAPES).map(([key, val]) => (
+                      <option key={key} value={key}>
+                        {val.label}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      try {
+                        updateSource(
+                          document.id,
+                          addFlowchartNode(document.source, nodeLabel, newShape),
+                        );
+                        setNodeLabel("");
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                  >
+                    Add node
+                  </Button>
+                </div>
                 <div className="mt-4 grid gap-2">
                   {[
                     ["From", edgeFrom, setEdgeFrom],
