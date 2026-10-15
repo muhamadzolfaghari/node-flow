@@ -10,6 +10,7 @@ import {
   Shapes,
   Layers,
   ClipboardList,
+  Binary,
   X,
 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ const icons = {
   mindmap: GitBranch,
   flowchart: Network,
   requirement: ClipboardList,
+  packet: Binary,
 };
 export default function Templates() {
   const [params, setParams] = useSearchParams(),
