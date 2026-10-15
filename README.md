@@ -29,7 +29,7 @@ All 34 entries are available in the new-file dialog, file inspector, and import 
 
 | Format | Input | Editing and preview scope |
 | --- | --- | --- |
-| Mermaid | `.mmd`, `.mermaid`, detected plain text | Native Mermaid rendering: flowcharts, ER, UML class/sequence/state, mindmaps, Gantt, C4, journeys, timelines, Git graphs, Sankey, pie, XY, quadrant, Kanban, and block diagrams. |
+| Mermaid | `.mmd`, `.mermaid`, detected plain text | Native Mermaid rendering: flowcharts, ER, UML class/sequence/state, mindmaps, Gantt, C4, journeys, timelines, Git graphs, Sankey, pie, XY, quadrant, Kanban, block, and requirement diagrams. |
 | Graphviz | `.dot`, `.gv` | Native DOT rendering through Graphviz WebAssembly. |
 | PlantUML | `.puml`, `.plantuml` | Sequence, class, and state subsets to Mermaid. Vendor styling, macros, and full PlantUML grammar are not implemented. |
 | D2 | `.d2` | Basic nodes, connections, and containers to Mermaid; approximate layout and styling. |
@@ -82,6 +82,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **XY Metric Charts**: Performance benchmark and metrics modeling with interactive title updates, bar/line series addition, and series deletion.
 - **Block Architecture Diagrams**: Multi-column hardware/system block modeling with configurable grid columns, span controls, block element addition, and block deletion.
 - **C4 Architecture Models**: Full Context/Container/Component modeling with Person, System, Database, and Component declaration, relationship direction and protocols (`Rel`), and element deletion.
+- **Requirement Diagrams**: Systems engineering requirements modeling with functional/performance requirement definitions, risk levels, verification methods, system elements, traceability links (`satisfies`, `traces`, `derives`, `refines`, `copies`, `contains`), and element/requirement deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

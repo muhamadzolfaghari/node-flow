@@ -48,6 +48,7 @@ import {
   LineChart,
   Boxes,
   Layers,
+  ClipboardList,
 } from "lucide-react";
 import {
   Button,
@@ -208,6 +209,14 @@ import {
   deleteC4Element,
   addC4Relation,
   deleteC4Relation,
+  isRequirement,
+  requirementItems,
+  requirementRelations,
+  addRequirement,
+  addRequirementElement,
+  deleteRequirement,
+  addRequirementRelation,
+  deleteRequirementRelation,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -361,6 +370,18 @@ export default function Studio() {
     [c4RelFrom, setC4RelFrom] = useState(""),
     [c4RelTo, setC4RelTo] = useState(""),
     [c4RelLabel, setC4RelLabel] = useState("Uses"),
+    // Requirement diagram modeling state
+    [reqType, setReqType] = useState("functionalRequirement"),
+    [reqName, setReqName] = useState(""),
+    [reqId, setReqId] = useState(""),
+    [reqText, setReqText] = useState(""),
+    [reqRisk, setReqRisk] = useState("low"),
+    [reqVerify, setReqVerify] = useState("test"),
+    [reqElName, setReqElName] = useState(""),
+    [reqElType, setReqElType] = useState("module"),
+    [reqRelFrom, setReqRelFrom] = useState(""),
+    [reqRelTo, setReqRelTo] = useState(""),
+    [reqRelType, setReqRelType] = useState("satisfies"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -422,6 +443,12 @@ export default function Studio() {
   }, [document?.source]);
   const c4Rels = useMemo(() => {
     return isC4(document) ? c4Relations(document.source) : [];
+  }, [document?.source]);
+  const reqItems = useMemo(() => {
+    return isRequirement(document) ? requirementItems(document.source) : [];
+  }, [document?.source]);
+  const reqRels = useMemo(() => {
+    return isRequirement(document) ? requirementRelations(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -4150,6 +4177,318 @@ export default function Studio() {
                         Rel
                       </Button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isRequirement(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <ClipboardList className="size-3.5 text-primary" />
+                  <span>Requirement diagram tools</span>
+                </div>
+
+                {reqItems.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Requirements & Elements ({reqItems.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {reqItems.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {item.category === "element"
+                                ? item.elementType
+                                : item.type}
+                            </Badge>
+                            <span className="font-mono font-medium text-[11px]">
+                              {item.name}
+                            </span>
+                            {item.category === "requirement" && item.id && (
+                              <span className="text-[10px] text-muted-foreground">
+                                [{item.id}]
+                              </span>
+                            )}
+                            {item.category === "requirement" && item.risk && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] h-4 px-1 capitalize"
+                              >
+                                {item.risk}
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteRequirement(document.source, item.name),
+                              );
+                              say(`Removed "${item.name}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {reqRels.length > 0 && (
+                  <div className="mt-3 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Traceability & Relations ({reqRels.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-40 overflow-auto">
+                      {reqRels.map((r, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-mono font-medium">
+                              {r.from}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">
+                              -{r.type}→
+                            </span>
+                            <span className="font-mono font-medium">
+                              {r.to}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteRequirementRelation(
+                                  document.source,
+                                  r.from,
+                                  r.to,
+                                ),
+                              );
+                              say(
+                                `Removed relation "${r.from} - ${r.type} -> ${r.to}"`,
+                              );
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add requirement
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Requirement type"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={reqType}
+                        onChange={(e) => setReqType(e.target.value)}
+                      >
+                        <option value="functionalRequirement">Functional</option>
+                        <option value="requirement">Requirement</option>
+                        <option value="interfaceRequirement">Interface</option>
+                        <option value="performanceRequirement">
+                          Performance
+                        </option>
+                        <option value="physicalRequirement">Physical</option>
+                        <option value="designConstraint">Constraint</option>
+                      </select>
+                      <Input
+                        aria-label="Requirement name"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Name (e.g. req_auth)"
+                        value={reqName}
+                        onChange={(e) => setReqName(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Requirement ID"
+                        className="h-8 text-xs w-20 font-mono"
+                        placeholder="ID (1.0)"
+                        value={reqId}
+                        onChange={(e) => setReqId(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Requirement text"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Specification text"
+                        value={reqText}
+                        onChange={(e) => setReqText(e.target.value)}
+                      />
+                      <select
+                        aria-label="Requirement risk"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={reqRisk}
+                        onChange={(e) => setReqRisk(e.target.value)}
+                      >
+                        <option value="low">Low risk</option>
+                        <option value="medium">Med risk</option>
+                        <option value="high">High risk</option>
+                      </select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addRequirement(
+                                document.source,
+                                reqType,
+                                reqName,
+                                reqId,
+                                reqText,
+                                reqRisk,
+                                reqVerify,
+                              ),
+                            );
+                            setReqName("");
+                            setReqId("");
+                            setReqText("");
+                            say(`Added requirement "${reqName}"`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Req
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add architecture element
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Element name"
+                      className="h-8 text-xs flex-1 font-mono"
+                      placeholder="Element name (e.g. auth_service)"
+                      value={reqElName}
+                      onChange={(e) => setReqElName(e.target.value)}
+                    />
+                    <Input
+                      aria-label="Element type"
+                      className="h-8 text-xs w-28"
+                      placeholder="Type (e.g. service)"
+                      value={reqElType}
+                      onChange={(e) => setReqElType(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addRequirementElement(
+                              document.source,
+                              reqElName,
+                              reqElType,
+                            ),
+                          );
+                          setReqElName("");
+                          say(`Added element "${reqElName}"`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Element
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Connect element & requirement
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Relation from"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Element (e.g. auth_service)"
+                        value={reqRelFrom}
+                        onChange={(e) => setReqRelFrom(e.target.value)}
+                      />
+                      <select
+                        aria-label="Relation type"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={reqRelType}
+                        onChange={(e) => setReqRelType(e.target.value)}
+                      >
+                        <option value="satisfies">satisfies</option>
+                        <option value="traces">traces</option>
+                        <option value="derives">derives</option>
+                        <option value="refines">refines</option>
+                        <option value="copies">copies</option>
+                        <option value="contains">contains</option>
+                      </select>
+                      <Input
+                        aria-label="Relation to"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Requirement (e.g. req_auth)"
+                        value={reqRelTo}
+                        onChange={(e) => setReqRelTo(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs w-full"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addRequirementRelation(
+                              document.source,
+                              reqRelFrom,
+                              reqRelTo,
+                              reqRelType,
+                            ),
+                          );
+                          setReqRelFrom("");
+                          setReqRelTo("");
+                          say(
+                            `Connected ${reqRelFrom} - ${reqRelType} -> ${reqRelTo}`,
+                          );
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add Relationship
+                    </Button>
                   </div>
                 </div>
               </div>

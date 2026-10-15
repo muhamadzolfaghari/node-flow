@@ -101,6 +101,14 @@ import {
   deleteC4Element,
   addC4Relation,
   deleteC4Relation,
+  isRequirement,
+  requirementItems,
+  requirementRelations,
+  addRequirement,
+  addRequirementElement,
+  deleteRequirement,
+  addRequirementRelation,
+  deleteRequirementRelation,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -748,6 +756,92 @@ test("c4 architecture visual modeling: elements, relations, addition, deletion, 
   assert.throws(() => addC4Element(c4, "System", "id", ""), /Element label required/);
   assert.throws(() => addC4Relation(c4, "", "to", "label"), /Source element required/);
   assert.throws(() => addC4Relation(c4, "from", "", "label"), /Target element required/);
+});
+
+test("Requirement Diagram visual modeling: parsing, additions, relationships, and deletions", () => {
+  let reqDoc = `requirementDiagram
+    functionalRequirement req_security {
+        id: 1.0
+        text: User passwords must be salted and hashed
+        risk: high
+        verifymethod: test
+    }
+    performanceRequirement req_latency {
+        id: 2.0
+        text: Response time under 200ms
+        risk: medium
+        verifymethod: demonstration
+    }
+    element auth_service {
+        type: microservice
+    }
+    element cache {
+        type: redis
+    }
+    auth_service - satisfies -> req_security
+    cache - satisfies -> req_latency`;
+
+  assert.equal(isRequirement({ format: "mermaid", source: reqDoc }), true);
+  assert.equal(isRequirement({ format: "mermaid", source: "flowchart TD\n A-->B" }), false);
+  assert.equal(isRequirement({ format: "d2", source: reqDoc }), false);
+
+  let items = requirementItems(reqDoc);
+  assert.equal(items.length, 4);
+  const req1 = items.find((i) => i.name === "req_security");
+  assert.equal(req1.type, "functionalRequirement");
+  assert.equal(req1.id, "1.0");
+  assert.equal(req1.risk, "high");
+  assert.equal(req1.verify, "test");
+  assert.equal(req1.text, "User passwords must be salted and hashed");
+
+  const el1 = items.find((i) => i.name === "auth_service");
+  assert.equal(el1.category, "element");
+  assert.equal(el1.elementType, "microservice");
+
+  let rels = requirementRelations(reqDoc);
+  assert.equal(rels.length, 2);
+  assert.equal(rels[0].from, "auth_service");
+  assert.equal(rels[0].type, "satisfies");
+  assert.equal(rels[0].to, "req_security");
+
+  reqDoc = addRequirement(
+    reqDoc,
+    "interfaceRequirement",
+    "req_api",
+    "3.0",
+    "RESTful endpoints for all actions",
+    "low",
+    "inspection",
+  );
+  assert.match(reqDoc, /interfaceRequirement req_api/);
+  assert.match(reqDoc, /id: 3\.0/);
+
+  reqDoc = addRequirementElement(reqDoc, "gateway", "proxy");
+  assert.match(reqDoc, /element gateway/);
+  assert.match(reqDoc, /type: proxy/);
+
+  reqDoc = addRequirementRelation(reqDoc, "gateway", "req_api", "traces");
+  assert.match(reqDoc, /gateway - traces -> req_api/);
+
+  reqDoc = deleteRequirement(reqDoc, "req_security");
+  assert.doesNotMatch(reqDoc, /req_security/);
+  assert.doesNotMatch(reqDoc, /User passwords must be salted/);
+  assert.doesNotMatch(reqDoc, /auth_service - satisfies -> req_security/);
+
+  reqDoc = deleteRequirementRelation(reqDoc, "cache", "req_latency");
+  assert.doesNotMatch(reqDoc, /cache - satisfies -> req_latency/);
+
+  items = requirementItems(reqDoc);
+  assert.equal(items.some((i) => i.name === "req_api"), true);
+  assert.equal(items.some((i) => i.name === "gateway"), true);
+  assert.equal(items.some((i) => i.name === "req_security"), false);
+
+  assert.throws(() => addRequirement(reqDoc, "functionalRequirement", ""), /Requirement name required/);
+  assert.throws(() => addRequirementElement(reqDoc, ""), /Element name required/);
+  assert.throws(() => deleteRequirement(reqDoc, ""), /Name required/);
+  assert.throws(() => addRequirementRelation(reqDoc, "", "to"), /Source element required/);
+  assert.throws(() => addRequirementRelation(reqDoc, "from", ""), /Target requirement required/);
+  assert.throws(() => deleteRequirementRelation(reqDoc, "", "to"), /From and To required/);
 });
 
 

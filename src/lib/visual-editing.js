@@ -1894,6 +1894,205 @@ export function deleteC4Relation(source, from, to) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* REQUIREMENT DIAGRAM VISUAL MODELING                                        */
+/* -------------------------------------------------------------------------- */
+
+export const isRequirement = (doc) =>
+  doc?.format === "mermaid" &&
+  /^\s*requirementDiagram\b/m.test(doc.source);
+
+export function requirementItems(source) {
+  const items = [];
+  const reqBlockRegex =
+    /(requirement|functionalRequirement|interfaceRequirement|performanceRequirement|physicalRequirement|designConstraint)\s+([A-Za-z0-9_-]+)\s*\{([^}]*)\}/gi;
+  let match;
+  while ((match = reqBlockRegex.exec(source)) !== null) {
+    const type = match[1];
+    const name = match[2];
+    const body = match[3];
+
+    const idMatch = body.match(/^\s*id\s*:\s*(.+)$/im);
+    const textMatch = body.match(/^\s*text\s*:\s*(.+)$/im);
+    const riskMatch = body.match(/^\s*risk\s*:\s*(\w+)/im);
+    const verifyMatch = body.match(/^\s*verifymethod\s*:\s*(\w+)/im);
+
+    items.push({
+      category: "requirement",
+      type,
+      name,
+      id: idMatch ? idMatch[1].trim() : "",
+      text: textMatch ? textMatch[1].trim() : "",
+      risk: riskMatch ? riskMatch[1].trim() : "low",
+      verify: verifyMatch ? verifyMatch[1].trim() : "test",
+    });
+  }
+
+  const elBlockRegex = /element\s+([A-Za-z0-9_-]+)\s*\{([^}]*)\}/gi;
+  while ((match = elBlockRegex.exec(source)) !== null) {
+    const name = match[1];
+    const body = match[2];
+    const typeMatch = body.match(/^\s*type\s*:\s*(.+)$/im);
+    const docrefMatch = body.match(/^\s*docref\s*:\s*(.+)$/im);
+    items.push({
+      category: "element",
+      type: "element",
+      name,
+      elementType: typeMatch ? typeMatch[1].trim() : "module",
+      docref: docrefMatch ? docrefMatch[1].trim() : "",
+    });
+  }
+
+  return items;
+}
+
+export function requirementRelations(source) {
+  const rels = [];
+  const relRegex =
+    /^\s*([A-Za-z0-9_-]+)\s*-\s*(satisfies|traces|derives|refines|copies|contains)\s*->\s*([A-Za-z0-9_-]+)/gm;
+  let match;
+  while ((match = relRegex.exec(source)) !== null) {
+    rels.push({
+      from: match[1].trim(),
+      type: match[2].trim(),
+      to: match[3].trim(),
+    });
+  }
+  return rels;
+}
+
+export function addRequirement(
+  source,
+  type = "functionalRequirement",
+  name,
+  id,
+  text,
+  risk = "low",
+  verify = "test",
+) {
+  if (!name || !name.trim()) throw new Error("Requirement name required.");
+  const cleanName = name.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanId = (id || "1").trim();
+  const cleanText = (text || cleanName).trim().replace(/"/g, "'");
+  const cleanRisk = ["low", "medium", "high"].includes(risk) ? risk : "low";
+  const cleanVerify = [
+    "test",
+    "inspection",
+    "analysis",
+    "demonstration",
+  ].includes(verify)
+    ? verify
+    : "test";
+
+  const block = `
+    ${type} ${cleanName} {
+        id: ${cleanId}
+        text: ${cleanText}
+        risk: ${cleanRisk}
+        verifymethod: ${cleanVerify}
+    }`;
+
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes(" - ") && lines[i].includes(" -> ")) {
+      insertIdx = i;
+      break;
+    }
+  }
+
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, block);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${block}\n`;
+}
+
+export function addRequirementElement(source, name, elType = "module") {
+  if (!name || !name.trim()) throw new Error("Element name required.");
+  const cleanName = name.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanType = (elType || "module").trim();
+  const block = `
+    element ${cleanName} {
+        type: ${cleanType}
+    }`;
+
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes(" - ") && lines[i].includes(" -> ")) {
+      insertIdx = i;
+      break;
+    }
+  }
+
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, block);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${block}\n`;
+}
+
+export function deleteRequirement(source, name) {
+  if (!name || !name.trim()) throw new Error("Name required.");
+  const target = name.trim();
+
+  const blockRegex = new RegExp(
+    `(?:requirement|functionalRequirement|interfaceRequirement|performanceRequirement|physicalRequirement|designConstraint|element)\\s+${escapeRegex(target)}\\s*\\{[^}]*\\}`,
+    "gi",
+  );
+  let updated = source.replace(blockRegex, "");
+
+  const lines = updated.split("\n").filter((line) => {
+    if (line.includes(" - ") && line.includes(" -> ")) {
+      const parts = line.split(/->|-/).map((s) => s.trim());
+      if (parts.some((p) => p === target)) return false;
+    }
+    return true;
+  });
+
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+export function addRequirementRelation(
+  source,
+  from,
+  to,
+  relType = "satisfies",
+) {
+  if (!from || !from.trim()) throw new Error("Source element required.");
+  if (!to || !to.trim()) throw new Error("Target requirement required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+  const cleanRel = [
+    "satisfies",
+    "traces",
+    "derives",
+    "refines",
+    "copies",
+    "contains",
+  ].includes(relType)
+    ? relType
+    : "satisfies";
+
+  const relLine = `    ${cleanFrom} - ${cleanRel} -> ${cleanTo}`;
+  return `${source.trimEnd()}\n${relLine}\n`;
+}
+
+export function deleteRequirementRelation(source, from, to) {
+  if (!from || !to) throw new Error("From and To required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+  const lines = source.split("\n").filter((line) => {
+    return !new RegExp(
+      `^\\s*${escapeRegex(cleanFrom)}\\s*-\\s*\\w+\\s*->\\s*${escapeRegex(cleanTo)}`,
+      "i",
+    ).test(line);
+  });
+  return lines.join("\n");
+}
+
+
 
 
 
