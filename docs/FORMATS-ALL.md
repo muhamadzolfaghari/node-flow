@@ -49,3 +49,5 @@ Original source always stays editable; export downloads original or derived view
 | Mermaid mindmap | Markdown, OPML, XMind | same + `xmind.js`/`freemind.js` |
 | Code (12 langs) | Mermaid class | `code-to-uml.js` |
 | XMI | Mermaid class/sequence | `xmi.js` (+ XMI export back) |
+| Diagram (any format) | SVG (self-contained with embedded metadata) | `src/components/exporter.js` + `src/utils/importers/svg-metadata.js` (100% roundtrip) |
+
