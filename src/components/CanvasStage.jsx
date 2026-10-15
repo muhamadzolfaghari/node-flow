@@ -48,7 +48,8 @@ export default function CanvasStage({
     canvasRef = useRef(null),
     camera = useRef({ x: 30, y: 30, z: 1 }),
     shouldFit = useRef(true),
-    editInputRef = useRef(null);
+    editInputRef = useRef(null),
+    spaceHeld = useRef(false);
   const [position, setPosition] = useState(camera.current),
     [size, setSize] = useState({ w: 1000, h: 700 }),
     [thumbnail, setThumbnail] = useState(""),
@@ -56,6 +57,8 @@ export default function CanvasStage({
     [wheelMode, setWheelMode] = useState("zoom"),
     [laser, setLaser] = useState(null),
     [tool, setTool] = useState("pointer"),
+    [spacePanning, setSpacePanning] = useState(false),
+    [nodeAnchor, setNodeAnchor] = useState(null),
     [isDragging, setIsDragging] = useState(false),
     [isEditing, setIsEditing] = useState(false),
     [editLabel, setEditLabel] = useState(""),
@@ -76,6 +79,7 @@ export default function CanvasStage({
     presentation,
     wheelMode,
     tool,
+    spacePanning,
   });
   callbacks.current = {
     onSelect,
@@ -90,6 +94,7 @@ export default function CanvasStage({
     presentation,
     wheelMode,
     tool,
+    spacePanning,
   };
 
   /**
@@ -299,6 +304,44 @@ export default function CanvasStage({
     }
   }, [selected]);
 
+  const updateNodeAnchor = () => {
+    if (!selected?.id || !stageRef.current) {
+      setNodeAnchor(null);
+      return;
+    }
+    const svg = containerRef.current?.querySelector("svg");
+    let target = svg?.querySelector(".is-selected");
+    if (!target && selected?.id) {
+      try {
+        target = svg?.querySelector(`[id="${CSS.escape(selected.id)}"]`);
+      } catch {}
+      if (!target) target = document.getElementById(selected.id);
+    }
+    if (target && stageRef.current) {
+      try {
+        const elRect = target.getBoundingClientRect();
+        const stageRect = stageRef.current.getBoundingClientRect();
+        if (
+          elRect.width > 0 &&
+          elRect.bottom > stageRect.top &&
+          elRect.top < stageRect.bottom &&
+          elRect.right > stageRect.left &&
+          elRect.left < stageRect.right
+        ) {
+          const x = Math.max(180, Math.min(stageRect.width - 180, elRect.left - stageRect.left + elRect.width / 2));
+          const y = Math.max(16, elRect.top - stageRect.top - 50);
+          setNodeAnchor({ x, y });
+          return;
+        }
+      } catch {}
+    }
+    setNodeAnchor(null);
+  };
+
+  useEffect(() => {
+    updateNodeAnchor();
+  }, [selected, position]);
+
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -350,7 +393,7 @@ export default function CanvasStage({
     };
     const up = (e) => {
       setIsDragging(false);
-      if (!moved && !callbacks.current.presentation) {
+      if (!moved && !callbacks.current.presentation && !spaceHeld.current) {
         if (callbacks.current.tool === "pointer") {
           const node = globalThis.document
             .elementFromPoint(e.clientX, e.clientY)
@@ -495,6 +538,27 @@ export default function CanvasStage({
       }
     };
     window.addEventListener("keydown", keys);
+    const handleSpaceDown = (e) => {
+      if (
+        (e.code === "Space" || e.key === " ") &&
+        !e.target.closest('input,textarea,select,button,[contenteditable],[role="dialog"]')
+      ) {
+        e.preventDefault();
+        if (!spaceHeld.current) {
+          spaceHeld.current = true;
+          setSpacePanning(true);
+        }
+      }
+    };
+    const handleSpaceUp = (e) => {
+      if (e.code === "Space" || e.key === " ") {
+        spaceHeld.current = false;
+        setSpacePanning(false);
+      }
+    };
+    window.addEventListener("keydown", handleSpaceDown);
+    window.addEventListener("keyup", handleSpaceUp);
+
     const resize = new ResizeObserver(() => {
       if (shouldFit.current) fit();
     });
@@ -507,6 +571,8 @@ export default function CanvasStage({
       stage.removeEventListener("dblclick", dblclick);
       stage.removeEventListener("wheel", wheel);
       window.removeEventListener("keydown", keys);
+      window.removeEventListener("keydown", handleSpaceDown);
+      window.removeEventListener("keyup", handleSpaceUp);
       resize.disconnect();
     };
   }, []);
@@ -540,7 +606,7 @@ export default function CanvasStage({
       <div
         ref={stageRef}
         className={`studio-canvas absolute inset-0 ${
-          tool === "hand" ? "tool-hand" : "tool-pointer"
+          tool === "hand" || spacePanning ? "tool-hand" : "tool-pointer"
         } ${isDragging ? "is-dragging" : ""} ${
           grid === "dots"
             ? `dot-grid ${isLight ? "theme-light" : ""}`
@@ -566,7 +632,14 @@ export default function CanvasStage({
       </div>
 
       {selected && (
-        <div className="stage-floating-toolbar absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary/30 bg-card/95 px-3 py-1 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-2 z-20 text-xs select-none">
+        <div
+          className="stage-floating-toolbar absolute flex items-center gap-1 rounded-full border border-primary/30 bg-card/95 px-3 py-1 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-2 z-20 text-xs select-none transition-[left,top] duration-150"
+          style={
+            nodeAnchor
+              ? { left: `${nodeAnchor.x}px`, top: `${nodeAnchor.y}px`, transform: "translateX(-50%)" }
+              : { left: "50%", top: "16px", transform: "translateX(-50%)" }
+          }
+        >
           {isEditing ? (
             <form
               onSubmit={(e) => {

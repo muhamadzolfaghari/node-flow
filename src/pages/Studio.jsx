@@ -5749,7 +5749,16 @@ export default function Studio() {
                     id: "toggle-grid",
                     label: "Cycle Canvas Grid",
                     icon: Crosshair,
-                    onClick: () => setGrid((g) => (g === "dots" ? "lines" : g === "lines" ? "none" : "dots")),
+                    onClick: () =>
+                      setGrid((g) =>
+                        g === "dots"
+                          ? "lines"
+                          : g === "lines"
+                            ? "blueprint"
+                            : g === "blueprint"
+                              ? "none"
+                              : "dots",
+                      ),
                   },
                 ],
               });
@@ -6296,8 +6305,10 @@ export default function Studio() {
                                   g === "dots"
                                     ? "lines"
                                     : g === "lines"
-                                      ? "none"
-                                      : "dots",
+                                      ? "blueprint"
+                                      : g === "blueprint"
+                                        ? "none"
+                                        : "dots",
                                 ),
                             },
                             {
