@@ -172,3 +172,45 @@ test("StarUML (.mdj) import and compilation to Mermaid classDiagram", async () =
   assert.match(compiled.code, /classDiagram/);
 });
 
+test("Lucidchart JSON and CSV import and compilation to Mermaid flowchart", async () => {
+  const { detectFormat, compileDocument } = await import("../src/lib/formats.js");
+  const { parseLucidchartToMermaid } = await import("../src/utils/importers/lucidchart.js");
+
+  const lucidJson = JSON.stringify({
+    pages: [
+      {
+        shapes: [
+          { id: "101", text: "Web Client" },
+          { id: "102", text: "REST API Gateway" },
+          { id: "103", text: "Auth Database" }
+        ],
+        lines: [
+          { from: "101", to: "102", text: "POST /login" },
+          { from: "102", to: "103", text: "Validate hash" }
+        ]
+      }
+    ]
+  });
+
+  assert.equal(detectFormat("architecture.lucid", lucidJson), "lucid");
+  const mmdJson = parseLucidchartToMermaid(lucidJson);
+  assert.match(mmdJson, /flowchart TD/);
+  assert.match(mmdJson, /101\["Web Client"\]/);
+  assert.match(mmdJson, /101 -->\|"POST \/login"\| 102/);
+
+  const lucidCsv = `Id,Name,Shape Library,Page ID,Contained By,Group,Line Source,Line Destination,Source Arrow,Destination Arrow,Text Area 1
+1,Process,Standard,1,,,,,None,Arrow,Validate User
+2,Process,Standard,1,,,,,None,Arrow,Authorize Token
+3,Line,Standard,1,,,1,2,None,Arrow,Success`;
+
+  assert.equal(detectFormat("diagram.csv", lucidCsv), "lucid");
+  const mmdCsv = parseLucidchartToMermaid(lucidCsv);
+  assert.match(mmdCsv, /flowchart TD/);
+  assert.match(mmdCsv, /1\["Validate User"\]/);
+  assert.match(mmdCsv, /1 -->\|"Success"\| 2/);
+
+  const compiled = await compileDocument({ format: "lucid", source: lucidJson });
+  assert.match(compiled.code, /flowchart TD/);
+});
+
+

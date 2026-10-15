@@ -398,6 +398,19 @@ export const FORMATS = [
     sample:
       '{\n  "_type": "Project",\n  "name": "AppModel",\n  "ownedElements": [\n    {\n      "_type": "UMLClass",\n      "_id": "c1",\n      "name": "User",\n      "attributes": [\n        { "name": "id", "type": "string", "visibility": "private" }\n      ],\n      "operations": [\n        { "name": "login", "parameters": [{ "direction": "return", "type": "boolean" }] }\n      ]\n    }\n  ]\n}',
   },
+  {
+    id: "lucid",
+    name: "Lucidchart",
+    ext: "lucid",
+    extensions: ["lucid", "lucidchart"],
+    language: "json",
+    mode: "Derived",
+    family: "Whiteboard",
+    description:
+      "Lucidchart CSV or JSON export converted to Mermaid flowchart nodes and connections.",
+    sample:
+      '{\n  "pages": [\n    {\n      "shapes": [\n        { "id": "1", "text": "Client App" },\n        { "id": "2", "text": "API Server" }\n      ],\n      "lines": [\n        { "from": "1", "to": "2", "text": "HTTP GET" }\n      ]\n    }\n  ]\n}',
+  },
 ];
 export const getFormat = (id) =>
   FORMATS.find((format) => format.id === id) || FORMATS[0];
@@ -424,8 +437,8 @@ export function detectFormat(name = "", source = "") {
     (f) => f.extensions.includes(ext) && f.id !== "markdown",
   );
   if (known && !["openapi", "asyncapi", "archimate"].includes(known.id)) {
-    // json/yaml/xml are content-sniffed below even if extension matches yaml/json
-    if (!["yaml", "jsonschema", "gliffy", "excalidraw"].includes(known.id)) return known.id;
+    // json/yaml/xml/csv are content-sniffed below even if extension matches yaml/json/csv
+    if (!["yaml", "jsonschema", "gliffy", "excalidraw", "csv"].includes(known.id)) return known.id;
   }
   if (/^\s*(strict\s+)?(di)?graph\s*[^\n]*\{/i.test(source)) return "graphviz";
   if (
@@ -458,6 +471,8 @@ export function detectFormat(name = "", source = "") {
   // JSON-schema: object with properties/$defs/definitions
   if (/^\s*\{/.test(source) && /"(properties|definitions|\$defs)"\s*:/.test(source)) return "jsonschema";
   if (/"_type"\s*:\s*"Project"|"_type"\s*:\s*"UMLClass"/.test(source)) return "staruml";
+  if (/(?:Shape Library|Text Area 1|Line Source).*Line Destination/i.test(source)) return "lucid";
+  if (/"pages"\s*:\s*\[|"shapes"\s*:\s*\[|"lines"\s*:\s*\[/.test(source) && !/"elements"/.test(source)) return "lucid";
   if (/\btype\s+\w+\s*\{[^}]*:/.test(source) && /:\s*(String|ID|Int|Float|Boolean)/.test(source)) return "graphql";
   if (["md", "markdown", "txt"].includes(ext)) return "markdown";
   // yaml fallback: generic mapping
@@ -630,6 +645,11 @@ export async function compileDocument(document) {
       code = (
         await import("../utils/importers/staruml.js")
       ).parseStarUmlToMermaid(source);
+      break;
+    case "lucid":
+      code = (
+        await import("../utils/importers/lucidchart.js")
+      ).parseLucidchartToMermaid(source);
       break;
     default:
       throw new Error(`Unsupported format: ${format}`);
