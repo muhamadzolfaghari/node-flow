@@ -2092,6 +2092,78 @@ export function deleteRequirementRelation(source, from, to) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* PACKET / BYTEFIELD DIAGRAM VISUAL MODELING                                 */
+/* -------------------------------------------------------------------------- */
+
+export const isPacket = (doc) =>
+  doc?.format === "mermaid" &&
+  /^\s*packet(?:-beta)?\b/m.test(doc.source);
+
+export function packetFields(source) {
+  const fields = [];
+  const lines = source.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith("%%") || /^\s*packet(?:-beta)?\b/i.test(line)) continue;
+    const match = line.match(/^(\d+)(?:-(\d+))?\s*:\s*(.+)$/);
+    if (match) {
+      const start = parseInt(match[1], 10);
+      const end = match[2] ? parseInt(match[2], 10) : start;
+      const label = match[3].replace(/^["']|["']$/g, "").trim();
+      fields.push({
+        start,
+        end,
+        label,
+        bits: end - start + 1,
+      });
+    }
+  }
+  return fields;
+}
+
+export function addPacketField(source, start, end, label) {
+  if (start === undefined || start === null || start === "" || isNaN(Number(start))) {
+    throw new Error("Start bit required.");
+  }
+  const s = parseInt(start, 10);
+  const e =
+    end !== undefined && end !== null && end !== "" && !isNaN(Number(end))
+      ? parseInt(end, 10)
+      : s;
+  if (e < s) throw new Error("End bit cannot be less than start bit.");
+  const cleanLabel = (label || `Field ${s}`).trim().replace(/"/g, "'");
+
+  const line =
+    s === e ? `    ${s}: "${cleanLabel}"` : `    ${s}-${e}: "${cleanLabel}"`;
+  return `${source.trimEnd()}\n${line}\n`;
+}
+
+export function deletePacketField(source, start, end) {
+  if (start === undefined || start === null || start === "" || isNaN(Number(start))) {
+    throw new Error("Start bit required.");
+  }
+  const s = parseInt(start, 10);
+  const e =
+    end !== undefined && end !== null && end !== "" && !isNaN(Number(end))
+      ? parseInt(end, 10)
+      : s;
+
+  const lines = source.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    const match = trimmed.match(/^(\d+)(?:-(\d+))?\s*:/);
+    if (match) {
+      const lineStart = parseInt(match[1], 10);
+      const lineEnd = match[2] ? parseInt(match[2], 10) : lineStart;
+      if (lineStart === s && lineEnd === e) return false;
+    }
+    return true;
+  });
+
+  return lines.join("\n");
+}
+
+
 
 
 

@@ -109,6 +109,10 @@ import {
   deleteRequirement,
   addRequirementRelation,
   deleteRequirementRelation,
+  isPacket,
+  packetFields,
+  addPacketField,
+  deletePacketField,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -843,6 +847,54 @@ test("Requirement Diagram visual modeling: parsing, additions, relationships, an
   assert.throws(() => addRequirementRelation(reqDoc, "from", ""), /Target requirement required/);
   assert.throws(() => deleteRequirementRelation(reqDoc, "", "to"), /From and To required/);
 });
+
+test("Packet / Bytefield diagram visual modeling: parsing, addition, deletion, validation", () => {
+  let pkt = `packet-beta
+0-15: "Source Port"
+16-31: "Destination Port"
+32-63: "Sequence Number"
+64: "URG"
+65: "ACK"`;
+
+  assert.equal(isPacket({ format: "mermaid", source: pkt }), true);
+  assert.equal(isPacket({ format: "mermaid", source: "packet\n0-15: \"Port\"" }), true);
+  assert.equal(isPacket({ format: "mermaid", source: "flowchart TD\n A-->B" }), false);
+  assert.equal(isPacket({ format: "d2", source: pkt }), false);
+
+  let fields = packetFields(pkt);
+  assert.equal(fields.length, 5);
+  assert.equal(fields[0].start, 0);
+  assert.equal(fields[0].end, 15);
+  assert.equal(fields[0].bits, 16);
+  assert.equal(fields[0].label, "Source Port");
+
+  assert.equal(fields[3].start, 64);
+  assert.equal(fields[3].end, 64);
+  assert.equal(fields[3].bits, 1);
+  assert.equal(fields[3].label, "URG");
+
+  pkt = addPacketField(pkt, 66, 95, "Payload Data");
+  assert.match(pkt, /66-95:\s*"Payload Data"/);
+
+  pkt = addPacketField(pkt, 96, null, "Checksum Flag");
+  assert.match(pkt, /96:\s*"Checksum Flag"/);
+
+  pkt = deletePacketField(pkt, 0, 15);
+  assert.doesNotMatch(pkt, /Source Port/);
+
+  pkt = deletePacketField(pkt, 64, 64);
+  assert.doesNotMatch(pkt, /"URG"/);
+
+  fields = packetFields(pkt);
+  assert.equal(fields.some((f) => f.label === "Source Port"), false);
+  assert.equal(fields.some((f) => f.label === "Destination Port"), true);
+  assert.equal(fields.some((f) => f.label === "Payload Data"), true);
+
+  assert.throws(() => addPacketField(pkt, "", 10, "Field"), /Start bit required/);
+  assert.throws(() => addPacketField(pkt, 20, 10, "Field"), /End bit cannot be less than start bit/);
+  assert.throws(() => deletePacketField(pkt, ""), /Start bit required/);
+});
+
 
 
 

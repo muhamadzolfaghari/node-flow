@@ -49,6 +49,7 @@ import {
   Boxes,
   Layers,
   ClipboardList,
+  Binary,
 } from "lucide-react";
 import {
   Button,
@@ -217,6 +218,10 @@ import {
   deleteRequirement,
   addRequirementRelation,
   deleteRequirementRelation,
+  isPacket,
+  packetFields,
+  addPacketField,
+  deletePacketField,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -382,6 +387,10 @@ export default function Studio() {
     [reqRelFrom, setReqRelFrom] = useState(""),
     [reqRelTo, setReqRelTo] = useState(""),
     [reqRelType, setReqRelType] = useState("satisfies"),
+    // Packet diagram modeling state
+    [pktStart, setPktStart] = useState(""),
+    [pktEnd, setPktEnd] = useState(""),
+    [pktLabel, setPktLabel] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -449,6 +458,9 @@ export default function Studio() {
   }, [document?.source]);
   const reqRels = useMemo(() => {
     return isRequirement(document) ? requirementRelations(document.source) : [];
+  }, [document?.source]);
+  const pktList = useMemo(() => {
+    return isPacket(document) ? packetFields(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -4488,6 +4500,125 @@ export default function Studio() {
                     >
                       <Plus className="size-3.5" />
                       Add Relationship
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isPacket(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Binary className="size-3.5 text-primary" />
+                  <span>Packet bytefield tools</span>
+                </div>
+
+                {pktList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Packet Fields ({pktList.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {pktList.map((f, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {f.start === f.end
+                                ? `bit ${f.start}`
+                                : `${f.start}–${f.end}`}
+                            </Badge>
+                            <span className="truncate font-medium text-[11px]">
+                              {f.label}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              ({f.bits} {f.bits === 1 ? "bit" : "bits"})
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deletePacketField(
+                                  document.source,
+                                  f.start,
+                                  f.end,
+                                ),
+                              );
+                              say(`Removed field "${f.label}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add packet field
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Packet start bit"
+                        type="number"
+                        className="h-8 text-xs w-20 font-mono"
+                        placeholder="Start"
+                        value={pktStart}
+                        onChange={(e) => setPktStart(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Packet end bit"
+                        type="number"
+                        className="h-8 text-xs w-20 font-mono"
+                        placeholder="End (opt)"
+                        value={pktEnd}
+                        onChange={(e) => setPktEnd(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Packet field label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Field name (e.g. Checksum)"
+                        value={pktLabel}
+                        onChange={(e) => setPktLabel(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs w-full"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addPacketField(
+                              document.source,
+                              pktStart,
+                              pktEnd,
+                              pktLabel,
+                            ),
+                          );
+                          setPktStart("");
+                          setPktEnd("");
+                          setPktLabel("");
+                          say(`Added packet field "${pktLabel || "Field"}"`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add Field
                     </Button>
                   </div>
                 </div>

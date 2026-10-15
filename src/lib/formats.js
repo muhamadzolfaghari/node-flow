@@ -442,7 +442,7 @@ export function detectFormat(name = "", source = "") {
   }
   if (/^\s*(strict\s+)?(di)?graph\s*[^\n]*\{/i.test(source)) return "graphviz";
   if (
-    /^\s*(?:---[\s\S]*?---\s*)?(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram|mindmap|gantt|pie|xychart|C4|gitGraph|journey|timeline|sankey|quadrantChart|kanban|block|requirementDiagram)\b/m.test(
+    /^\s*(?:---[\s\S]*?---\s*)?(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram|mindmap|gantt|pie|xychart|C4|gitGraph|journey|timeline|sankey|quadrantChart|kanban|block|requirementDiagram|packet)\b/m.test(
       source,
     )
   )
