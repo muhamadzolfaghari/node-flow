@@ -22,6 +22,7 @@ import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
 import { getFormat } from "../lib/formats.js";
 import { fixAnySyntax, testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
 import { explainError } from "../utils/syntax-error-db.js";
+import { formatMermaidCode } from "../utils/mermaid-formatter.js";
 import { Sparkles, CheckCircle2, AlertTriangle, Lightbulb, Check, ChevronDown, Wand2 } from "lucide-react";
 
 // Diagram types list for tokenizer & completions
@@ -307,7 +308,7 @@ const keywordCompletions = keywords.map((label) => ({
   type: "keyword",
 }));
 
-const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
+const CodeEditor = forwardRef(function CodeEditor({ document, onChange, onContextMenu }, ref) {
   const host = useRef(null);
   const editor = useRef(null);
   const latest = useRef({ document, onChange });
@@ -514,11 +515,43 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
     });
   }, [document?.id, document?.source, document?.format, document?.name, createState]);
 
+  const formatDocument = useCallback(() => {
+    if (!editor.current || !latest.current.document) return;
+    const view = editor.current;
+    const docText = view.state.doc.toString();
+    try {
+      const formatted = formatMermaidCode(docText);
+      if (formatted && formatted !== docText) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: formatted },
+        });
+        latest.current.onChange(currentId.current, formatted);
+      }
+    } catch (e) {
+      console.warn("Format document error:", e);
+    }
+  }, []);
+
   useImperativeHandle(ref, () => ({
     undo: () => editor.current && undo(editor.current),
     redo: () => editor.current && redo(editor.current),
     search: () => editor.current && openSearchPanel(editor.current),
     focus: () => editor.current?.focus(),
+    format: formatDocument,
+    runAiFix,
+    selectAll: () => {
+      const v = editor.current;
+      if (v) {
+        v.dispatch({ selection: { anchor: 0, head: v.state.doc.length } });
+        v.focus();
+      }
+    },
+    copyAll: () => {
+      const v = editor.current;
+      if (v) {
+        navigator.clipboard?.writeText(v.state.doc.toString());
+      }
+    },
     goTo: (line) => {
       const v = editor.current;
       if (v) {
@@ -650,7 +683,16 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
       )}
 
       {/* CodeMirror Mounting Host */}
-      <div ref={host} className="code-mirror flex-1 min-h-0 overflow-hidden" />
+      <div
+        ref={host}
+        className="code-mirror flex-1 min-h-0 overflow-hidden"
+        onContextMenu={(e) => {
+          if (onContextMenu) {
+            e.preventDefault();
+            onContextMenu(e);
+          }
+        }}
+      />
     </div>
   );
 });

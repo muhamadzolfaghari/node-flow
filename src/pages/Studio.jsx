@@ -290,10 +290,13 @@ export default function Studio() {
       items: [],
     }),
     [dialog, setDialog] = useState(null),
+    [renameId, setRenameId] = useState(null),
     [format, setFormat] = useState("mermaid"),
     [name, setName] = useState(""),
-    [query, setQuery] = useState(""),
-    [inspectorTab, setInspectorTab] = useState("properties"),
+    [query, setQuery] = useState("");
+  const projectRef = useRef(project);
+  projectRef.current = project;
+  const [inspectorTab, setInspectorTab] = useState("properties"),
     [selected, setSelected] = useState(null),
     [label, setLabel] = useState(""),
     [nodeLabel, setNodeLabel] = useState(""),
@@ -607,6 +610,22 @@ export default function Studio() {
         e.preventDefault();
         openNewFile();
       }
+      if (modifier && key === "w") {
+        if (projectRef.current.activeId) {
+          e.preventDefault();
+          closeTab(projectRef.current.activeId);
+        }
+      }
+      if (modifier && e.shiftKey && key === "t") {
+        e.preventDefault();
+        reopenClosedTab();
+      }
+      if (e.key === "F2" && projectRef.current.activeId) {
+        if (!e.target.closest("input,textarea,[contenteditable]")) {
+          e.preventDefault();
+          startRenameFile(projectRef.current.activeId);
+        }
+      }
       if (key === "?" && !e.target.closest("input,textarea,[contenteditable]"))
         setDialog("shortcuts");
     };
@@ -847,7 +866,9 @@ export default function Studio() {
     }));
     say("Version snapshot saved");
   };
-  const closeTab = (id) =>
+  const recentlyClosedTabs = useRef([]);
+  const closeTab = (id) => {
+    recentlyClosedTabs.current.push(id);
     updateProject((p) => {
       const openIds = p.openIds.filter((open) => open !== id);
       return {
@@ -857,6 +878,23 @@ export default function Studio() {
           p.activeId === id ? openIds[openIds.length - 1] || null : p.activeId,
       };
     });
+  };
+  const reopenClosedTab = () => {
+    const lastId = recentlyClosedTabs.current.pop();
+    if (!lastId) {
+      say("No recently closed tabs to reopen");
+      return;
+    }
+    const doc = project.documents.find((d) => d.id === lastId);
+    if (doc) {
+      updateProject((p) => ({
+        ...p,
+        openIds: p.openIds.includes(lastId) ? p.openIds : [...p.openIds, lastId],
+        activeId: lastId,
+      }));
+      say(`Reopened tab "${doc.name}"`);
+    }
+  };
   const closeOtherTabs = (id) =>
     updateProject((p) => ({
       ...p,
@@ -874,12 +912,14 @@ export default function Studio() {
         activeId: openIds.includes(p.activeId) ? p.activeId : id,
       };
     });
-  const closeAllTabs = () =>
+  const closeAllTabs = () => {
+    recentlyClosedTabs.current.push(...project.openIds);
     updateProject((p) => ({
       ...p,
       openIds: [],
       activeId: null,
     }));
+  };
   const duplicateFile = (docId) => {
     const doc = project.documents.find((d) => d.id === docId);
     if (!doc) return;
@@ -919,6 +959,13 @@ export default function Studio() {
       };
     });
     say("File deleted");
+  };
+  const startRenameFile = (docId) => {
+    const doc = projectRef.current.documents.find((d) => d.id === docId);
+    if (!doc) return;
+    setRenameId(doc.id);
+    setName(doc.name);
+    setDialog("rename");
   };
   const chooseNode = (node) => {
     setSelected(node);
@@ -1009,7 +1056,53 @@ export default function Studio() {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="flex-1 overflow-auto py-1">
+      <div
+        className="flex-1 overflow-auto py-1"
+        onContextMenu={(e) => {
+          if (e.target.closest("button[data-document-id]")) return;
+          e.preventDefault();
+          setContextMenu({
+            isOpen: true,
+            position: { x: e.clientX, y: e.clientY },
+            title: "Explorer",
+            items: [
+              {
+                id: "new-file",
+                label: "New Diagram File",
+                icon: FilePlus,
+                shortcut: "⌘⇧N",
+                onClick: () => openNewFile(),
+              },
+              {
+                id: "import-files",
+                label: "Import Files...",
+                icon: Upload,
+                shortcut: "⌘O",
+                onClick: () => fileRef.current?.click(),
+              },
+              {
+                id: "templates",
+                label: "Browse Templates...",
+                icon: Shapes,
+                onClick: () => setDialog("templates"),
+              },
+              { divider: true },
+              {
+                id: "download-zip",
+                label: "Download Workspace (.zip)",
+                icon: Download,
+                onClick: () => downloadZip(),
+              },
+              {
+                id: "project-backup",
+                label: "Project Backup (.atlas)",
+                icon: Save,
+                onClick: () => projectBackup(),
+              },
+            ],
+          });
+        }}
+      >
         {fileList.map((d) => (
           <button
             key={d.id}
@@ -1017,6 +1110,7 @@ export default function Studio() {
             onClick={() => openDocument(d.id)}
             onContextMenu={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setContextMenu({
                 isOpen: true,
                 position: { x: e.clientX, y: e.clientY },
@@ -1027,6 +1121,13 @@ export default function Studio() {
                     label: "Open in Tab",
                     icon: FileCode2,
                     onClick: () => openDocument(d.id),
+                  },
+                  {
+                    id: "rename",
+                    label: "Rename...",
+                    icon: Pencil,
+                    shortcut: "F2",
+                    onClick: () => startRenameFile(d.id),
                   },
                   {
                     id: "duplicate",
@@ -1041,6 +1142,33 @@ export default function Studio() {
                     onClick: () => {
                       navigator.clipboard?.writeText(d.name);
                       say(`Copied "${d.name}"`);
+                    },
+                  },
+                  {
+                    id: "copy-source",
+                    label: "Copy Diagram Code",
+                    onClick: () => {
+                      navigator.clipboard?.writeText(d.source);
+                      say(`Copied ${d.name} code`);
+                    },
+                  },
+                  { divider: true },
+                  {
+                    id: "export-svg",
+                    label: "Export Vector SVG",
+                    icon: Download,
+                    onClick: () => {
+                      openDocument(d.id);
+                      setTimeout(() => exportSvg(), 100);
+                    },
+                  },
+                  {
+                    id: "export-png",
+                    label: "Export High-Res PNG",
+                    icon: Image,
+                    onClick: () => {
+                      openDocument(d.id);
+                      setTimeout(() => exportPng(), 100);
                     },
                   },
                   { divider: true },
@@ -1110,6 +1238,63 @@ export default function Studio() {
       value={inspectorTab}
       onValueChange={setInspectorTab}
       className="flex h-full min-h-0 flex-col gap-0"
+      onContextMenu={(e) => {
+        if (e.target.closest("input, textarea, select, button")) return;
+        e.preventDefault();
+        setContextMenu({
+          isOpen: true,
+          position: { x: e.clientX, y: e.clientY },
+          title: "Inspector Panel",
+          items: [
+            {
+              id: "tab-props",
+              label: "Show Properties",
+              icon: Settings2,
+              onClick: () => setInspectorTab("properties"),
+            },
+            {
+              id: "tab-history",
+              label: "Show History Snapshots",
+              icon: History,
+              onClick: () => setInspectorTab("history"),
+            },
+            {
+              id: "tab-outline",
+              label: "Show Outline Structure",
+              icon: Layers,
+              onClick: () => setInspectorTab("outline"),
+            },
+            { divider: true },
+            {
+              id: "save-snapshot",
+              label: "Save Version Snapshot Now",
+              icon: GitCommit,
+              onClick: () => saveSnapshot(),
+            },
+            { divider: true },
+            {
+              id: "theme-dark",
+              label: "Theme: Dark (Modern)",
+              onClick: () => setTheme("dark"),
+            },
+            {
+              id: "theme-default",
+              label: "Theme: Light (Default)",
+              onClick: () => setTheme("default"),
+            },
+            {
+              id: "theme-forest",
+              label: "Theme: Forest",
+              onClick: () => setTheme("forest"),
+            },
+            {
+              id: "theme-neutral",
+              label: "Theme: Neutral",
+              onClick: () => setTheme("neutral"),
+            },
+          ],
+        });
+      }}
     >
       <TabsList className="h-10 w-full shrink-0 rounded-none border-b bg-card p-1">
         <TabsTrigger className="text-[11px]" value="properties">
@@ -5505,6 +5690,52 @@ export default function Studio() {
             className="flex h-10 shrink-0 items-center overflow-x-auto border-b bg-background"
             role="tablist"
             aria-label="Open documents"
+            onContextMenu={(e) => {
+              if (e.target.closest('[role="tab"], .group')) return;
+              e.preventDefault();
+              setContextMenu({
+                isOpen: true,
+                position: { x: e.clientX, y: e.clientY },
+                title: "Editor Tabs",
+                items: [
+                  {
+                    id: "new-file",
+                    label: "New Diagram File",
+                    icon: FilePlus,
+                    shortcut: "⌘⇧N",
+                    onClick: () => openNewFile(),
+                  },
+                  {
+                    id: "reopen-closed",
+                    label: "Reopen Closed Tab",
+                    icon: RotateCcw,
+                    shortcut: "⌘⇧T",
+                    disabled: recentlyClosedTabs.current.length === 0,
+                    onClick: () => reopenClosedTab(),
+                  },
+                  {
+                    id: "close-all",
+                    label: "Close All Tabs",
+                    icon: X,
+                    disabled: project.openIds.length === 0,
+                    onClick: () => closeAllTabs(),
+                  },
+                  { divider: true },
+                  {
+                    id: "split-view",
+                    label: "Split View Layout",
+                    icon: Split,
+                    onClick: () => setView("split"),
+                  },
+                  {
+                    id: "toggle-grid",
+                    label: "Cycle Canvas Grid",
+                    icon: Crosshair,
+                    onClick: () => setGrid((g) => (g === "dots" ? "lines" : g === "lines" ? "none" : "dots")),
+                  },
+                ],
+              });
+            }}
             onKeyDown={(event) => {
               if (
                 !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
@@ -5544,6 +5775,7 @@ export default function Studio() {
                     )}
                     onContextMenu={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       setContextMenu({
                         isOpen: true,
                         position: { x: e.clientX, y: e.clientY },
@@ -5575,7 +5807,22 @@ export default function Studio() {
                             label: "Close All Tabs",
                             onClick: () => closeAllTabs(),
                           },
+                          {
+                            id: "reopen-closed",
+                            label: "Reopen Closed Tab",
+                            icon: RotateCcw,
+                            shortcut: "⌘⇧T",
+                            disabled: recentlyClosedTabs.current.length === 0,
+                            onClick: () => reopenClosedTab(),
+                          },
                           { divider: true },
+                          {
+                            id: "rename",
+                            label: "Rename...",
+                            icon: Pencil,
+                            shortcut: "F2",
+                            onClick: () => startRenameFile(id),
+                          },
                           {
                             id: "duplicate",
                             label: "Duplicate File",
@@ -5598,6 +5845,14 @@ export default function Studio() {
                               navigator.clipboard?.writeText(d.source);
                               say(`Copied ${d.name} source to clipboard`);
                             },
+                          },
+                          { divider: true },
+                          {
+                            id: "delete",
+                            label: "Delete File",
+                            icon: Trash2,
+                            danger: true,
+                            onClick: () => deleteFile(id),
                           },
                         ],
                       });
@@ -5715,6 +5970,77 @@ export default function Studio() {
                     ref={editorRef}
                     document={document}
                     onChange={updateSource}
+                    onContextMenu={(e) => {
+                      setContextMenu({
+                        isOpen: true,
+                        position: { x: e.clientX, y: e.clientY },
+                        title: document.name,
+                        items: [
+                          {
+                            id: "format",
+                            label: "Format Document",
+                            icon: Code2,
+                            shortcut: "⇧⌥F",
+                            onClick: () => {
+                              editorRef.current?.format();
+                              say("Formatted document");
+                            },
+                          },
+                          {
+                            id: "ai-fix",
+                            label: "AI Diagnostics & Fix",
+                            icon: Sparkles,
+                            shortcut: "Alt+F",
+                            onClick: () => runAiFix(),
+                          },
+                          { divider: true },
+                          {
+                            id: "undo",
+                            label: "Undo",
+                            icon: Undo2,
+                            shortcut: "⌘Z",
+                            onClick: () => editorRef.current?.undo(),
+                          },
+                          {
+                            id: "redo",
+                            label: "Redo",
+                            icon: Redo2,
+                            shortcut: "⌘⇧Z",
+                            onClick: () => editorRef.current?.redo(),
+                          },
+                          { divider: true },
+                          {
+                            id: "find",
+                            label: "Find & Replace",
+                            icon: Search,
+                            shortcut: "⌘F",
+                            onClick: () => editorRef.current?.search(),
+                          },
+                          {
+                            id: "select-all",
+                            label: "Select All",
+                            shortcut: "⌘A",
+                            onClick: () => editorRef.current?.selectAll(),
+                          },
+                          {
+                            id: "copy-all",
+                            label: "Copy All Code",
+                            icon: Copy,
+                            onClick: () => {
+                              editorRef.current?.copyAll();
+                              say("Copied all source code to clipboard");
+                            },
+                          },
+                          { divider: true },
+                          {
+                            id: "assistant",
+                            label: "Open Diagram Assistant...",
+                            icon: Sparkles,
+                            onClick: () => setDialog("assistant"),
+                          },
+                        ],
+                      });
+                    }}
                   />
                 </div>
               )}
@@ -5753,79 +6079,219 @@ export default function Studio() {
                     theme={theme}
                     selected={selected}
                     onSelect={chooseNode}
-                    onContextMenu={(e) => {
-                      setContextMenu({
-                        isOpen: true,
-                        position: { x: e.clientX, y: e.clientY },
-                        title: "Canvas Controls",
-                        items: [
-                          {
-                            id: "fit",
-                            label: "Fit to View",
-                            icon: Maximize,
-                            shortcut: "F",
-                            onClick: () => canvasRef.current?.fit(),
-                          },
-                          {
-                            id: "center",
-                            label: "Center Content",
-                            icon: Crosshair,
-                            shortcut: "C",
-                            onClick: () => canvasRef.current?.center(),
-                          },
-                          {
-                            id: "reset",
-                            label: "Reset Zoom (100%)",
-                            icon: RotateCcw,
-                            shortcut: "0",
-                            onClick: () => canvasRef.current?.reset(),
-                          },
-                          {
-                            id: "zoom-in",
-                            label: "Zoom In",
-                            icon: Plus,
-                            shortcut: "+",
-                            onClick: () => canvasRef.current?.zoomIn(),
-                          },
-                          {
-                            id: "zoom-out",
-                            label: "Zoom Out",
-                            icon: Minus,
-                            shortcut: "-",
-                            onClick: () => canvasRef.current?.zoomOut(),
-                          },
-                          { divider: true },
-                          {
-                            id: "export-svg",
-                            label: "Export Vector SVG",
-                            icon: Download,
-                            onClick: exportSvg,
-                          },
-                          {
-                            id: "export-png",
-                            label: "Export High-Res PNG",
-                            icon: Image,
-                            onClick: exportPng,
-                          },
-                          {
-                            id: "copy-code",
-                            label: "Copy Mermaid Source",
-                            icon: Copy,
-                            onClick: () => {
-                              navigator.clipboard?.writeText(document.source);
-                              say("Copied source to clipboard");
+                    onContextMenu={(e, nodeInfo) => {
+                      if (nodeInfo) {
+                        const targetNodeId =
+                          nodeInfo.id.match(/^flowchart-(.+)-\d+$/)?.[1] ||
+                          nodeInfo.id;
+                        setContextMenu({
+                          isOpen: true,
+                          position: { x: e.clientX, y: e.clientY },
+                          title: nodeInfo.label || `Node ${targetNodeId}`,
+                          items: [
+                            {
+                              id: "add-child",
+                              label: "Add Connected Step",
+                              icon: Plus,
+                              shortcut: "Tab",
+                              disabled: !isFlowchart(document),
+                              onClick: () => {
+                                try {
+                                  const res = addFlowchartChild(
+                                    document.source,
+                                    targetNodeId,
+                                    "Next step",
+                                    edgeArrow,
+                                  );
+                                  updateSource(document.id, res.source);
+                                  setSelected({
+                                    id: `flowchart-${res.childId}-0`,
+                                    label: res.childLabel,
+                                  });
+                                  setLabel(res.childLabel);
+                                  say(`Added connected step ${res.childId}`);
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              },
                             },
-                          },
-                          { divider: true },
-                          {
-                            id: "quick-fix",
-                            label: "AI Diagnostics & Fix",
-                            icon: Sparkles,
-                            shortcut: "Alt+F",
-                            onClick: () => runAiFix(),
-                          },
-                        ],
-                      });
+                            {
+                              id: "duplicate-node",
+                              label: "Duplicate Node",
+                              icon: Copy,
+                              shortcut: "⌘D",
+                              disabled: !isFlowchart(document),
+                              onClick: () => {
+                                try {
+                                  const res = duplicateFlowchartNode(
+                                    document.source,
+                                    targetNodeId,
+                                  );
+                                  updateSource(document.id, res.source);
+                                  setSelected({
+                                    id: `flowchart-${res.duplicateId}-0`,
+                                    label: res.duplicateLabel,
+                                  });
+                                  setLabel(res.duplicateLabel);
+                                  say(`Duplicated node as ${res.duplicateId}`);
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              },
+                            },
+                            {
+                              id: "edit-label",
+                              label: "Edit in Inspector",
+                              icon: Pencil,
+                              onClick: () => {
+                                setInspector(true);
+                                setInspectorTab("properties");
+                              },
+                            },
+                            {
+                              id: "delete-node",
+                              label: "Delete Node",
+                              icon: Trash2,
+                              danger: true,
+                              disabled: !isFlowchart(document),
+                              onClick: () => {
+                                try {
+                                  updateSource(
+                                    document.id,
+                                    deleteFlowchartNode(document.source, targetNodeId),
+                                  );
+                                  setSelected(null);
+                                  say("Node removed");
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              },
+                            },
+                            { divider: true },
+                            {
+                              id: "copy-node-id",
+                              label: "Copy Node ID",
+                              onClick: () => {
+                                navigator.clipboard?.writeText(targetNodeId);
+                                say(`Copied node ID "${targetNodeId}"`);
+                              },
+                            },
+                            {
+                              id: "copy-node-label",
+                              label: "Copy Node Label",
+                              onClick: () => {
+                                navigator.clipboard?.writeText(
+                                  nodeInfo.label || targetNodeId,
+                                );
+                                say(
+                                  `Copied label "${nodeInfo.label || targetNodeId}"`,
+                                );
+                              },
+                            },
+                            { divider: true },
+                            {
+                              id: "fit",
+                              label: "Fit Canvas to View",
+                              icon: Maximize,
+                              shortcut: "F",
+                              onClick: () => canvasRef.current?.fit(),
+                            },
+                            {
+                              id: "center",
+                              label: "Center Content",
+                              icon: Crosshair,
+                              shortcut: "C",
+                              onClick: () => canvasRef.current?.center(),
+                            },
+                          ],
+                        });
+                      } else {
+                        setContextMenu({
+                          isOpen: true,
+                          position: { x: e.clientX, y: e.clientY },
+                          title: "Canvas Controls",
+                          items: [
+                            {
+                              id: "fit",
+                              label: "Fit to View",
+                              icon: Maximize,
+                              shortcut: "F",
+                              onClick: () => canvasRef.current?.fit(),
+                            },
+                            {
+                              id: "center",
+                              label: "Center Content",
+                              icon: Crosshair,
+                              shortcut: "C",
+                              onClick: () => canvasRef.current?.center(),
+                            },
+                            {
+                              id: "reset",
+                              label: "Reset Zoom (100%)",
+                              icon: RotateCcw,
+                              shortcut: "0",
+                              onClick: () => canvasRef.current?.reset(),
+                            },
+                            {
+                              id: "zoom-in",
+                              label: "Zoom In",
+                              icon: Plus,
+                              shortcut: "+",
+                              onClick: () => canvasRef.current?.zoomIn(),
+                            },
+                            {
+                              id: "zoom-out",
+                              label: "Zoom Out",
+                              icon: Minus,
+                              shortcut: "-",
+                              onClick: () => canvasRef.current?.zoomOut(),
+                            },
+                            { divider: true },
+                            {
+                              id: "export-svg",
+                              label: "Export Vector SVG",
+                              icon: Download,
+                              onClick: exportSvg,
+                            },
+                            {
+                              id: "export-png",
+                              label: "Export High-Res PNG",
+                              icon: Image,
+                              onClick: exportPng,
+                            },
+                            {
+                              id: "copy-code",
+                              label: "Copy Mermaid Source",
+                              icon: Copy,
+                              onClick: () => {
+                                navigator.clipboard?.writeText(document.source);
+                                say("Copied source to clipboard");
+                              },
+                            },
+                            { divider: true },
+                            {
+                              id: "toggle-grid",
+                              label: "Cycle Canvas Grid",
+                              icon: Crosshair,
+                              onClick: () =>
+                                setGrid((g) =>
+                                  g === "dots"
+                                    ? "lines"
+                                    : g === "lines"
+                                      ? "none"
+                                      : "dots",
+                                ),
+                            },
+                            {
+                              id: "quick-fix",
+                              label: "AI Diagnostics & Fix",
+                              icon: Sparkles,
+                              shortcut: "Alt+F",
+                              onClick: () => runAiFix(),
+                            },
+                          ],
+                        });
+                      }
                     }}
                     onQuickAdd={() => {
                       if (!isFlowchart(document) || !nodeId) return;
@@ -5917,7 +6383,57 @@ export default function Studio() {
               </div>
             </div>
           )}
-          <div className="max-h-32 shrink-0 overflow-auto border-t bg-card px-3 py-2">
+          <div
+            className="max-h-32 shrink-0 overflow-auto border-t bg-card px-3 py-2"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({
+                isOpen: true,
+                position: { x: e.clientX, y: e.clientY },
+                title: "Problems & Diagnostics",
+                items: [
+                  {
+                    id: "ai-fix-problems",
+                    label: "Run AI Diagnostics & Fix",
+                    icon: Sparkles,
+                    shortcut: "Alt+F",
+                    onClick: () => runAiFix(),
+                  },
+                  {
+                    id: "copy-error",
+                    label: "Copy Error Diagnostics",
+                    icon: Copy,
+                    disabled: !preview.error,
+                    onClick: () => {
+                      if (preview.error) {
+                        navigator.clipboard?.writeText(preview.error);
+                        say("Copied error to clipboard");
+                      }
+                    },
+                  },
+                  { divider: true },
+                  {
+                    id: "view-split",
+                    label: "View: Split",
+                    icon: Split,
+                    onClick: () => setView("split"),
+                  },
+                  {
+                    id: "view-code",
+                    label: "View: Source Only",
+                    icon: Code2,
+                    onClick: () => setView("code"),
+                  },
+                  {
+                    id: "view-canvas",
+                    label: "View: Canvas Only",
+                    icon: Maximize,
+                    onClick: () => setView("canvas"),
+                  },
+                ],
+              });
+            }}
+          >
             <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
               <AlertCircle className="size-3" />
               Problems & output
@@ -5962,7 +6478,57 @@ export default function Studio() {
           </aside>
         )}
       </div>
-      <div className="flex h-7 shrink-0 items-center gap-3 border-t bg-card px-3 text-[10px] text-muted-foreground">
+      <div
+        className="flex h-7 shrink-0 items-center gap-3 border-t bg-card px-3 text-[10px] text-muted-foreground"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setContextMenu({
+            isOpen: true,
+            position: { x: e.clientX, y: e.clientY },
+            title: "Status Bar & Workspace",
+            items: [
+              {
+                id: "shortcuts",
+                label: "Keyboard Shortcuts...",
+                icon: Braces,
+                shortcut: "?",
+                onClick: () => setDialog("shortcuts"),
+              },
+              {
+                id: "toggle-explorer",
+                label: "Toggle File Explorer",
+                icon: PanelLeft,
+                onClick: () => setExplorer((ex) => !ex),
+              },
+              {
+                id: "toggle-inspector",
+                label: "Toggle Inspector Sidebar",
+                icon: PanelRight,
+                onClick: () => setInspector((ins) => !ins),
+              },
+              { divider: true },
+              {
+                id: "reset-view",
+                label: "Reset Layout to Split View",
+                icon: Split,
+                onClick: () => setView("split"),
+              },
+              {
+                id: "save-project",
+                label: "Save Project Now",
+                icon: Save,
+                shortcut: "⌘S",
+                onClick: () =>
+                  say(
+                    saveStatus === "Saved locally"
+                      ? "Project saved in this browser"
+                      : saveStatus,
+                  ),
+              },
+            ],
+          });
+        }}
+      >
         <span className="flex items-center gap-1.5">
           <span
             className={cn(
@@ -6010,7 +6576,10 @@ export default function Studio() {
       <Dialog
         open={!!dialog}
         onOpenChange={(open) => {
-          if (!open) setDialog(null);
+          if (!open) {
+            setRenameId(null);
+            setDialog(null);
+          }
         }}
       >
         <DialogContent
@@ -6066,9 +6635,10 @@ export default function Studio() {
                   addProject(createProject(name.trim()));
                   nav("/studio", { replace: true });
                 } else {
+                  const targetDocId = renameId || document?.id;
                   if (
                     project.documents.some(
-                      (d) => d.id !== document.id && d.name === name.trim(),
+                      (d) => d.id !== targetDocId && d.name === name.trim(),
                     )
                   ) {
                     say("A file already has that name.");
@@ -6077,9 +6647,10 @@ export default function Studio() {
                   updateProject((p) => ({
                     ...p,
                     documents: p.documents.map((d) =>
-                      d.id === document.id ? { ...d, name: name.trim() } : d,
+                      d.id === targetDocId ? { ...d, name: name.trim() } : d,
                     ),
                   }));
+                  setRenameId(null);
                 }
                 setDialog(null);
               }}
@@ -6279,6 +6850,10 @@ export default function Studio() {
                 ["Save locally", "⌘ / Ctrl + S"],
                 ["Open files", "⌘ / Ctrl + O"],
                 ["New file", "⌘ / Ctrl + Shift + N"],
+                ["Close active tab", "⌘ / Ctrl + W"],
+                ["Reopen closed tab", "⌘ / Ctrl + Shift + T"],
+                ["Rename active file", "F2"],
+                ["Context menu (any section)", "Right Click"],
                 ["Search commands", "⌘ / Ctrl + K"],
                 ["Find in source", "⌘ / Ctrl + F"],
                 ["Undo / redo", "⌘Z / ⇧⌘Z"],

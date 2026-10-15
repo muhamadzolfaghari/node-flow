@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * VSCode-inspired floating context menu.
@@ -13,13 +13,41 @@ export function ContextMenu({
   title,
 }) {
   const menuRef = useRef(null);
+  const [coords, setCoords] = useState(position);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    // Measure and clamp exactly to viewport boundaries
+    if (menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      const pad = 8;
+      const x = Math.max(pad, Math.min(position.x, window.innerWidth - rect.width - pad));
+      const y = Math.max(pad, Math.min(position.y, window.innerHeight - rect.height - pad));
+      setCoords({ x, y });
+    } else {
+      setCoords(position);
+    }
+
+    const actionable = items.filter((it) => !it.divider && !it.disabled);
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
+        onClose();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev + 1) % actionable.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev <= 0 ? actionable.length - 1 : prev - 1));
+      } else if (e.key === "Enter" && activeIndex >= 0 && activeIndex < actionable.length) {
+        e.preventDefault();
+        actionable[activeIndex]?.onClick?.();
         onClose();
       }
     };
@@ -43,25 +71,19 @@ export function ContextMenu({
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, position, onClose, items]);
 
   if (!isOpen || !items || items.length === 0) return null;
-
-  // Viewport clamping
-  const menuWidth = 220;
-  const menuHeight = items.length * 32 + 20;
-  const clampedX = Math.min(position.x, window.innerWidth - menuWidth - 10);
-  const clampedY = Math.min(position.y, window.innerHeight - menuHeight - 10);
 
   return (
     <div
       ref={menuRef}
       role="menu"
       aria-label={title || "Context Menu"}
-      className="fixed z-50 min-w-[210px] rounded-lg border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-2xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 select-none"
+      className="fixed z-50 min-w-[210px] max-w-[320px] rounded-lg border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-2xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 select-none"
       style={{
-        left: Math.max(10, clampedX),
-        top: Math.max(10, clampedY),
+        left: coords.x,
+        top: coords.y,
       }}
       onContextMenu={(e) => e.preventDefault()}
     >

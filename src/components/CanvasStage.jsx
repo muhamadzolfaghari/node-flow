@@ -365,7 +365,20 @@ const CanvasStage = forwardRef(function CanvasStage(
       onContextMenu={(e) => {
         if (callbacks.current.onContextMenu) {
           e.preventDefault();
-          callbacks.current.onContextMenu(e);
+          let nodeInfo = null;
+          try {
+            const targetNode = globalThis.document
+              ?.elementFromPoint(e.clientX, e.clientY)
+              ?.closest("g.node, g.entity, g.cluster, g.actor");
+            if (targetNode) {
+              const label = targetNode
+                .querySelector(".nodeLabel, .label, text, title")
+                ?.textContent?.trim();
+              nodeInfo = { id: targetNode.id, label: label || targetNode.id };
+              callbacks.current.onSelect?.(nodeInfo);
+            }
+          } catch {}
+          callbacks.current.onContextMenu(e, nodeInfo);
         }
       }}
     >
