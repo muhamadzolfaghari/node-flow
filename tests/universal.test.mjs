@@ -98,10 +98,15 @@ test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
   assert.equal(f4.success, true);
 });
 
-test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml", async () => {
+test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi", async () => {
   const mod = await import("../src/utils/exporters/mermaid-export.js");
-  const seq = "sequenceDiagram\n  A->>B: GET /items";
+  const seq = "sequenceDiagram\n  A->>B: GET /items\n  A->>B: POST /items";
   assert.match(mod.mermaidToPlantUml(seq), /@startuml/);
+  const openapi = JSON.parse(mod.mermaidSequenceToOpenApiStub(seq, "Store API"));
+  assert.equal(openapi.openapi, "3.0.3");
+  assert.equal(openapi.info.title, "Store API");
+  assert.ok(openapi.paths["/items"].get);
+  assert.ok(openapi.paths["/items"].post);
   const flow = "flowchart TD\n  A[Hi] --> B[There]";
   assert.match(mod.mermaidToDot(flow), /digraph/);
   assert.match(mod.mermaidToD2(flow), /direction/);

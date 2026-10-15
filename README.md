@@ -90,6 +90,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 
 - Original editable source in its file format.
 - Derived Mermaid source, except native Graphviz previews.
+- Derived code, schema, and outline specifications: PlantUML (`.puml`), Graphviz DOT (`.dot`), D2 (`.d2`), SQL DDL (`.sql`), DBML (`.dbml`), TypeScript stubs (`.ts`), UML XMI 2.1 (`.xmi`), OPML outlines (`.opml`), Markdown outlines (`.md`), and OpenAPI 3.0 specifications (`.json`) extracted from sequence diagrams.
 - SVG vector diagrams with embedded diagram source metadata (`<metadata>` and XML comments) so exported `.svg` files can be dropped back into the studio to resume editing with 100% fidelity.
 - PNG at 2× or 4× scale; dimensions depend on the diagram.
 - PDF with a high-resolution raster image (not vector PDF).
