@@ -28,8 +28,10 @@ import {
   FolderPlus,
   Sparkles,
   ArrowUpRight,
+  Activity,
 } from "lucide-react";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
+import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 
 export default function CanvasStage({
   ref,
@@ -90,7 +92,8 @@ export default function CanvasStage({
     [searchOpen, setSearchOpen] = useState(false),
     [searchQuery, setSearchQuery] = useState(""),
     [searchIndex, setSearchIndex] = useState(0),
-    [minimapViewport, setMinimapViewport] = useState(null);
+    [minimapViewport, setMinimapViewport] = useState(null),
+    [isSimulating, setIsSimulating] = useState(false);
 
   const callbacks = useRef({
     onSelect,
@@ -1703,7 +1706,12 @@ export default function CanvasStage({
         >
           <MousePointer2 />
         </Tool>
-        <span className="mx-1 h-4 border-l border-border/80" />
+        <Tool
+          title={isSimulating ? "Stop Flow Simulator" : "Interactive Data Flow Simulator"}
+          onClick={() => setIsSimulating(!isSimulating)}
+        >
+          <Activity className={isSimulating ? "text-cyan-400 animate-pulse" : ""} />
+        </Tool>
         <Tool title="Search nodes (Cmd/Ctrl+P)" onClick={() => setSearchOpen(true)}>
           <Search />
         </Tool>
@@ -1713,6 +1721,13 @@ export default function CanvasStage({
           </Tool>
         )}
       </div>
+
+      {/* Interactive Data Flow Simulator Overlay */}
+      <FlowSimulatorOverlay
+        active={isSimulating}
+        onClose={() => setIsSimulating(false)}
+        containerRef={containerRef}
+      />
     </div>
   );
 }

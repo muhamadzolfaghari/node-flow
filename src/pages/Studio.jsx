@@ -60,8 +60,9 @@ import {
   Binary,
   Network,
   Minus,
-  RotateCcw,
   Image,
+  Cloud,
+  FolderGit2,
 } from "lucide-react";
 import {
   Button,
@@ -109,6 +110,10 @@ import { useDocumentPreview } from "../hooks/useDocumentPreview.js";
 import { useDiagramAssistant } from "../hooks/useDiagramAssistant.js";
 import { Exporter } from "../components/exporter.js";
 import ExportStudioModal from "../components/ExportStudioModal.jsx";
+import CloudStencilModal from "../components/CloudStencilModal.jsx";
+import ShowcaseModal from "../components/ShowcaseModal.jsx";
+import GitHubSyncDialog from "../components/GitHubSyncDialog.jsx";
+import { enterpriseStorage } from "../lib/indexeddb-storage.js";
 import { StorageManager } from "../components/storage.js";
 import { formatMermaidCode } from "../utils/mermaid-formatter.js";
 import { SUPPORTED_DIAGRAM_TYPES } from "../utils/importers/describe-to-diagram.js";
@@ -490,7 +495,17 @@ export default function Studio() {
     [aiOllamaModel, setAiOllamaModel] = useState(() => localStorage.getItem("nodeflow_ollama_model") || "deepseek-coder"),
     [aiDestination, setAiDestination] = useState("new-file"),
     [presentation, setPresentation] = useState(false),
-    [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
+    [isExportStudioOpen, setIsExportStudioOpen] = useState(false),
+    [isStencilOpen, setIsStencilOpen] = useState(false),
+    [isShowcaseOpen, setIsShowcaseOpen] = useState(false),
+    [isGitHubSyncOpen, setIsGitHubSyncOpen] = useState(false);
+
+  // Enterprise IndexedDB unlimited background persistence
+  useEffect(() => {
+    if (project?.id) {
+      enterpriseStorage.saveProjectBackup(project).catch(() => {});
+    }
+  }, [project]);
   const assistant = useDiagramAssistant();
   const preview = useDocumentPreview(document, theme, view);
   const definition = getFormat(document?.format),
@@ -5686,6 +5701,36 @@ export default function Studio() {
               Exit
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setIsStencilOpen(true)}
+            title="Cloud & Architecture Stencil Palette"
+          >
+            <Cloud className="size-3.5 text-sky-400" />
+            <span className="hidden sm:inline">Stencils</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setIsShowcaseOpen(true)}
+            title="Enterprise Architecture Showcases"
+          >
+            <Layers className="size-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">Architectures</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setIsGitHubSyncOpen(true)}
+            title="GitHub Repository Sync"
+          >
+            <FolderGit2 className="size-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Git Sync</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="text-xs" disabled={!document}>
@@ -7392,6 +7437,62 @@ export default function Studio() {
         source={document?.source || ""}
         format={document?.format || "mermaid"}
         currentTheme={theme}
+      />
+      <CloudStencilModal
+        isOpen={isStencilOpen}
+        onClose={() => setIsStencilOpen(false)}
+        onInsertSnippet={(snippet) => {
+          if (document?.id) {
+            updateSource(
+              document.id,
+              (document.source || "") +
+                (document.source?.endsWith("\n") ? "" : "\n") +
+                snippet +
+                "\n"
+            );
+            say("Cloud stencil inserted into diagram");
+          } else {
+            newFiles([
+              {
+                name: "cloud-architecture.mmd",
+                format: "mermaid",
+                source: `flowchart TD\n  ${snippet}\n`,
+              },
+            ]);
+            say("Created new cloud diagram with stencil");
+          }
+        }}
+      />
+      <ShowcaseModal
+        isOpen={isShowcaseOpen}
+        onClose={() => setIsShowcaseOpen(false)}
+        onLoadShowcase={(sc) => {
+          const fname = `${sc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.mmd`;
+          newFiles([
+            {
+              name: fname,
+              format: sc.format || "mermaid",
+              source: sc.code,
+            },
+          ]);
+          say(`Loaded enterprise showcase: ${sc.title}`);
+        }}
+      />
+      <GitHubSyncDialog
+        isOpen={isGitHubSyncOpen}
+        onClose={() => setIsGitHubSyncOpen(false)}
+        currentDocument={document}
+        onPull={(content, path) => {
+          const fname = path.split("/").pop() || "diagram.mmd";
+          newFiles([
+            {
+              name: fname,
+              format: "mermaid",
+              source: content,
+            },
+          ]);
+          say(`Pulled ${fname} from GitHub!`);
+        }}
       />
     </div>
   );

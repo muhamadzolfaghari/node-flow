@@ -112,6 +112,31 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **Cloud & Architecture Diagrams**: Cloud microservices and VPC topology modeling with group boundaries, service declarations with icon presets (server, database, cloud, disk, internet, key, user), port/side directional connections (`R`, `L`, `T`, `B`), and element deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
+## Enterprise Capabilities
+
+NodeFlow provides battle-tested enterprise architecture engineering tools, zero-server offline persistence, and direct version control synchronization:
+
+- **Enterprise Cloud & Architecture Stencil Palette**:
+  - One-click insertion of 24+ production cloud and infrastructure components across **AWS** (Lambda, S3, DynamoDB, API Gateway, SQS, ECS Fargate), **GCP** (Cloud Run, BigQuery, Pub/Sub, Cloud Storage), **Azure** (Functions, Cosmos DB, AKS), **Kubernetes & CNCF** (Pods, Ingress Controllers, ClusterIP Services), **Databases** (PostgreSQL, Redis Cluster, Apache Kafka, Snowflake), and **Cybersecurity & Edge** (Cloudflare WAF, HashiCorp Vault, Keycloak OIDC).
+  - Instant fuzzy search across services, tags, and cloud providers.
+- **Interactive Data Flow Simulator**:
+  - Live hardware-accelerated SVG photon pulses travelling along connection paths and dependency edges.
+  - Interactive playback deck: Play / Pause, Speed regulation (0.5×, 1×, 2×), Reset counter, and real-time active edge tracking across complex architectures.
+- **Enterprise IndexedDB Offline Storage Engine**:
+  - High-capacity client-side object stores (`showcases`, `projects`, `github_cache`) bypassing traditional 5MB `localStorage` limits.
+  - Automatic background project checkpoint synchronization with zero cloud dependency.
+  - Pre-loaded enterprise architecture showcase library:
+    - *AWS Multi-Region Serverless Banking (FinTech active-active with DynamoDB Global Tables)*
+    - *Kubernetes & Istio Zero-Trust Service Mesh (mTLS & Envoy sidecars)*
+    - *C4 Enterprise Banking System (Core Banking, API Gateway, Anti-Fraud)*
+    - *Event-Driven Kafka Lakehouse (Debezium CDC, Spark Structured Streaming, Apache Iceberg)*
+    - *Zero-Trust Identity & API Security (OAuth2 PKCE, Keycloak, HashiCorp Vault, Cloudflare WAF)*
+- **Direct GitHub Repository Synchronization**:
+  - Direct integration with GitHub REST API via secure personal access token (PAT) stored exclusively in local browser storage.
+  - Pull and commit diagram source files directly to branches (`main`, `develop`, etc.) with customized commit messages.
+- **Enterprise Research & Benchmark**:
+  - Comprehensive competitive analysis against MermaidChart, Eraser.io, IcePanel, Excalidraw, and Draw.io with a strategic roadmap documented in `enterprise_research_and_roadmap.md`.
+
 ## Exports
 
 - Original editable source in its file format.
