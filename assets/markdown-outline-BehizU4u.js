@@ -1,6 +1,0 @@
-import{sanitizeMindmapNodeText as p}from"./xmind-CDgVcvFS.js";import"./jszip.min-CV9xWxI3.js";import"./index-DNCdb7EN.js";function u(n,o="mindmap"){if(!n||typeof n!="string")throw new Error("Please provide outline text to convert.");const t=n.split(/\r?\n/).map(e=>e.replace(/\t/g,"    ")).filter(e=>e.trim().length>0);if(t.length===0)throw new Error("Outline text is empty.");const r=[];for(const e of t){const s=e.trim().replace(/^([-*+]|\d+\.)\s+/,"").replace(/^#+\s*/,""),a=e.length-e.trimStart().length;r.push({indent:a,text:s})}return o==="flowchart"?h(r):l(r)}function l(n){const o=["mindmap"],r=n[0].text.replace(/"/g,"'").trim();o.push(`  root(("${r}"))`);const e=n.length>1?n[1].indent:2;for(let i=1;i<n.length;i++){const s=n[i],a=Math.max(2,Math.floor(s.indent/Math.max(2,e))+2),c="  ".repeat(a);o.push(`${c}${p(s.text)}`)}return o.join(`
-`)+`
-`}function h(n){const o=["flowchart TD"],t=[];return n.forEach((r,e)=>{const i=`node_${e+1}`,s=r.text.replace(/"/g,"'").replace(/[\[\]]/g,"");for(o.push(`  ${i}["${s}"]`);t.length>0&&t[t.length-1].indent>=r.indent;)t.pop();if(t.length>0){const a=t[t.length-1];o.push(`  ${a.id} --> ${i}`)}t.push({indent:r.indent,id:i})}),o.join(`
-`)+`
-`}export{u as parseOutline};
-//# sourceMappingURL=markdown-outline-BehizU4u.js.map
