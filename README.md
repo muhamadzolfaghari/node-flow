@@ -9,7 +9,17 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
 - **Projects and files:** create and rename projects, import source files or folders, switch document tabs, duplicate and rename files, and search the explorer.
 - **Code editor:** CodeMirror with language highlighting, Mermaid completions, bracket matching, folding, search, undo/redo, and independent document histories.
 - **Live previews:** Mermaid and Graphviz render natively. Other supported languages retain their original editable source and derive a Mermaid preview. Diagnostics explain parser failures and conversion limits. Invalid edits retain the last valid preview for that file.
-- **Visual diagram editing:**
+- **Interactive live canvas & direct manipulation:**
+  - *Content auto-focus & framing:* accurate content bounding box calculation unions root SVG child groups and reconciles viewBox metadata with two-frame settle guarantees, eliminating dead whitespace and sub-element zoom traps.
+  - *Direct node selection & marquee lasso:* click any diagram node to reveal glowing neon selection ring; hold `Shift` and drag across the canvas to draw an interactive marquee selection box to lasso enclosed elements; click empty canvas space to deselect.
+  - *Spacebar canvas panning:* hold Spacebar to immediately toggle hand pan mode (`tool-hand`) with grab/grabbing cursor without losing selection state.
+  - *Dynamic node-anchored toolbar:* floating toolbar tracks the active node across zoom/pan levels; features inline label rename (`Enter` to save, `Esc` to cancel), Fast Shape Switcher (Rectangle, Rounded, Stadium, Cylinder, Diamond, Circle, Hexagon), Quick Color Swatches (8 curated styles), Add Step (`Tab`), Connect to Node picker, Duplicate (`⌘D`), and Delete (`Backspace`).
+  - *Interactive edge context menu:* right-click any connection line, arrow, or label directly on the canvas to disconnect `from → to` in one click or copy connection syntax.
+  - *Blank canvas quick creation:* right-click empty canvas space to instantly add a new step or access framing and export controls.
+  - *Dual-tier blueprint grid:* 4-way grid cycling (`dots` → `lines` → `blueprint` → `none`) featuring major 96px structural lines and minor 16px divisions.
+  - *Curated designer themes & ambient lighting:* 8 themes (Dark Studio Neon, Light Paper, Nord Arctic Frost, Tokyo Night Cyber Indigo, Cyberpunk Neon Gold, Catppuccin Mocha Pastel, Forest Pine, Neutral Slate) with matching ambient radial stage backlights.
+  - *Minimap, tool toggle & zoom presets:* minimap navigation, tool mode toggle (Pointer `V` vs. Hand `H`), zoom popover (200%, 150%, 125%, 100%, 75%, 50%, Fit, Center, Reset), and presentation mode with laser pointer.
+- **Visual diagram modeling suite:**
   - *Flowcharts:* select labeled nodes, rename labels, switch node shapes (8 shapes: rectangle, rounded, stadium, subroutine, cylinder, circle, diamond, hexagon), apply color accent palettes, switch layout direction (TD, LR, BT, RL), duplicate nodes with style cloning, connect existing nodes with customizable arrow styles (solid, dotted, thick, open, etc.), inspect incoming and outgoing connections with one-click edge disconnection, quick-add connected child steps, and delete nodes with clean edge cascade.
   - *Sequence diagrams:* visual participant and actor management, message passing with arrow styles (synchronous, dotted reply, async, failure), and clean participant deletion.
   - *Class diagrams:* class creation, attribute and method declarations, UML relationships (inheritance, composition, aggregation, association, dependency, realization), and class deletion.
@@ -17,8 +27,13 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
   - *Entity-Relationship (ER) diagrams:* visual entity management, typed attributes with primary key (PK) / foreign key (FK) indicators, relational cardinality connectors (`||--||`, `||--o{`, `}|--|{`, `|o--||`, etc.), and entity deletion.
   - *Mindmaps:* topic hierarchy viewer with indent visualization, subtopic branch insertion with custom shapes (circle, square, rounded, cloud, bang), and single-click branch subtree deletion.
   - *Git graphs:* branch management, commit generation with tags and highlight types, branch checkout, and branch merging with release tags.
-  - *Diagram look & themes:* one-click render look toggle (Classic vector vs. Hand-drawn sketchy) and Mermaid theme selection (Default, Neutral, Dark, Forest, Base) managed through clean frontmatter directives. Changes update source in real time.
-- **Canvas:** pan, zoom, fit, center, minimap navigation, grid styles, wheel pan/zoom modes, arrow-key navigation, pinch zoom, and presentation mode with a laser pointer.
+  - *Diagram look & themes:* one-click render look toggle (Classic vector vs. Hand-drawn sketchy) and theme presets managed through clean frontmatter directives with real-time updates.
+- **VSCode-grade context menu architecture:**
+  - Context menus across 10 distinct application regions: document tabs (Close, Close Others, Close to the Right, Close Saved, Duplicate, Rename, Export, Reveal in Explorer), Explorer header, Explorer files, Canvas nodes, Canvas connection edges, Blank canvas controls, Monaco code editor, Breadcrumbs, Inspector panel, and Status bar.
+- **Geospatial & Vector Tile engine:**
+  - Direct conversion of Mapbox Vector Tile (MVT) Protobuf schemas (`.mvt`, `.pbf`, `syntax = "proto2"`), ESRI Shapefile attribute table dumps (`.shp`, `.dbf`), TopoJSON shared arc compression topologies (`.topojson`), and GeoJSON FeatureCollections into structured visual topologies with animated canvas HUD badge.
+- **Modern React 19 architecture:**
+  - Built on React 19 utilizing `useActionState` for async transitions, `useOptimistic` for instant tab and title updates, `useDeferredValue` for responsive search filtering, and direct `ref` props across components.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
 - **Project portability & exports:** download SVG with embedded roundtrip source metadata, high-res PNG (2×, 4×), print-ready PDF, standalone offline interactive HTML viewer, 16:9 widescreen PowerPoint presentation slides (`.pptx`), `.atlas` project backups, and ZIP source archives.
 - **Diagram assistant:** local rule-based drafts, plus optional Qwen2.5-Coder inference through WebLLM. Qwen requires WebGPU and downloads model weights on first use; no API key is needed. Generated drafts open as new files for review.
@@ -144,14 +159,19 @@ See [verification results and limits](docs/VERIFICATION.md) and the [desktop and
 | New file | `Ctrl/Cmd + Shift + N` |
 | Search commands | `Ctrl/Cmd + K` |
 | Find in source | `Ctrl/Cmd + F` |
+| AI diagnostics & fix | `Alt + F` |
 | Undo / redo | Platform editor shortcuts |
 | Indent / dedent | `Tab` / `Shift + Tab` |
 | Fit / center / reset canvas | `F` / `C` / `0` |
-| Zoom | `+` / `−` |
-| Pan | Drag or arrow keys; Shift + arrows for larger steps |
+| Zoom in / zoom out | `+` / `−` |
+| Canvas pan | Space + Drag, or arrow keys |
+| Marquee box select | `Shift + Drag` (Pointer mode) |
+| Pointer / select tool | `V` |
+| Hand / pan tool | `H` |
 | Quick-add child step | `Tab` / `Enter` (canvas with node selected) |
 | Duplicate selected node | `Ctrl/Cmd + D` (canvas with node selected) |
 | Delete selected node | `Delete` / `Backspace` (canvas with node selected) |
+| Deselect active node | `Escape` |
 | Keyboard help | `?` outside an editor |
 
 ## Development
