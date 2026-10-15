@@ -6137,7 +6137,7 @@ export default function Studio() {
                     theme={theme}
                     selected={selected}
                     onSelect={chooseNode}
-                    onContextMenu={(e, nodeInfo) => {
+                    onContextMenu={(e, nodeInfo, edgeInfo) => {
                       if (nodeInfo) {
                         const targetNodeId =
                           nodeInfo.id.match(/^flowchart-(.+)-\d+$/)?.[1] ||
@@ -6263,12 +6263,79 @@ export default function Studio() {
                             },
                           ],
                         });
+                      } else if (edgeInfo) {
+                        setContextMenu({
+                          isOpen: true,
+                          position: { x: e.clientX, y: e.clientY },
+                          title: `Connection: ${edgeInfo.from} → ${edgeInfo.to}`,
+                          items: [
+                            {
+                              id: "delete-edge",
+                              label: `Disconnect ${edgeInfo.from} → ${edgeInfo.to}`,
+                              icon: Trash2,
+                              danger: true,
+                              disabled: !isFlowchart(document),
+                              onClick: () => {
+                                try {
+                                  updateSource(
+                                    document.id,
+                                    deleteFlowchartEdge(
+                                      document.source,
+                                      edgeInfo.from,
+                                      edgeInfo.to,
+                                    ),
+                                  );
+                                  say(
+                                    `Disconnected ${edgeInfo.from} from ${edgeInfo.to}`,
+                                  );
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              },
+                            },
+                            { divider: true },
+                            {
+                              id: "copy-edge",
+                              label: "Copy Connection Code",
+                              icon: Copy,
+                              onClick: () => {
+                                navigator.clipboard?.writeText(
+                                  `${edgeInfo.from} --> ${edgeInfo.to}`,
+                                );
+                                say(
+                                  `Copied connection: ${edgeInfo.from} --> ${edgeInfo.to}`,
+                                );
+                              },
+                            },
+                          ],
+                        });
                       } else {
                         setContextMenu({
                           isOpen: true,
                           position: { x: e.clientX, y: e.clientY },
                           title: "Canvas Controls",
                           items: [
+                            {
+                              id: "add-step",
+                              label: "Add New Step",
+                              icon: Plus,
+                              shortcut: "Double Click",
+                              disabled: !isFlowchart(document),
+                              onClick: () => {
+                                try {
+                                  const updated = addFlowchartNode(
+                                    document.source,
+                                    "New Step",
+                                    shape || "rectangle",
+                                  );
+                                  updateSource(document.id, updated);
+                                  say("Added new step to diagram");
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              },
+                            },
+                            { divider: true },
                             {
                               id: "fit",
                               label: "Fit to View",

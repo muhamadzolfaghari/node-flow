@@ -690,6 +690,7 @@ export default function CanvasStage({
         if (callbacks.current.onContextMenu) {
           e.preventDefault();
           let nodeInfo = null;
+          let edgeInfo = null;
           try {
             const targetNode = globalThis.document
               ?.elementFromPoint(e.clientX, e.clientY)
@@ -700,9 +701,21 @@ export default function CanvasStage({
                 ?.textContent?.trim();
               nodeInfo = { id: targetNode.id, label: label || targetNode.id };
               callbacks.current.onSelect?.(nodeInfo);
+            } else {
+              const targetEdge = globalThis.document
+                ?.elementFromPoint(e.clientX, e.clientY)
+                ?.closest("g.edgePath, g.edgePaths, g.edgeLabel, path.path");
+              if (targetEdge) {
+                const edgeGroup = targetEdge.closest("g.edgePath") || targetEdge;
+                const cls = (typeof edgeGroup.className === "string" ? edgeGroup.className : edgeGroup.className?.baseVal) || "";
+                const match = cls.match(/\bLS-([^\s]+)\s+LE-([^\s]+)\b/) || edgeGroup.id?.match(/^L[-_]([^-]+)[-_]([^-]+)/);
+                if (match) {
+                  edgeInfo = { from: match[1], to: match[2], id: edgeGroup.id };
+                }
+              }
             }
           } catch {}
-          callbacks.current.onContextMenu(e, nodeInfo);
+          callbacks.current.onContextMenu(e, nodeInfo, edgeInfo);
         }
       }}
     >
