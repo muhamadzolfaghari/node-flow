@@ -411,6 +411,58 @@ export const FORMATS = [
     sample:
       '{\n  "pages": [\n    {\n      "shapes": [\n        { "id": "1", "text": "Client App" },\n        { "id": "2", "text": "API Server" }\n      ],\n      "lines": [\n        { "from": "1", "to": "2", "text": "HTTP GET" }\n      ]\n    }\n  ]\n}',
   },
+  {
+    id: "illustrator",
+    name: "Adobe Illustrator",
+    ext: "ai",
+    extensions: ["ai", "ait"],
+    language: "diagram",
+    mode: "Derived",
+    family: "Design & Vector",
+    description:
+      "Adobe Illustrator artboards, vector layers, labeled groups, and path objects converted to structured visual diagrams.",
+    sample:
+      'Artboard "Architecture Overview"\n  Layer "Frontend App" [rect]\n  Layer "API Gateway" [rounded]\n  Layer "Microservices" [box]\n  Layer "Database" [cylinder]\n  "Frontend App" -> "API Gateway" : HTTPS\n  "API Gateway" -> "Microservices" : gRPC\n  "Microservices" -> "Database" : SQL',
+  },
+  {
+    id: "figma",
+    name: "Figma / FigJam",
+    ext: "fig",
+    extensions: ["fig", "figjam"],
+    language: "json",
+    mode: "Derived",
+    family: "Whiteboard",
+    description:
+      "Figma frames, component nodes, FigJam sticky notes, shapes, and connector lines converted to Mermaid flowchart.",
+    sample:
+      '{\n  "document": {\n    "children": [\n      { "id": "1", "name": "UI Components", "type": "FRAME" },\n      { "id": "2", "name": "Backend Services", "type": "FRAME" },\n      { "id": "3", "type": "CONNECTOR", "connectorStart": { "endpointNodeId": "1" }, "connectorEnd": { "endpointNodeId": "2" }, "characters": "API" }\n    ]\n  }\n}',
+  },
+  {
+    id: "omnigraffle",
+    name: "OmniGraffle",
+    ext: "graffle",
+    extensions: ["graffle"],
+    language: "xml",
+    mode: "Derived",
+    family: "Diagrams",
+    description:
+      "OmniGraffle graphics, shape sheets, and line connections converted to Mermaid flowchart.",
+    sample:
+      '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0"><dict><key>GraphicsList</key><array><dict><key>ID</key><integer>1</integer><key>Text</key><dict><key>Text</key><string>Client</string></dict></dict><dict><key>ID</key><integer>2</integer><key>Text</key><dict><key>Text</key><string>Server</string></dict></dict><dict><key>Class</key><string>LineGraphic</string><key>Head</key><dict><key>ID</key><integer>2</integer></dict><key>Tail</key><dict><key>ID</key><integer>1</integer></dict></dict></array></dict></plist>',
+  },
+  {
+    id: "miro",
+    name: "Miro",
+    ext: "miro",
+    extensions: ["miro"],
+    language: "json",
+    mode: "Derived",
+    family: "Whiteboard",
+    description:
+      "Miro board items, sticky notes, cards, shapes, and connector lines converted to Mermaid flowchart.",
+    sample:
+      '{\n  "items": [\n    { "id": "1", "type": "sticky_note", "data": { "content": "Sprint Goal" } },\n    { "id": "2", "type": "card", "data": { "title": "Architecture Refactoring" } },\n    { "id": "3", "type": "connector", "startItem": { "id": "1" }, "endItem": { "id": "2" }, "caption": "Drives" }\n  ]\n}',
+  },
 ];
 export const getFormat = (id) =>
   FORMATS.find((format) => format.id === id) || FORMATS[0];
@@ -473,6 +525,10 @@ export function detectFormat(name = "", source = "") {
   if (/"_type"\s*:\s*"Project"|"_type"\s*:\s*"UMLClass"/.test(source)) return "staruml";
   if (/(?:Shape Library|Text Area 1|Line Source).*Line Destination/i.test(source)) return "lucid";
   if (/"pages"\s*:\s*\[|"shapes"\s*:\s*\[|"lines"\s*:\s*\[/.test(source) && !/"elements"/.test(source)) return "lucid";
+  if (/(?:xmlns:i="http:\/\/ns\.adobe\.com\/AdobeIllustrator|<i:pgf\b|Artboard\s+["']|%AI5_BeginLayer)/i.test(source)) return "illustrator";
+  if (/(?:"document"\s*:\s*\{[^}]*"children"|"connectorStart"\s*:|"type"\s*:\s*"(?:FRAME|COMPONENT|STICKY)")/i.test(source)) return "figma";
+  if (/<plist\b[^>]*>[\s\S]*<key>GraphicsList<\/key>/i.test(source) || /OmniGraffle/i.test(source)) return "omnigraffle";
+  if (/(?:"widgets"\s*:\s*\[|"startItem"\s*:|"sticky_note"|"type"\s*:\s*"connector")/i.test(source) || (/"items"\s*:\s*\[/i.test(source) && /"data"\s*:\s*\{/i.test(source))) return "miro";
   if (/\btype\s+\w+\s*\{[^}]*:/.test(source) && /:\s*(String|ID|Int|Float|Boolean)/.test(source)) return "graphql";
   if (["md", "markdown", "txt"].includes(ext)) return "markdown";
   // yaml fallback: generic mapping
@@ -650,6 +706,26 @@ export async function compileDocument(document) {
       code = (
         await import("../utils/importers/lucidchart.js")
       ).parseLucidchartToMermaid(source);
+      break;
+    case "illustrator":
+      code = (
+        await import("../utils/importers/illustrator.js")
+      ).parseIllustratorToMermaid(source);
+      break;
+    case "figma":
+      code = (
+        await import("../utils/importers/figma.js")
+      ).parseFigmaToMermaid(source);
+      break;
+    case "omnigraffle":
+      code = (
+        await import("../utils/importers/omnigraffle.js")
+      ).parseOmniGraffleToMermaid(source);
+      break;
+    case "miro":
+      code = (
+        await import("../utils/importers/miro.js")
+      ).parseMiroToMermaid(source);
       break;
     default:
       throw new Error(`Unsupported format: ${format}`);

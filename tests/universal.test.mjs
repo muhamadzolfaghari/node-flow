@@ -39,6 +39,10 @@ test("content sniffing for new formats", () => {
   assert.equal(detectFormat("g.gliffy", '{"stage":{"objects":[{"id":0,"text":"A"}]}}'), "gliffy");
   assert.equal(detectFormat("v.vdx", '<VisioDocument><Shape ID="1" Name="A"><Text>Hi</Text></Shape></VisioDocument>'), "visio");
   assert.equal(detectFormat("c.yaml", "apiVersion: v1\nkind: Pod\nmetadata:\n name: x"), "yaml");
+  assert.equal(detectFormat("art.ai", 'Artboard "Architecture"\n Layer "UI" [rect]'), "illustrator");
+  assert.equal(detectFormat("board.fig", '{"document":{"children":[{"id":"1","type":"FRAME"}]}}'), "figma");
+  assert.equal(detectFormat("diagram.graffle", '<plist version="1.0"><dict><key>GraphicsList</key><array></array></dict></plist>'), "omnigraffle");
+  assert.equal(detectFormat("retro.miro", '{"items":[{"id":"1","type":"sticky_note"}]}'), "miro");
 });
 
 test("plantuml full grammar: activity/usecase/deployment", async () => {

@@ -529,6 +529,24 @@ export class Exporter {
     this.downloadBlob(pptxBlob, `${this.sanitizeFilename(deckTitle)}_presentation_deck.pptx`);
   }
 
+  /**
+   * Export vector SVG formatted for Adobe Illustrator with Illustrator namespaces & layers
+   */
+  static downloadIllustratorSvg(container, filename, options = {}) {
+    const svgEl = container?.querySelector('svg');
+    if (!svgEl) return;
+    const baseSvg = this.getCleanSvgString(svgEl, options);
+    let aiSvg = baseSvg;
+    if (!aiSvg.includes('xmlns:i=')) {
+      aiSvg = aiSvg.replace(
+        '<svg ',
+        '<svg xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" xmlns:x="http://ns.adobe.com/Extensibility/1.0/" '
+      );
+    }
+    const blob = new Blob([aiSvg], { type: 'image/svg+xml;charset=utf-8' });
+    this.downloadBlob(blob, `${this.sanitizeFilename(filename)}_illustrator.svg`);
+  }
+
 
   /**
    * Internal PDF 1.4 synthesizer

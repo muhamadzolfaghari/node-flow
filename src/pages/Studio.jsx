@@ -778,6 +778,11 @@ export default function Studio() {
         );
         say("Presentation deck downloaded");
       }
+      else if (kind === "ai")
+        Exporter.downloadIllustratorSvg(el, title, {
+          background: "#ffffff",
+          padding: 32,
+        });
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
       else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md" || kind === "openapi" || kind === "prisma" || kind === "graphql" || kind === "terraform") {
         const mod = await import("../utils/exporters/mermaid-export.js");
@@ -5328,6 +5333,7 @@ export default function Studio() {
               <DropdownMenuLabel>Current preview</DropdownMenuLabel>
               {[
                 ["svg", "SVG vector"],
+                ["ai", "Adobe Illustrator (.ai.svg)"],
                 ["png", "PNG image · 2×"],
                 ["png4", "PNG image · 4×"],
                 ["pdf", "PDF document"],
