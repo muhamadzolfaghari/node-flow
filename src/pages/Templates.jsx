@@ -9,6 +9,7 @@ import {
   Calendar,
   Shapes,
   Layers,
+  ClipboardList,
   X,
 } from "lucide-react";
 import {
@@ -26,6 +27,7 @@ const icons = {
   class: Shapes,
   mindmap: GitBranch,
   flowchart: Network,
+  requirement: ClipboardList,
 };
 export default function Templates() {
   const [params, setParams] = useSearchParams(),

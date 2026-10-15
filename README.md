@@ -58,9 +58,9 @@ Derived previews are models of supported syntax, not lossless vendor renderers. 
 
 ### UML and chart templates
 
-The library contains **30 starter templates**, including all **14 UML categories**. Class, sequence, and state templates use native Mermaid types. Object and profile models adapt class diagrams; timing models adapt timelines; use case, activity, component, deployment, package, composite structure, communication, and interaction overview models adapt flowcharts. This is not a complete UML metamodel or validator.
+The library contains **31 starter templates**, including all **14 UML categories**. Class, sequence, and state templates use native Mermaid types. Object and profile models adapt class diagrams; timing models adapt timelines; use case, activity, component, deployment, package, composite structure, communication, and interaction overview models adapt flowcharts. This is not a complete UML metamodel or validator.
 
-Additional templates cover ER schemas, C4 context, cloud topology, product journeys, Kanban, Gantt, mindmaps, prioritization matrices, timelines, Sankey funnels, hardware blocks, Git graphs, and XY charts.
+Additional templates cover ER schemas, C4 context, cloud topology, product journeys, Kanban, Gantt, mindmaps, prioritization matrices, timelines, Sankey funnels, hardware blocks, Git graphs, XY charts, and systems engineering requirements.
 
 ### Visual modeling suite
 
