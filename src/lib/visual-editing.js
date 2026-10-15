@@ -1728,6 +1728,173 @@ export function deleteBlockItem(source, id) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* C4 ARCHITECTURE VISUAL MODELING                                            */
+/* -------------------------------------------------------------------------- */
+
+export const isC4 = (doc) =>
+  doc?.format === "mermaid" &&
+  /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/m.test(
+    doc.source,
+  );
+
+export function c4Elements(source) {
+  const elements = [];
+  const elRegex =
+    /^\s*(Person(?:_Ext)?|System(?:_Ext|_Db|Db)?|Container(?:_Ext|_Db|Db)?|Component(?:_Ext|_Db|Db)?)\s*\(\s*([A-Za-z0-9_-]+)\s*,\s*"([^"]*)"(?:\s*,\s*"([^"]*)")?(?:\s*,\s*"([^"]*)")?\s*\)/;
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const match = line.match(elRegex);
+    if (match) {
+      const type = match[1];
+      const id = match[2];
+      const label = match[3];
+      const arg3 = match[4] || "";
+      const arg4 = match[5] || "";
+
+      let tech = "";
+      let desc = arg3;
+      if (type.startsWith("Container") || type.startsWith("Component")) {
+        tech = arg3;
+        desc = arg4 || arg3;
+      }
+      elements.push({ type, id, label, tech, desc });
+    }
+  }
+  return elements;
+}
+
+export function c4Relations(source) {
+  const rels = [];
+  const relRegex =
+    /^\s*(Rel(?:_Back|_Neighbor|_D|_U|_L|_R)?)\s*\(\s*([A-Za-z0-9_-]+)\s*,\s*([A-Za-z0-9_-]+)\s*,\s*"([^"]*)"(?:\s*,\s*"([^"]*)")?\s*\)/;
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const match = line.match(relRegex);
+    if (match) {
+      rels.push({
+        type: match[1],
+        from: match[2],
+        to: match[3],
+        label: match[4],
+        tech: match[5] || "",
+      });
+    }
+  }
+  return rels;
+}
+
+export function addC4Element(
+  source,
+  type = "System",
+  id,
+  label,
+  desc = "",
+  tech = "",
+) {
+  if (!id || !id.trim()) throw new Error("Element ID required.");
+  if (!label || !label.trim()) throw new Error("Element label required.");
+
+  const cleanType = [
+    "Person",
+    "Person_Ext",
+    "System",
+    "System_Ext",
+    "Container",
+    "ContainerDb",
+    "Component",
+  ].includes(type)
+    ? type
+    : "System";
+
+  const cleanId = id.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanLabel = label.trim().replace(/"/g, "'");
+  const cleanDesc = (desc || "").trim().replace(/"/g, "'");
+  const cleanTech = (tech || "").trim().replace(/"/g, "'");
+
+  let line = "";
+  if (cleanType.startsWith("Container") || cleanType.startsWith("Component")) {
+    line = `    ${cleanType}(${cleanId}, "${cleanLabel}", "${cleanTech}", "${cleanDesc}")`;
+  } else {
+    line = `    ${cleanType}(${cleanId}, "${cleanLabel}", "${cleanDesc}")`;
+  }
+
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*Rel\w*\s*\(/i.test(lines[i])) {
+      insertIdx = i;
+      break;
+    }
+  }
+
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, line);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${line}\n`;
+}
+
+export function deleteC4Element(source, id) {
+  if (!id || !id.trim()) throw new Error("Element ID required.");
+  const targetId = id.trim();
+  const lines = source.split("\n").filter((line) => {
+    if (
+      new RegExp(
+        `^\\s*\\w+\\s*\\(\\s*${escapeRegex(targetId)}\\s*,`,
+        "i",
+      ).test(line)
+    ) {
+      return false;
+    }
+    if (
+      new RegExp(
+        `^\\s*Rel\\w*\\s*\\(\\s*${escapeRegex(targetId)}\\s*,`,
+        "i",
+      ).test(line) ||
+      new RegExp(
+        `^\\s*Rel\\w*\\s*\\([^,]+,\\s*${escapeRegex(targetId)}\\s*,`,
+        "i",
+      ).test(line)
+    ) {
+      return false;
+    }
+    return true;
+  });
+  return lines.join("\n");
+}
+
+export function addC4Relation(source, from, to, label, tech = "") {
+  if (!from || !from.trim()) throw new Error("Source element required.");
+  if (!to || !to.trim()) throw new Error("Target element required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+  const cleanLabel = (label || "Uses").trim().replace(/"/g, "'");
+  const cleanTech = (tech || "").trim().replace(/"/g, "'");
+
+  const relLine = cleanTech
+    ? `    Rel(${cleanFrom}, ${cleanTo}, "${cleanLabel}", "${cleanTech}")`
+    : `    Rel(${cleanFrom}, ${cleanTo}, "${cleanLabel}")`;
+
+  return `${source.trimEnd()}\n${relLine}\n`;
+}
+
+export function deleteC4Relation(source, from, to) {
+  if (!from || !to) throw new Error("From and To required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+  const lines = source.split("\n").filter((line) => {
+    return !new RegExp(
+      `^\\s*Rel\\w*\\s*\\(\\s*${escapeRegex(cleanFrom)}\\s*,\\s*${escapeRegex(cleanTo)}\\s*,`,
+      "i",
+    ).test(line);
+  });
+  return lines.join("\n");
+}
+
+
 
 
 

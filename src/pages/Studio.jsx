@@ -47,6 +47,7 @@ import {
   Split,
   LineChart,
   Boxes,
+  Layers,
 } from "lucide-react";
 import {
   Button,
@@ -200,6 +201,13 @@ import {
   blockItems,
   addBlockItem,
   deleteBlockItem,
+  isC4,
+  c4Elements,
+  c4Relations,
+  addC4Element,
+  deleteC4Element,
+  addC4Relation,
+  deleteC4Relation,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -345,6 +353,14 @@ export default function Studio() {
     [blockLabelInput, setBlockLabelInput] = useState(""),
     [blockSpanInput, setBlockSpanInput] = useState("1"),
     [blockColsInput, setBlockColsInput] = useState("4"),
+    // C4 Architecture modeling state
+    [c4ElType, setC4ElType] = useState("System"),
+    [c4ElId, setC4ElId] = useState(""),
+    [c4ElLabel, setC4ElLabel] = useState(""),
+    [c4ElDesc, setC4ElDesc] = useState(""),
+    [c4RelFrom, setC4RelFrom] = useState(""),
+    [c4RelTo, setC4RelTo] = useState(""),
+    [c4RelLabel, setC4RelLabel] = useState("Uses"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -400,6 +416,12 @@ export default function Studio() {
   }, [document?.source]);
   const blockColumnsCount = useMemo(() => {
     return isBlock(document) ? getBlockColumns(document.source) : 1;
+  }, [document?.source]);
+  const c4Els = useMemo(() => {
+    return isC4(document) ? c4Elements(document.source) : [];
+  }, [document?.source]);
+  const c4Rels = useMemo(() => {
+    return isC4(document) ? c4Relations(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3900,6 +3922,232 @@ export default function Studio() {
                       >
                         <Plus className="size-3.5" />
                         Block
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isC4(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Layers className="size-3.5 text-primary" />
+                  <span>C4 architecture tools</span>
+                </div>
+
+                {c4Els.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Elements ({c4Els.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {c4Els.map((el) => (
+                        <div
+                          key={el.id}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {el.type}
+                            </Badge>
+                            <span className="font-mono font-medium text-[11px]">
+                              {el.id}
+                            </span>
+                            <span className="truncate text-muted-foreground text-[11px]">
+                              {el.label}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteC4Element(document.source, el.id),
+                              );
+                              say(`Removed C4 element "${el.id}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {c4Rels.length > 0 && (
+                  <div className="mt-3 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Relationships ({c4Rels.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-40 overflow-auto">
+                      {c4Rels.map((r, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-mono font-medium">
+                              {r.from}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">
+                              →
+                            </span>
+                            <span className="font-mono font-medium">
+                              {r.to}
+                            </span>
+                            <span className="truncate text-muted-foreground text-[10px]">
+                              ({r.label})
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteC4Relation(document.source, r.from, r.to),
+                              );
+                              say(`Removed relation "${r.from} → ${r.to}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add architecture element
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="C4 element type"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={c4ElType}
+                        onChange={(e) => setC4ElType(e.target.value)}
+                      >
+                        <option value="System">System</option>
+                        <option value="System_Ext">System (Ext)</option>
+                        <option value="Person">Person</option>
+                        <option value="Person_Ext">Person (Ext)</option>
+                        <option value="Container">Container</option>
+                        <option value="ContainerDb">Database</option>
+                        <option value="Component">Component</option>
+                      </select>
+                      <Input
+                        aria-label="C4 element ID"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Alias (e.g. authService)"
+                        value={c4ElId}
+                        onChange={(e) => setC4ElId(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="C4 element label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Title (e.g. Auth Service)"
+                        value={c4ElLabel}
+                        onChange={(e) => setC4ElLabel(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addC4Element(
+                                document.source,
+                                c4ElType,
+                                c4ElId,
+                                c4ElLabel,
+                                c4ElDesc,
+                              ),
+                            );
+                            setC4ElId("");
+                            setC4ElLabel("");
+                            setC4ElDesc("");
+                            say(`Added ${c4ElType} "${c4ElId}"`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Element
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Connect elements
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="C4 relation from"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="From (e.g. customer)"
+                        value={c4RelFrom}
+                        onChange={(e) => setC4RelFrom(e.target.value)}
+                      />
+                      <Input
+                        aria-label="C4 relation to"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="To (e.g. bankingSystem)"
+                        value={c4RelTo}
+                        onChange={(e) => setC4RelTo(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="C4 relation label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Description (e.g. Uses via HTTPS)"
+                        value={c4RelLabel}
+                        onChange={(e) => setC4RelLabel(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addC4Relation(
+                                document.source,
+                                c4RelFrom,
+                                c4RelTo,
+                                c4RelLabel,
+                              ),
+                            );
+                            setC4RelFrom("");
+                            setC4RelTo("");
+                            setC4RelLabel("Uses");
+                            say("Relationship added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Rel
                       </Button>
                     </div>
                   </div>

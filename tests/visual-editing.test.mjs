@@ -94,6 +94,13 @@ import {
   blockItems,
   addBlockItem,
   deleteBlockItem,
+  isC4,
+  c4Elements,
+  c4Relations,
+  addC4Element,
+  deleteC4Element,
+  addC4Relation,
+  deleteC4Relation,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -692,6 +699,57 @@ test("block diagram visual modeling: columns, items, addition, deletion, validat
   assert.throws(() => addBlockItem(blk, ""), /Block ID required/);
   assert.throws(() => deleteBlockItem(blk, ""), /Block ID required/);
 });
+
+test("c4 architecture visual modeling: elements, relations, addition, deletion, validation", () => {
+  let c4 = `C4Context
+    title Banking System Context
+    Person(customer, "Personal Banking Customer", "Customer of bank")
+    System(bankingSystem, "Internet Banking", "Allows account operations")
+    System_Ext(mailSystem, "E-mail Subsystem", "Notification service")
+
+    Rel(customer, bankingSystem, "Transfers funds", "HTTPS")
+    Rel(bankingSystem, mailSystem, "Sends alerts", "SMTP")`;
+
+  assert.equal(isC4({ format: "mermaid", source: c4 }), true);
+
+  let els = c4Elements(c4);
+  assert.equal(els.length, 3);
+  assert.equal(els[0].id, "customer");
+  assert.equal(els[0].type, "Person");
+  assert.equal(els[0].label, "Personal Banking Customer");
+  assert.equal(els[1].id, "bankingSystem");
+  assert.equal(els[1].type, "System");
+
+  let rels = c4Relations(c4);
+  assert.equal(rels.length, 2);
+  assert.equal(rels[0].from, "customer");
+  assert.equal(rels[0].to, "bankingSystem");
+  assert.equal(rels[0].label, "Transfers funds");
+  assert.equal(rels[0].tech, "HTTPS");
+
+  c4 = addC4Element(c4, "ContainerDb", "db", "Main Database", "Relational store", "PostgreSQL");
+  assert.match(c4, /ContainerDb\(db, "Main Database", "PostgreSQL", "Relational store"\)/);
+
+  c4 = addC4Relation(c4, "bankingSystem", "db", "Reads and writes", "TCP/5432");
+  assert.match(c4, /Rel\(bankingSystem, db, "Reads and writes", "TCP\/5432"\)/);
+
+  c4 = deleteC4Element(c4, "mailSystem");
+  assert.doesNotMatch(c4, /mailSystem/);
+  assert.doesNotMatch(c4, /Sends alerts/);
+
+  c4 = deleteC4Relation(c4, "customer", "bankingSystem");
+  assert.doesNotMatch(c4, /Transfers funds/);
+
+  els = c4Elements(c4);
+  assert.equal(els.some((e) => e.id === "db"), true);
+  assert.equal(els.some((e) => e.id === "mailSystem"), false);
+
+  assert.throws(() => addC4Element(c4, "System", "", "Label"), /Element ID required/);
+  assert.throws(() => addC4Element(c4, "System", "id", ""), /Element label required/);
+  assert.throws(() => addC4Relation(c4, "", "to", "label"), /Source element required/);
+  assert.throws(() => addC4Relation(c4, "from", "", "label"), /Target element required/);
+});
+
 
 
 
