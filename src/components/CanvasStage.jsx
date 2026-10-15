@@ -94,38 +94,80 @@ export default function CanvasStage({
 
   /**
    * Accurately determines content geometry bounding box.
-   * Eliminates dead whitespace offsets in charts by prioritizing actual node geometry.
+   * Eliminates dead whitespace offsets and centers on the true diagram geometry
+   * across all Mermaid, Graphviz, Mindmap, Architecture, Packet, and Sequence diagrams.
    */
   const getContentBounds = () => {
     const svg = containerRef.current?.querySelector("svg");
     if (!svg) return { x: 0, y: 0, w: 1000, h: 700 };
 
-    let bbox = null;
+    // 1. Check viewBox first: Mermaid and Graphviz calculate exact diagram coordinates in viewBox
+    const vb = svg.viewBox?.baseVal;
+    let viewBoxBounds = null;
+    if (vb && vb.width > 5 && vb.height > 5) {
+      viewBoxBounds = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
+    }
+
+    // 2. Try svg.getBBox() on root SVG element
+    let geomBounds = null;
     try {
-      // Find main graphics container or nodes group for accurate bounds
-      const mainGroup =
-        svg.querySelector("g.output, g.root, g.nodes, g.clusters, g#my-svg, g") || svg;
-      if (typeof mainGroup.getBBox === "function") {
-        const b = mainGroup.getBBox();
-        if (b && b.width > 5 && b.height > 5) {
-          bbox = { x: b.x, y: b.y, w: b.width, h: b.height };
+      if (typeof svg.getBBox === "function") {
+        const b = svg.getBBox();
+        if (b && b.width > 10 && b.height > 10 && Number.isFinite(b.x) && Number.isFinite(b.y)) {
+          geomBounds = { x: b.x, y: b.y, w: b.width, h: b.height };
         }
       }
-    } catch {
-      // Fallback if SVG not yet attached in test runner
+    } catch {}
+
+    // 3. If svg.getBBox didn't work, compute the union bbox of all immediate top-level child groups
+    if (!geomBounds) {
+      try {
+        const topGroups = svg.querySelectorAll(":scope > g:not([class*='marker']):not(defs)");
+        if (topGroups.length > 0) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          let found = false;
+          topGroups.forEach((g) => {
+            if (typeof g.getBBox === "function") {
+              const gb = g.getBBox();
+              if (gb && gb.width > 0 && gb.height > 0) {
+                minX = Math.min(minX, gb.x);
+                minY = Math.min(minY, gb.y);
+                maxX = Math.max(maxX, gb.x + gb.width);
+                maxY = Math.max(maxY, gb.y + gb.height);
+                found = true;
+              }
+            }
+          });
+          if (found && maxX > minX && maxY > minY) {
+            geomBounds = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+          }
+        }
+      } catch {}
     }
 
-    const box = svg.viewBox?.baseVal;
-    if (!bbox) {
-      if (box && box.width > 5 && box.height > 5) {
-        bbox = { x: box.x, y: box.y, w: box.width, h: box.height };
+    // Prefer geomBounds if valid and reasonable, otherwise fallback to viewBoxBounds
+    let bbox = null;
+    if (geomBounds && geomBounds.w > 10 && geomBounds.h > 10) {
+      if (viewBoxBounds && (geomBounds.w < viewBoxBounds.w * 0.25 || geomBounds.h < viewBoxBounds.h * 0.25)) {
+        bbox = viewBoxBounds;
       } else {
-        const rect = svg.getBoundingClientRect();
-        bbox = { x: 0, y: 0, w: rect.width || 1000, h: rect.height || 700 };
+        bbox = geomBounds;
       }
+    } else if (viewBoxBounds) {
+      bbox = viewBoxBounds;
     }
 
-    return bbox;
+    // Fallback to boundingClientRect if attached
+    if (!bbox) {
+      try {
+        const rect = svg.getBoundingClientRect();
+        if (rect && rect.width > 10 && rect.height > 10) {
+          bbox = { x: 0, y: 0, w: rect.width, h: rect.height };
+        }
+      } catch {}
+    }
+
+    return bbox || { x: 0, y: 0, w: 1000, h: 700 };
   };
 
   const dimensions = () => {
@@ -144,14 +186,16 @@ export default function CanvasStage({
     if (!s || !containerRef.current?.querySelector("svg")) return;
     const b = getContentBounds();
     setSize({ w: b.w, h: b.h });
-    const paddingX = 48;
-    const paddingY = 60;
+    const paddingX = Math.min(96, Math.max(36, s.clientWidth * 0.08));
+    const paddingY = Math.min(100, Math.max(48, s.clientHeight * 0.1));
+    const availW = Math.max(50, s.clientWidth - paddingX);
+    const availH = Math.max(50, s.clientHeight - paddingY);
     const z = Math.max(
       0.04,
       Math.min(
-        1.25,
-        (s.clientWidth - paddingX) / Math.max(b.w, 10),
-        (s.clientHeight - paddingY) / Math.max(b.h, 10),
+        1.5,
+        availW / Math.max(b.w, 10),
+        availH / Math.max(b.h, 10),
       ),
     );
     const cx = b.x + b.w / 2;
@@ -211,8 +255,12 @@ export default function CanvasStage({
       `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`,
     );
     if (shouldFit.current) {
-      requestAnimationFrame(fit);
-      shouldFit.current = false;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          fit();
+          shouldFit.current = false;
+        });
+      });
     }
   }, [status, documentId]);
 
@@ -498,7 +546,9 @@ export default function CanvasStage({
             ? `dot-grid ${isLight ? "theme-light" : ""}`
             : grid === "lines"
               ? `line-grid ${isLight ? "theme-light" : ""}`
-              : ""
+              : grid === "blueprint"
+                ? `blueprint-grid ${isLight ? "theme-light" : ""}`
+                : ""
         }`}
         style={{
           touchAction: "none",
@@ -885,7 +935,15 @@ export function GridToggle({ grid, onChange }) {
       size="sm"
       aria-label={`Grid: ${grid}`}
       onClick={() =>
-        onChange(grid === "dots" ? "lines" : grid === "lines" ? "none" : "dots")
+        onChange(
+          grid === "dots"
+            ? "lines"
+            : grid === "lines"
+              ? "blueprint"
+              : grid === "blueprint"
+                ? "none"
+                : "dots",
+        )
       }
     >
       <Grid3X3 className="size-4" />

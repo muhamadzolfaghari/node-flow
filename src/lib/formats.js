@@ -465,14 +465,14 @@ export const FORMATS = [
   },
   {
     id: "geojson",
-    name: "GeoJSON / Geospatial",
+    name: "GeoJSON / Geospatial (MVT, Shapefile, Protobuf)",
     ext: "geojson",
-    extensions: ["geojson", "geo.json"],
+    extensions: ["geojson", "geo.json", "mvt", "pbf", "shp", "dbf", "kml", "topojson"],
     language: "json",
     mode: "Derived",
     family: "Geospatial & Maps",
     description:
-      "GeoJSON FeatureCollections, Map Layers, Vector Tile (MVT) schemas, and spatial topologies converted to visual diagrams.",
+      "GeoJSON FeatureCollections, Mapbox Vector Tile (MVT) Protobuf schemas, ESRI Shapefile attributes, and spatial topologies converted to visual diagrams.",
     sample:
       '{\n  "type": "FeatureCollection",\n  "features": [\n    {\n      "type": "Feature",\n      "properties": { "name": "Logistics Hub", "layer": "Distribution" },\n      "geometry": { "type": "Point", "coordinates": [-122.4, 37.7] }\n    },\n    {\n      "type": "Feature",\n      "properties": { "name": "Retail Store", "layer": "Fulfillment", "connectsTo": "Logistics Hub", "routeType": "Fleet Truck" },\n      "geometry": { "type": "Point", "coordinates": [-122.2, 37.8] }\n    }\n  ]\n}',
   },
@@ -542,7 +542,10 @@ export function detectFormat(name = "", source = "") {
   if (/(?:"document"\s*:\s*\{[^}]*"children"|"connectorStart"\s*:|"type"\s*:\s*"(?:FRAME|COMPONENT|STICKY)")/i.test(source)) return "figma";
   if (/<plist\b[^>]*>[\s\S]*<key>GraphicsList<\/key>/i.test(source) || /OmniGraffle/i.test(source)) return "omnigraffle";
   if (/\btype\s+\w+\s*\{[^}]*:/.test(source) && /:\s*(String|ID|Int|Float|Boolean)/.test(source)) return "graphql";
-  if (["geojson", "geo.json"].includes(ext) || /"FeatureCollection"|"coordinates"\s*:|vector_tile/i.test(source)) return "geojson";
+  if (
+    ["geojson", "geo.json", "mvt", "pbf", "shp", "dbf", "kml", "topojson"].includes(ext) ||
+    /"FeatureCollection"|"coordinates"\s*:|vector_tile|Topology|"objects"\s*:\s*\{|map_layer|shapefile/i.test(source)
+  ) return "geojson";
   if (["md", "markdown", "txt"].includes(ext)) return "markdown";
   // yaml fallback: generic mapping
   if (["yaml", "yml"].includes(ext) && /^\s*[\w./-]+\s*:/m.test(source)) return "yaml";

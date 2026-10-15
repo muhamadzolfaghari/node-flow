@@ -48,26 +48,42 @@
 .command-dialog { position: fixed; top: 12vh; margin: 0 auto; padding: 0; width: min(560px, calc(100% - 32px)); max-height: 80vh; border: 1px solid var(--border); border-radius: 10px; background: var(--popover); color: var(--foreground); box-shadow: 0 24px 80px #0008; }
 .command-dialog::backdrop { background: #020617b8; }
 .studio-stage-wrap {
-  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.08) 0%, rgba(99, 102, 241, 0.04) 35%, rgba(15, 23, 42, 0) 70%), #090d16;
+  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.1) 0%, rgba(99, 102, 241, 0.05) 35%, rgba(15, 23, 42, 0) 70%), #080c14;
 }
 .studio-stage-wrap.theme-light {
-  background: radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.06) 0%, rgba(56, 189, 248, 0.03) 35%, transparent 70%), #f8fafc;
+  background: radial-gradient(circle at 50% 45%, rgba(14, 165, 233, 0.07) 0%, rgba(99, 102, 241, 0.03) 35%, transparent 70%), #f8fafc;
 }
 .dot-grid {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1.25px, transparent 1.25px);
+  background-image: radial-gradient(rgba(148, 163, 184, 0.35) 1.25px, transparent 1.25px);
   background-size: 24px 24px;
 }
 .dot-grid.theme-light {
-  background-image: radial-gradient(rgba(100, 116, 139, 0.32) 1.25px, transparent 1.25px);
+  background-image: radial-gradient(rgba(100, 116, 139, 0.38) 1.25px, transparent 1.25px);
 }
 .line-grid {
-  background-image: linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 .line-grid.theme-light {
-  background-image: linear-gradient(rgba(100, 116, 139, 0.14) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(100, 116, 139, 0.14) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(100, 116, 139, 0.16) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(100, 116, 139, 0.16) 1px, transparent 1px);
+}
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.22) 1px, transparent 1px),
+    linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+  background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px;
+}
+.blueprint-grid.theme-light {
+  background-image:
+    linear-gradient(rgba(2, 132, 199, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(2, 132, 199, 0.22) 1px, transparent 1px),
+    linear-gradient(rgba(2, 132, 199, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(2, 132, 199, 0.07) 1px, transparent 1px);
+  background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px;
 }
 .studio-canvas { cursor: grab; }
 .studio-canvas:active { cursor: grabbing; }

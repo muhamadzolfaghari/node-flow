@@ -1542,6 +1542,54 @@ Active Trial Users, Enterprise Contracts, 150
     CDN --> MapClient
 `,
   },
+  {
+    id: 'mvt-vector-tile-protobuf-spec',
+    title: 'Mapbox Vector Tile (MVT) Protobuf Specification',
+    category: 'Engineering & Data',
+    role: 'Developer',
+    kind: 'classDiagram',
+    description: 'Binary Protobuf encoding specification for Mapbox Vector Tiles (MVT): Tile layers, geometry commands, feature tags, and value dictionaries.',
+    code: `classDiagram
+    %% Mapbox Vector Tile (MVT) Protobuf Specification
+    class Tile {
+        +Layer[] layers
+        +uint32 version
+        +decodeTile(z, x, y)
+    }
+    class Layer {
+        +string name
+        +Feature[] features
+        +string[] keys
+        +Value[] values
+        +uint32 extent
+        +uint32 version
+    }
+    class Feature {
+        +uint64 id
+        +uint32[] tags
+        +GeomType type
+        +uint32[] geometry
+    }
+    class Value {
+        +string string_value
+        +float float_value
+        +double double_value
+        +int64 int_value
+        +bool bool_value
+    }
+    class GeomType {
+        <<enumeration>>
+        UNKNOWN : 0
+        POINT : 1
+        LINESTRING : 2
+        POLYGON : 3
+    }
+    Tile *-- Layer : contains
+    Layer *-- Feature : encodes
+    Layer *-- Value : dictionary
+    Feature --> GeomType : classifies
+`,
+  },
 ];
 
 export function getTemplateById(id) {
