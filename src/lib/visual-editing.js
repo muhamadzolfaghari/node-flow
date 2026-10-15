@@ -1315,6 +1315,50 @@ export function deleteGanttTask(source, taskName) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* QUADRANT CHART VISUAL MODELING                                             */
+/* -------------------------------------------------------------------------- */
+
+export const isQuadrantChart = (doc) =>
+  doc?.format === "mermaid" && /^\s*quadrantChart\b/m.test(doc.source);
+
+export function quadrantPoints(source) {
+  const points = [];
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const match = line.match(
+      /^\s*([^:]+?)\s*:\s*\[\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\]\s*$/,
+    );
+    if (match) {
+      points.push({
+        label: match[1].trim(),
+        x: parseFloat(match[2]),
+        y: parseFloat(match[3]),
+      });
+    }
+  }
+  return points;
+}
+
+export function addQuadrantPoint(source, label, x = 0.5, y = 0.5) {
+  if (!label.trim()) throw new Error("Point label required.");
+  const xVal = Math.max(0, Math.min(1, parseFloat(x) || 0.5));
+  const yVal = Math.max(0, Math.min(1, parseFloat(y) || 0.5));
+  return `${source.trimEnd()}\n    ${safeLabel(label.trim())}: [${xVal}, ${yVal}]\n`;
+}
+
+export function deleteQuadrantPoint(source, label) {
+  if (!label.trim()) throw new Error("Point label required.");
+  const lines = source
+    .split("\n")
+    .filter(
+      (l) =>
+        !new RegExp(`^\\s*${escapeRegex(label.trim())}\\s*:`, "i").test(l),
+    );
+  return lines.join("\n");
+}
+
+
 
 
 

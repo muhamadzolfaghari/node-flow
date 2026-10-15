@@ -42,6 +42,7 @@ import {
   Compass,
   Kanban,
   Calendar,
+  Crosshair,
 } from "lucide-react";
 import {
   Button,
@@ -171,6 +172,10 @@ import {
   addGanttSection,
   addGanttTask,
   deleteGanttTask,
+  isQuadrantChart,
+  quadrantPoints,
+  addQuadrantPoint,
+  deleteQuadrantPoint,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -294,6 +299,10 @@ export default function Studio() {
     [ganttTaskName, setGanttTaskName] = useState(""),
     [ganttTaskStatus, setGanttTaskStatus] = useState("active"),
     [ganttTaskDur, setGanttTaskDur] = useState("5d"),
+    // Quadrant modeling state
+    [quadLabel, setQuadLabel] = useState(""),
+    [quadX, setQuadX] = useState("0.5"),
+    [quadY, setQuadY] = useState("0.5"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -331,6 +340,9 @@ export default function Studio() {
   }, [document?.source]);
   const ganttSecs = useMemo(() => {
     return isGantt(document) ? ganttSections(document.source) : [];
+  }, [document?.source]);
+  const quadPoints = useMemo(() => {
+    return isQuadrantChart(document) ? quadrantPoints(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3116,6 +3128,133 @@ export default function Studio() {
                       <Plus className="size-3.5" />
                       Add task
                     </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isQuadrantChart(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Crosshair className="size-3.5 text-primary" />
+                  <span>Quadrant chart tools</span>
+                </div>
+
+                {quadPoints.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Points ({quadPoints.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {quadPoints.map((pt, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <span className="truncate font-medium">
+                            {pt.label}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              [{pt.x}, {pt.y}]
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                updateSource(
+                                  document.id,
+                                  deleteQuadrantPoint(
+                                    document.source,
+                                    pt.label,
+                                  ),
+                                );
+                                say(`Removed point "${pt.label}"`);
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add point
+                  </span>
+                  <div className="grid gap-2">
+                    <Input
+                      aria-label="Quadrant point label"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Point label (e.g. Real-Time Sync)"
+                      value={quadLabel}
+                      onChange={(e) => setQuadLabel(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <div className="flex items-center gap-1 flex-1">
+                        <span className="text-[11px] text-muted-foreground font-mono">
+                          X:
+                        </span>
+                        <Input
+                          aria-label="X coordinate"
+                          type="number"
+                          step="0.05"
+                          min="0"
+                          max="1"
+                          className="h-8 text-xs font-mono"
+                          placeholder="0.5"
+                          value={quadX}
+                          onChange={(e) => setQuadX(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 flex-1">
+                        <span className="text-[11px] text-muted-foreground font-mono">
+                          Y:
+                        </span>
+                        <Input
+                          aria-label="Y coordinate"
+                          type="number"
+                          step="0.05"
+                          min="0"
+                          max="1"
+                          className="h-8 text-xs font-mono"
+                          placeholder="0.5"
+                          value={quadY}
+                          onChange={(e) => setQuadY(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addQuadrantPoint(
+                                document.source,
+                                quadLabel,
+                                quadX,
+                                quadY,
+                              ),
+                            );
+                            setQuadLabel("");
+                            say("Point added to matrix");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Point
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

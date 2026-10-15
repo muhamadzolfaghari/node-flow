@@ -76,6 +76,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **User Journey Maps**: Journey stage / section organization, task addition with satisfaction scores (1–5) and multiple participating actors, and task deletion.
 - **Kanban Boards**: Dynamic column creation, card insertion under targeted workflow columns, and single-click card deletion.
 - **Gantt Charts**: Roadmap workstream section management, task scheduling with status tags (`active`, `done`, `crit`, `milestone`), duration specifications, and task deletion.
+- **Quadrant Charts**: Eisenhower and feature prioritization matrices with point coordinates ([x, y]), custom item addition, and point deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

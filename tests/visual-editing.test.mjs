@@ -70,6 +70,10 @@ import {
   addGanttSection,
   addGanttTask,
   deleteGanttTask,
+  isQuadrantChart,
+  quadrantPoints,
+  addQuadrantPoint,
+  deleteQuadrantPoint,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -494,6 +498,34 @@ test("gantt chart visual modeling: sections, tasks, status, deletion", () => {
   assert.equal(verSec.tasks.length, 1);
   assert.equal(verSec.tasks[0].name, "Browser E2E Suite");
 });
+
+test("quadrant chart visual modeling: points, coordinates, deletion", () => {
+  let q = `quadrantChart
+    title Prioritization Matrix
+    x-axis Low Effort --> High Effort
+    y-axis Low Value --> High Value
+    Fast Hashing: [0.22, 0.85]
+    UML Templates: [0.30, 0.92]`;
+
+  assert.equal(isQuadrantChart({ format: "mermaid", source: q }), true);
+  let pts = quadrantPoints(q);
+  assert.equal(pts.length, 2);
+  assert.equal(pts[0].label, "Fast Hashing");
+  assert.equal(pts[0].x, 0.22);
+  assert.equal(pts[0].y, 0.85);
+
+  q = addQuadrantPoint(q, "Real-Time Sync", 0.75, 0.88);
+  assert.match(q, /Real-Time Sync: \[0.75, 0.88\]/);
+
+  q = deleteQuadrantPoint(q, "UML Templates");
+  assert.doesNotMatch(q, /UML Templates/);
+
+  pts = quadrantPoints(q);
+  assert.equal(pts.length, 2);
+  assert.equal(pts.some((p) => p.label === "Real-Time Sync"), true);
+  assert.equal(pts.some((p) => p.label === "UML Templates"), false);
+});
+
 
 
 
