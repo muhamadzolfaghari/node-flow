@@ -1,4 +1,4 @@
-name: Verify DiagramAtlas
+name: Verify NodeFlow
 on:
   push:
     branches: [main, 'codex/**']

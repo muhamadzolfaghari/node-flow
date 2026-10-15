@@ -34,7 +34,7 @@ export const MATRIX = [
 ]
 
 export const FAQS = [
-  { q: 'Is DiagramAtlas completely free?', a: 'Yes — MIT licensed, no subscriptions, paywalls, watermarks or required accounts. Personal, open-source and commercial use.' },
+  { q: 'Is NodeFlow completely free?', a: 'Yes — MIT licensed, no subscriptions, paywalls, watermarks or required accounts. Personal, open-source and commercial use.' },
   { q: 'How does in-browser AI work without an API key?', a: 'Dual engine: instant heuristic synthesis (0 MB) plus a real Qwen2.5-Coder LLM running locally via WebGPU/Wasm. Fully private.' },
   { q: 'What can I import and export?', a: 'Import XMind, Draw.io, PlantUML, Graphviz DOT, D2, SQL DDL, OpenAPI, Markdown and CSV. Export SVG, 2x/4x PNG, vector PDF, standalone HTML and .xmind.' },
   { q: 'How is it different from Mermaid Live Editor?', a: 'CAD canvas, XMind bi-directional I/O, universal converters, non-destructive errors, local AI and vector PDF — with zero cloud paywall.' },

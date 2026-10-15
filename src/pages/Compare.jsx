@@ -192,7 +192,7 @@ export default function Compare() {
             Import, edit, model, and export
           </h2>
           <p className="mt-2 text-xs leading-6 text-muted-foreground">
-            Open multiple files, folders, ZIP archives, or DiagramAtlas project
+            Open multiple files, folders, ZIP archives, or NodeFlow / DiagramAtlas project
             backups. Edit source with a live preview, keep version snapshots,
             and export source, SVG, PNG, PDF, interactive HTML, or XMind
             mindmaps. PDF export currently embeds a raster image. The studio is
