@@ -14,6 +14,8 @@ import {
   getFlowchartDirection,
   changeFlowchartDirection,
   duplicateFlowchartNode,
+  flowchartEdges,
+  deleteFlowchartEdge,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -102,6 +104,20 @@ test("duplicating a node preserves shape and clones styles", () => {
   assert.match(updated, /style node3 fill:#064e3b/);
 });
 
+test("listing and deleting flowchart edges", () => {
+  const source = "flowchart LR\n  A[Client] --> B[Server]\n  B ==>|\"sync\"| C[(Database)]";
+  const edges = flowchartEdges(source);
+  assert.equal(edges.length, 2);
+  assert.equal(edges[0].from, "A");
+  assert.equal(edges[0].to, "B");
+  assert.equal(edges[1].from, "B");
+  assert.equal(edges[1].to, "C");
+  assert.equal(edges[1].label, "sync");
+  assert.equal(edges[1].symbol, "==>");
 
-
-
+  const severed = deleteFlowchartEdge(source, "A", "B");
+  assert.match(severed, /A\[Client\]/);
+  assert.match(severed, /B\[Server\]/);
+  assert.equal(flowchartEdges(severed).length, 1);
+  assert.equal(flowchartNodes(severed).length, 3);
+});

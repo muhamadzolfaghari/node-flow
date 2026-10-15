@@ -137,6 +137,62 @@ export function connectFlowchartNodes(source, from, to, label = "", arrowType = 
   return `${source.trimEnd()}\n  ${from} ${arrow}${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
 }
 
+export function flowchartEdges(source) {
+  const edges = [];
+  const lines = source.split("\n");
+  for (const line of lines) {
+    if (/^\s*(?:flowchart|graph|subgraph|classDef|style|click)\b/i.test(line)) continue;
+    const match = line.match(
+      /\b([A-Za-z_][\w-]*)\s*(?:\[\[|\(\(|\(\[|\[\(|\{\{|\{|\(|\[)?[^\n]*?(?:\]\]|\)\)|\]\)|\)\]|\}\}|\}|\)|\])?\s*([-.~=]+>|[-.~=]+)(?:\|"?([^"|\n]*?)"?\|)?\s*([A-Za-z_][\w-]*)/,
+    );
+    if (match) {
+      const from = match[1];
+      const symbol = match[2];
+      const label = match[3] || "";
+      const to = match[4];
+      if (from && to && !["subgraph", "classDef", "style"].includes(from)) {
+        edges.push({ from, to, label: label.trim(), symbol });
+      }
+    }
+  }
+  return edges;
+}
+
+export function deleteFlowchartEdge(source, from, to) {
+  if (!from || !to) throw new Error("Choose two connected nodes.");
+  const lines = source.split("\n");
+  const result = [];
+  let deleted = false;
+
+  const edgePattern = new RegExp(
+    `^(\\s*)([A-Za-z_][\\w-]*\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()?[^\\n]*?(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))?)\\s*([-.~=]+>|[-.~=]+)(?:\\|[^|\\n]*\\|)?\\s*([A-Za-z_][\\w-]*\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()?[^\\n]*?(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))?)\\s*$`,
+  );
+
+  for (const line of lines) {
+    const match = line.match(edgePattern);
+    if (!deleted && match) {
+      const fromPart = match[2].trim();
+      const toPart = match[4].trim();
+      const fromId = fromPart.match(/^([A-Za-z_][\w-]*)/)?.[1];
+      const toId = toPart.match(/^([A-Za-z_][\w-]*)/)?.[1];
+      if (fromId === from && toId === to) {
+        deleted = true;
+        const hasFromDecl = /[\[\(\{]/.test(fromPart);
+        const hasToDecl = /[\[\(\{]/.test(toPart);
+        if (hasFromDecl) result.push(`  ${fromPart}`);
+        if (hasToDecl) result.push(`  ${toPart}`);
+        continue;
+      }
+    }
+    result.push(line);
+  }
+
+  if (!deleted) {
+    throw new Error(`No connection found from ${from} to ${to}.`);
+  }
+  return result.join("\n");
+}
+
 export function addFlowchartChild(
   source,
   parentId,

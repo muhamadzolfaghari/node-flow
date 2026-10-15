@@ -102,6 +102,8 @@ import {
   getFlowchartDirection,
   changeFlowchartDirection,
   duplicateFlowchartNode,
+  flowchartEdges,
+  deleteFlowchartEdge,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -500,6 +502,12 @@ export default function Studio() {
     setInspectorTab("properties");
   };
   const nodeId = selected?.id?.match(/^flowchart-(.+)-\d+$/)?.[1];
+  const relatedEdges = useMemo(() => {
+    if (!isFlowchart(document) || !nodeId) return [];
+    return flowchartEdges(document.source).filter(
+      (e) => e.from === nodeId || e.to === nodeId,
+    );
+  }, [document?.source, nodeId]);
   const startResize = (e) => {
     e.preventDefault();
     const grid = splitRef.current;
@@ -885,6 +893,73 @@ export default function Studio() {
                   <Trash2 className="size-3.5" />
                   Delete node
                 </Button>
+                {relatedEdges.length > 0 && (
+                  <div className="mt-4 border-t pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Connections ({relatedEdges.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-36 overflow-auto">
+                      {relatedEdges.map((e, idx) => {
+                        const isOutgoing = e.from === nodeId;
+                        const otherId = isOutgoing ? e.to : e.from;
+                        const otherNode = nodes.find((n) => n.id === otherId);
+                        const otherLabel = otherNode?.label || otherId;
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-1.5 rounded bg-muted/40 px-2 py-1 text-[11px]"
+                          >
+                            <span className="truncate">
+                              {isOutgoing ? (
+                                <>
+                                  <span className="text-muted-foreground font-mono">
+                                    {e.symbol}
+                                  </span>{" "}
+                                  {otherLabel}
+                                </>
+                              ) : (
+                                <>
+                                  {otherLabel}{" "}
+                                  <span className="text-muted-foreground font-mono">
+                                    {e.symbol}
+                                  </span>
+                                </>
+                              )}
+                              {e.label ? (
+                                <span className="ml-1 text-[10px] text-muted-foreground italic">
+                                  ({e.label})
+                                </span>
+                              ) : null}
+                            </span>
+                            <button
+                              type="button"
+                              title="Disconnect"
+                              aria-label={`Disconnect ${otherLabel}`}
+                              className="text-muted-foreground hover:text-destructive shrink-0 p-0.5 rounded transition"
+                              onClick={() => {
+                                try {
+                                  updateSource(
+                                    document.id,
+                                    deleteFlowchartEdge(
+                                      document.source,
+                                      e.from,
+                                      e.to,
+                                    ),
+                                  );
+                                  say(`Disconnected ${e.from} and ${e.to}`);
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              }}
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {isFlowchart(document) && (
