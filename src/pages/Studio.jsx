@@ -769,6 +769,15 @@ export default function Studio() {
           background: "#ffffff",
           padding: 32,
         });
+      else if (kind === "pptx-deck") {
+        say("Generating presentation deck...");
+        await Exporter.downloadProjectDeckPptx(
+          [{ title, container: el }],
+          project?.name || title,
+          { background: "#ffffff", padding: 32 }
+        );
+        say("Presentation deck downloaded");
+      }
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
       else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md" || kind === "openapi" || kind === "prisma" || kind === "graphql" || kind === "terraform") {
         const mod = await import("../utils/exporters/mermaid-export.js");
@@ -5323,6 +5332,7 @@ export default function Studio() {
                 ["png4", "PNG image · 4×"],
                 ["pdf", "PDF document"],
                 ["pptx", "PowerPoint slide (.pptx)"],
+                ["pptx-deck", "Multi-slide presentation deck (.pptx)"],
                 ["html", "Interactive HTML"],
                 ["xmind", "XMind mindmap"],
                 ["copy", "Copy Markdown"],
@@ -5562,6 +5572,7 @@ export default function Studio() {
                     status={preview.status}
                     documentId={document.id}
                     grid={grid}
+                    selected={selected}
                     onSelect={chooseNode}
                     onQuickAdd={() => {
                       if (!isFlowchart(document) || !nodeId) return;

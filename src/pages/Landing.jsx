@@ -80,9 +80,18 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1fr_.8fr]">
             <div>
-              <Badge tone="indigo">
+              <Badge tone="indigo" className="gap-2 py-1 px-3">
                 <span className="size-1.5 rounded-full bg-primary" />
-                Open source modeling workspace
+                <span>Open source modeling workspace</span>
+                <span className="text-muted-foreground/60">·</span>
+                <a
+                  href="https://github.com/muhamadzolfaghari"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-foreground/90 hover:text-primary transition-colors"
+                >
+                  by Mohammad Zolfaghari
+                </a>
               </Badge>
               <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-[1.12] tracking-[-.04em] sm:text-6xl">
                 Your diagram IDE.

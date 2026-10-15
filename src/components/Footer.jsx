@@ -4,9 +4,18 @@ export default function Footer() {
     <footer className="border-t">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-5 py-7 sm:px-8">
         <div>
-          <p className="text-sm font-medium">NodeFlow</p>
+          <p className="text-sm font-semibold tracking-tight">NodeFlow</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Open source diagram studio · MIT licensed
+            Crafted by{" "}
+            <a
+              href="https://github.com/muhamadzolfaghari"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline decoration-primary/40 underline-offset-4 hover:decoration-primary transition-colors"
+            >
+              Mohammad Zolfaghari
+            </a>{" "}
+            · Open source under MIT license
           </p>
         </div>
         <nav

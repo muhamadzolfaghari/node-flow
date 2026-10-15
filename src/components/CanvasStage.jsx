@@ -14,6 +14,9 @@ import {
   Grid3X3,
   Map as MapIcon,
   MousePointer2,
+  Copy,
+  Trash2,
+  X,
 } from "lucide-react";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 
@@ -23,6 +26,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     grid = "dots",
     status,
     documentId,
+    selected,
     onSelect,
     onQuickAdd,
     onDeleteSelected,
@@ -320,6 +324,52 @@ const CanvasStage = forwardRef(function CanvasStage(
           <div ref={containerRef} className="mermaid-stage" />
         </div>
       </div>
+      {selected && (
+        <div className="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary/30 bg-card/95 px-3 py-1 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-2 z-20 text-xs select-none">
+          <span className="font-semibold text-primary flex items-center gap-1.5 max-w-[150px] truncate">
+            <span className="size-2 rounded-full bg-primary animate-pulse" />
+            <span className="truncate">{selected.label || selected.id}</span>
+          </span>
+          <span className="h-4 border-l border-border/80 mx-1" />
+          {callbacks.current.onQuickAdd && (
+            <button
+              onClick={callbacks.current.onQuickAdd}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-primary/20 hover:text-primary transition"
+              title="Add connected child step (Tab)"
+            >
+              <Plus className="size-3" />
+              <span>Add Step</span>
+            </button>
+          )}
+          {callbacks.current.onDuplicateSelected && (
+            <button
+              onClick={callbacks.current.onDuplicateSelected}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-accent transition"
+              title="Duplicate node (Cmd/Ctrl+D)"
+            >
+              <Copy className="size-3" />
+              <span>Duplicate</span>
+            </button>
+          )}
+          {callbacks.current.onDeleteSelected && (
+            <button
+              onClick={callbacks.current.onDeleteSelected}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-rose-400 hover:bg-rose-500/20 transition"
+              title="Delete node (Delete/Backspace)"
+            >
+              <Trash2 className="size-3" />
+              <span>Delete</span>
+            </button>
+          )}
+          <button
+            onClick={() => callbacks.current.onSelect?.(null)}
+            className="rounded p-0.5 text-muted-foreground hover:text-foreground transition ml-1"
+            title="Deselect (Escape)"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
       {status.state === "rendering" && (
         <span className="absolute left-4 top-4 rounded-md border bg-card px-3 py-1.5 text-xs text-muted-foreground">
           Building preview…

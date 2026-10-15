@@ -421,6 +421,116 @@ export class Exporter {
   }
 
   /**
+   * Generates a multi-slide 16:9 widescreen PowerPoint presentation (.pptx) deck
+   * @param {Array<{ title: string, container?: HTMLElement, blob?: Blob, width?: number, height?: number }>} slidesList
+   * @param {string} deckTitle
+   * @param {object} options
+   */
+  static async downloadProjectDeckPptx(slidesList, deckTitle = 'Project Presentation', options = {}) {
+    const { background = '#ffffff', padding = 32 } = options;
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+
+    // 16:9 widescreen dimensions in EMUs (1 inch = 914400 EMUs)
+    const slideW = 12192000;
+    const slideH = 6858000;
+    const maxW = slideW - 1219200; // 609600 margin on each side
+    const maxH = slideH - 1219200;
+
+    const renderedSlides = [];
+    for (let i = 0; i < slidesList.length; i++) {
+      const item = slidesList[i];
+      let b = item.blob;
+      let w = item.width;
+      let h = item.height;
+
+      if (!b && item.container) {
+        try {
+          const res = await this.renderToBlob(item.container, {
+            scale: 3,
+            background,
+            padding,
+            format: 'image/png',
+          });
+          b = res.blob;
+          w = res.width;
+          h = res.height;
+        } catch (e) {
+          console.warn(`Could not render slide ${i + 1}:`, e);
+        }
+      }
+
+      if (b && w && h) {
+        renderedSlides.push({
+          title: item.title || `Slide ${i + 1}`,
+          blob: b,
+          width: w,
+          height: h,
+        });
+      }
+    }
+
+    if (renderedSlides.length === 0) {
+      throw new Error('No valid slides available to generate presentation deck.');
+    }
+
+    // Build OpenXML package
+    let contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n  <Default Extension="xml" ContentType="application/xml"/>\n  <Default Extension="png" ContentType="image/png"/>\n  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>\n`;
+
+    let presRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n`;
+
+    let sldIdLstXml = `<p:sldIdLst>\n`;
+
+    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>\n</Relationships>`);
+
+    renderedSlides.forEach((s, idx) => {
+      const slideNum = idx + 1;
+      const rId = `rId${slideNum}`;
+      contentTypesXml += `  <Override PartName="/ppt/slides/slide${slideNum}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>\n`;
+      presRelsXml += `  <Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${slideNum}.xml"/>\n`;
+      sldIdLstXml += `    <p:sldId id="${256 + idx}" r:id="${rId}"/>\n`;
+
+      const scale = Math.min(maxW / s.width, maxH / s.height);
+      const emuW = Math.round(s.width * scale);
+      const emuH = Math.round(s.height * scale);
+      const offX = Math.round((slideW - emuW) / 2);
+      const offY = Math.round((slideH - emuH) / 2);
+
+      // Slide relationship pointing to its image
+      zip.file(
+        `ppt/slides/_rels/slide${slideNum}.xml.rels`,
+        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${slideNum}.png"/>\n</Relationships>`
+      );
+
+      // Slide XML
+      zip.file(
+        `ppt/slides/slide${slideNum}.xml`,
+        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">\n  <p:cSld>\n    <p:spTree>\n      <p:nvGrpSpPr>\n        <p:cNvPr id="1" name=""/>\n        <p:cNvGrpSpPr/>\n        <p:nvPr/>\n      </p:nvGrpSpPr>\n      <p:grpSpPr>\n        <a:xfrm>\n          <a:off x="0" y="0"/>\n          <a:ext cx="0" cy="0"/>\n          <a:chOff x="0" y="0"/>\n          <a:chExt cx="0" cy="0"/>\n        </a:xfrm>\n      </p:grpSpPr>\n      <p:pic>\n        <p:nvPicPr>\n          <p:cNvPr id="2" name="${this.sanitizeFilename(s.title)}"/>\n          <p:cNvPicPr>\n            <a:picLocks noChangeAspect="1"/>\n          </p:cNvPicPr>\n          <p:nvPr/>\n        </p:nvPicPr>\n        <p:blipFill>\n          <a:blip r:embed="rId1"/>\n          <a:stretch>\n            <a:fillRect/>\n          </a:stretch>\n        </p:blipFill>\n        <p:spPr>\n          <a:xfrm>\n            <a:off x="${offX}" y="${offY}"/>\n            <a:ext cx="${emuW}" cy="${emuH}"/>\n          </a:xfrm>\n          <a:prstGeom prst="rect">\n            <a:avLst/>\n          </a:prstGeom>\n        </p:spPr>\n      </p:pic>\n    </p:spTree>\n  </p:cSld>\n  <p:clrMapOvr>\n    <a:masterClrMapping/>\n  </p:clrMapOvr>\n</p:sld>`
+      );
+
+      zip.file(`ppt/media/image${slideNum}.png`, s.blob);
+    });
+
+    contentTypesXml += `</Types>`;
+    presRelsXml += `</Relationships>`;
+    sldIdLstXml += `  </p:sldIdLst>`;
+
+    zip.file('[Content_Types].xml', contentTypesXml);
+    zip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
+    zip.file(
+      'ppt/presentation.xml',
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">\n  <p:sldMasterIdLst/>\n  ${sldIdLstXml}\n  <p:sldSz cx="${slideW}" cy="${slideH}" type="screen16x9"/>\n  <p:notesSz cx="6858000" cy="9144000"/>\n</p:presentation>`
+    );
+
+    const pptxBlob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
+    this.downloadBlob(pptxBlob, `${this.sanitizeFilename(deckTitle)}_presentation_deck.pptx`);
+  }
+
+
+  /**
    * Internal PDF 1.4 synthesizer
    */
   static synthesizePdfFromJpeg(jpegUint8Array, imgWidth, imgHeight, options = {}) {

@@ -18,7 +18,7 @@ import { python } from "@codemirror/lang-python";
 import { autocompletion, snippetCompletion } from "@codemirror/autocomplete";
 import { linter, lintGutter } from "@codemirror/lint";
 import { undo, redo } from "@codemirror/commands";
-import { openSearchPanel } from "@codemirror/search";
+import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
 import { getFormat } from "../lib/formats.js";
 import { fixAnySyntax, testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
 import { explainError } from "../utils/syntax-error-db.js";
@@ -442,7 +442,9 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
           compartment.current.of(language(doc)),
           lintGutter(),
           syntaxLinter,
+          search({ top: true }),
           keymap.of([
+            ...searchKeymap,
             {
               key: "Alt-f",
               run: () => {
