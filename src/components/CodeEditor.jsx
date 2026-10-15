@@ -21,7 +21,7 @@ import { openSearchPanel } from "@codemirror/search";
 import { getFormat } from "../lib/formats.js";
 
 const keywords =
-  "flowchart graph sequenceDiagram classDiagram stateDiagram-v2 erDiagram mindmap gantt pie xychart-beta C4Context gitGraph journey timeline sankey-beta quadrantChart kanban block-beta requirementDiagram requirement functionalRequirement element satisfies traces packet-beta packet subgraph end participant actor class state direction title section autonumber".split(
+  "flowchart graph sequenceDiagram classDiagram stateDiagram-v2 erDiagram mindmap gantt pie xychart-beta C4Context gitGraph journey timeline sankey-beta quadrantChart kanban block-beta requirementDiagram requirement functionalRequirement element satisfies traces packet-beta packet architecture-beta architecture service group in junction subgraph end participant actor class state direction title section autonumber".split(
     " ",
   );
 const diagramLanguage = StreamLanguage.define({

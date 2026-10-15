@@ -50,6 +50,7 @@ import {
   Layers,
   ClipboardList,
   Binary,
+  Network,
 } from "lucide-react";
 import {
   Button,
@@ -222,6 +223,16 @@ import {
   packetFields,
   addPacketField,
   deletePacketField,
+  isArchitecture,
+  architectureGroups,
+  architectureServices,
+  architectureEdges,
+  addArchitectureGroup,
+  deleteArchitectureGroup,
+  addArchitectureService,
+  deleteArchitectureService,
+  addArchitectureEdge,
+  deleteArchitectureEdge,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -391,6 +402,19 @@ export default function Studio() {
     [pktStart, setPktStart] = useState(""),
     [pktEnd, setPktEnd] = useState(""),
     [pktLabel, setPktLabel] = useState(""),
+    // Architecture diagram modeling state
+    [archSvcId, setArchSvcId] = useState(""),
+    [archSvcTitle, setArchSvcTitle] = useState(""),
+    [archSvcIcon, setArchSvcIcon] = useState("server"),
+    [archSvcGroup, setArchSvcGroup] = useState(""),
+    [archGrpId, setArchGrpId] = useState(""),
+    [archGrpTitle, setArchGrpTitle] = useState(""),
+    [archGrpIcon, setArchGrpIcon] = useState("cloud"),
+    [archEdgeFrom, setArchEdgeFrom] = useState(""),
+    [archEdgeFromSide, setArchEdgeFromSide] = useState("R"),
+    [archEdgeTo, setArchEdgeTo] = useState(""),
+    [archEdgeToSide, setArchEdgeToSide] = useState("L"),
+    [archEdgeDirected, setArchEdgeDirected] = useState(false),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -461,6 +485,15 @@ export default function Studio() {
   }, [document?.source]);
   const pktList = useMemo(() => {
     return isPacket(document) ? packetFields(document.source) : [];
+  }, [document?.source]);
+  const archGroupList = useMemo(() => {
+    return isArchitecture(document) ? architectureGroups(document.source) : [];
+  }, [document?.source]);
+  const archServiceList = useMemo(() => {
+    return isArchitecture(document) ? architectureServices(document.source) : [];
+  }, [document?.source]);
+  const archEdgeList = useMemo(() => {
+    return isArchitecture(document) ? architectureEdges(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -4620,6 +4653,355 @@ export default function Studio() {
                     >
                       <Plus className="size-3.5" />
                       Add Field
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isArchitecture(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Network className="size-3.5 text-primary" />
+                  <span>Cloud architecture tools</span>
+                </div>
+
+                {archGroupList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Groups & VPCs ({archGroupList.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-40 overflow-auto">
+                      {archGroupList.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {g.icon}
+                            </Badge>
+                            <span className="font-mono font-medium text-[11px]">
+                              {g.id}
+                            </span>
+                            <span className="truncate text-muted-foreground text-[11px]">
+                              {g.title}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteArchitectureGroup(document.source, g.id),
+                              );
+                              say(`Removed group "${g.id}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {archServiceList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Services & Nodes ({archServiceList.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {archServiceList.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {s.icon}
+                            </Badge>
+                            <span className="font-mono font-medium text-[11px]">
+                              {s.id}
+                            </span>
+                            <span className="truncate text-muted-foreground text-[11px]">
+                              {s.title}
+                            </span>
+                            {s.inGroup && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] h-4 px-1 font-mono"
+                              >
+                                in {s.inGroup}
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteArchitectureService(document.source, s.id),
+                              );
+                              say(`Removed service "${s.id}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {archEdgeList.length > 0 && (
+                  <div className="mt-3 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Connections ({archEdgeList.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-40 overflow-auto">
+                      {archEdgeList.map((e, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate font-mono text-[11px]">
+                            <span>{e.from}:{e.fromSide}</span>
+                            <span className="text-muted-foreground">{e.directed ? "-->" : "--"}</span>
+                            <span>{e.toSide}:{e.to}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteArchitectureEdge(document.source, e.from, e.to),
+                              );
+                              say(`Removed connection "${e.from} -- ${e.to}"`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add architecture service
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Service identifier"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Service ID (e.g. auth_svc)"
+                        value={archSvcId}
+                        onChange={(e) => setArchSvcId(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Service title"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Display title"
+                        value={archSvcTitle}
+                        onChange={(e) => setArchSvcTitle(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Service icon"
+                        className="h-8 rounded-md border bg-background px-2 text-xs flex-1"
+                        value={archSvcIcon}
+                        onChange={(e) => setArchSvcIcon(e.target.value)}
+                      >
+                        <option value="server">server (Microservice)</option>
+                        <option value="database">database (Database)</option>
+                        <option value="cloud">cloud (Gateway/Cloud)</option>
+                        <option value="disk">disk (Storage/Cache)</option>
+                        <option value="internet">internet (Client/Web)</option>
+                        <option value="key">key (Auth/Security)</option>
+                        <option value="user">user (User)</option>
+                      </select>
+                      <Input
+                        aria-label="Parent group"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="In group (optional)"
+                        value={archSvcGroup}
+                        onChange={(e) => setArchSvcGroup(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addArchitectureService(
+                                document.source,
+                                archSvcId,
+                                archSvcTitle,
+                                archSvcIcon,
+                                archSvcGroup,
+                              ),
+                            );
+                            setArchSvcId("");
+                            setArchSvcTitle("");
+                            say(`Added service "${archSvcId}"`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Service
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add group boundary
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Group identifier"
+                      className="h-8 text-xs flex-1 font-mono"
+                      placeholder="Group ID (e.g. vpc_prod)"
+                      value={archGrpId}
+                      onChange={(e) => setArchGrpId(e.target.value)}
+                    />
+                    <Input
+                      aria-label="Group title"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Title (e.g. Production VPC)"
+                      value={archGrpTitle}
+                      onChange={(e) => setArchGrpTitle(e.target.value)}
+                    />
+                    <select
+                      aria-label="Group icon"
+                      className="h-8 rounded-md border bg-background px-2 text-xs w-24"
+                      value={archGrpIcon}
+                      onChange={(e) => setArchGrpIcon(e.target.value)}
+                    >
+                      <option value="cloud">cloud</option>
+                      <option value="server">server</option>
+                      <option value="disk">disk</option>
+                    </select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addArchitectureGroup(
+                              document.source,
+                              archGrpId,
+                              archGrpTitle,
+                              archGrpIcon,
+                            ),
+                          );
+                          setArchGrpId("");
+                          setArchGrpTitle("");
+                          say(`Added group "${archGrpId}"`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Group
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Connect services
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        aria-label="Connect from service"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="From service"
+                        value={archEdgeFrom}
+                        onChange={(e) => setArchEdgeFrom(e.target.value)}
+                      />
+                      <select
+                        aria-label="From side"
+                        className="h-8 rounded-md border bg-background px-1.5 text-xs w-16 text-center font-mono"
+                        value={archEdgeFromSide}
+                        onChange={(e) => setArchEdgeFromSide(e.target.value)}
+                      >
+                        <option value="R">R (Right)</option>
+                        <option value="L">L (Left)</option>
+                        <option value="B">B (Bottom)</option>
+                        <option value="T">T (Top)</option>
+                      </select>
+                      <span className="text-muted-foreground text-xs font-mono">--</span>
+                      <select
+                        aria-label="To side"
+                        className="h-8 rounded-md border bg-background px-1.5 text-xs w-16 text-center font-mono"
+                        value={archEdgeToSide}
+                        onChange={(e) => setArchEdgeToSide(e.target.value)}
+                      >
+                        <option value="L">L (Left)</option>
+                        <option value="R">R (Right)</option>
+                        <option value="T">T (Top)</option>
+                        <option value="B">B (Bottom)</option>
+                      </select>
+                      <Input
+                        aria-label="Connect to service"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="To service"
+                        value={archEdgeTo}
+                        onChange={(e) => setArchEdgeTo(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs w-full"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addArchitectureEdge(
+                              document.source,
+                              archEdgeFrom,
+                              archEdgeFromSide,
+                              archEdgeTo,
+                              archEdgeToSide,
+                              archEdgeDirected,
+                            ),
+                          );
+                          setArchEdgeFrom("");
+                          setArchEdgeTo("");
+                          say(`Connected ${archEdgeFrom} to ${archEdgeTo}`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add Connection
                     </Button>
                   </div>
                 </div>

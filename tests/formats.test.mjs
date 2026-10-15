@@ -45,6 +45,10 @@ test("ambiguous spec extensions are detected by content", () => {
     detectFormat("network.txt", "packet-beta\n 0-15: \"Port\""),
     "mermaid",
   );
+  assert.equal(
+    detectFormat("arch.txt", "architecture-beta\n service a(server)[API]"),
+    "mermaid",
+  );
   assert.throws(
     () => detectFormat("unrelated.json", '{"hello":true}'),
     /Cannot identify/,

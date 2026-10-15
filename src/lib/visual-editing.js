@@ -2163,16 +2163,186 @@ export function deletePacketField(source, start, end) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* ARCHITECTURE DIAGRAM (architecture-beta) VISUAL MODELING                   */
+/* -------------------------------------------------------------------------- */
 
+export const isArchitecture = (doc) =>
+  doc?.format === "mermaid" &&
+  /^\s*architecture(?:-beta)?\b/m.test(doc.source);
 
+export function architectureGroups(source) {
+  const groups = [];
+  const groupRegex =
+    /^\s*group\s+([A-Za-z0-9_-]+)(?:\(([^)]*)\))?(?:\[([^\]]*)\])?/gm;
+  let match;
+  while ((match = groupRegex.exec(source)) !== null) {
+    groups.push({
+      id: match[1],
+      icon: match[2] || "cloud",
+      title: match[3] || match[1],
+    });
+  }
+  return groups;
+}
 
+export function architectureServices(source) {
+  const services = [];
+  const serviceRegex =
+    /^\s*service\s+([A-Za-z0-9_-]+)(?:\(([^)]*)\))?(?:\[([^\]]*)\])?(?:\s+in\s+([A-Za-z0-9_-]+))?/gm;
+  let match;
+  while ((match = serviceRegex.exec(source)) !== null) {
+    services.push({
+      id: match[1],
+      icon: match[2] || "server",
+      title: match[3] || match[1],
+      inGroup: match[4] || null,
+    });
+  }
+  return services;
+}
 
+export function architectureEdges(source) {
+  const edges = [];
+  const edgeRegex =
+    /^\s*([A-Za-z0-9_-]+):([LRTB])\s*(--|-->)\s*([LRTB]):([A-Za-z0-9_-]+)/gm;
+  let match;
+  while ((match = edgeRegex.exec(source)) !== null) {
+    edges.push({
+      from: match[1],
+      fromSide: match[2],
+      toSide: match[4],
+      to: match[5],
+      directed: match[3] === "-->",
+    });
+  }
+  return edges;
+}
 
+export function addArchitectureGroup(source, id, title, icon = "cloud") {
+  if (!id || !id.trim()) throw new Error("Group ID required.");
+  const cleanId = id.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanTitle = (title || cleanId).trim().replace(/[\[\]]/g, "");
+  const cleanIcon = (icon || "cloud").trim().replace(/[()]/g, "");
 
+  const line = `    group ${cleanId}(${cleanIcon})[${cleanTitle}]`;
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*(service|junction|[A-Za-z0-9_-]+:[LRTB])\b/.test(lines[i])) {
+      insertIdx = i;
+      break;
+    }
+  }
 
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, line);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${line}\n`;
+}
 
+export function deleteArchitectureGroup(source, id) {
+  if (!id || !id.trim()) throw new Error("Group ID required.");
+  const target = id.trim();
+  const groupLineRegex = new RegExp(
+    `^\\s*group\\s+${escapeRegex(target)}(?:\\([^)]*\\))?(?:\\[[^\\]]*\\])?`,
+    "i",
+  );
+  const inGroupRegex = new RegExp(`\\s+in\\s+${escapeRegex(target)}\\b`, "i");
 
+  const lines = source.split("\n").filter((line) => !groupLineRegex.test(line));
+  return lines.map((line) => line.replace(inGroupRegex, "")).join("\n");
+}
 
+export function addArchitectureService(
+  source,
+  id,
+  title,
+  icon = "server",
+  inGroup = null,
+) {
+  if (!id || !id.trim()) throw new Error("Service ID required.");
+  const cleanId = id.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  const cleanTitle = (title || cleanId).trim().replace(/[\[\]]/g, "");
+  const cleanIcon = (icon || "server").trim().replace(/[()]/g, "");
+  const groupSuffix = inGroup && inGroup.trim() ? ` in ${inGroup.trim()}` : "";
 
+  const line = `    service ${cleanId}(${cleanIcon})[${cleanTitle}]${groupSuffix}`;
+  const lines = source.split("\n");
+  let insertIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*[A-Za-z0-9_-]+:[LRTB]\s*(--|-->)/.test(lines[i])) {
+      insertIdx = i;
+      break;
+    }
+  }
 
+  if (insertIdx !== -1) {
+    lines.splice(insertIdx, 0, line);
+    return lines.join("\n");
+  }
+  return `${source.trimEnd()}\n${line}\n`;
+}
 
+export function deleteArchitectureService(source, id) {
+  if (!id || !id.trim()) throw new Error("Service ID required.");
+  const target = id.trim();
+  const serviceLineRegex = new RegExp(
+    `^\\s*service\\s+${escapeRegex(target)}(?:\\([^)]*\\))?(?:\\[[^\\]]*\\])?(?:\\s+in\\s+\\w+)?`,
+    "i",
+  );
+
+  const lines = source.split("\n").filter((line) => {
+    if (serviceLineRegex.test(line)) return false;
+    if (
+      new RegExp(`^\\s*${escapeRegex(target)}:[LRTB]`, "i").test(line) ||
+      new RegExp(`[LRTB]:${escapeRegex(target)}\\s*$`, "i").test(line)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return lines.join("\n");
+}
+
+export function addArchitectureEdge(
+  source,
+  from,
+  fromSide = "R",
+  to,
+  toSide = "L",
+  directed = false,
+) {
+  if (!from || !from.trim()) throw new Error("Source service required.");
+  if (!to || !to.trim()) throw new Error("Target service required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+  const fSide = ["L", "R", "T", "B"].includes(fromSide) ? fromSide : "R";
+  const tSide = ["L", "R", "T", "B"].includes(toSide) ? toSide : "L";
+  const connector = directed ? "-->" : "--";
+
+  const line = `    ${cleanFrom}:${fSide} ${connector} ${tSide}:${cleanTo}`;
+  return `${source.trimEnd()}\n${line}\n`;
+}
+
+export function deleteArchitectureEdge(source, from, to) {
+  if (!from || !to) throw new Error("From and To required.");
+  const cleanFrom = from.trim();
+  const cleanTo = to.trim();
+
+  const lines = source.split("\n").filter((line) => {
+    return !(
+      new RegExp(
+        `^\\s*${escapeRegex(cleanFrom)}:[LRTB]\\s*(?:--|-->)\\s*[LRTB]:${escapeRegex(cleanTo)}`,
+        "i",
+      ).test(line) ||
+      new RegExp(
+        `^\\s*${escapeRegex(cleanTo)}:[LRTB]\\s*(?:--|-->)\\s*[LRTB]:${escapeRegex(cleanFrom)}`,
+        "i",
+      ).test(line)
+    );
+  });
+  return lines.join("\n");
+}

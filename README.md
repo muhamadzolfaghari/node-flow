@@ -84,6 +84,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **C4 Architecture Models**: Full Context/Container/Component modeling with Person, System, Database, and Component declaration, relationship direction and protocols (`Rel`), and element deletion.
 - **Requirement Diagrams**: Systems engineering requirements modeling with functional/performance requirement definitions, risk levels, verification methods, system elements, traceability links (`satisfies`, `traces`, `derives`, `refines`, `copies`, `contains`), and element/requirement deletion.
 - **Packet & Bytefield Diagrams**: Network protocol header and binary structure modeling with bitfield ranges, single-bit flags, field width calculations, and field deletion.
+- **Cloud & Architecture Diagrams**: Cloud microservices and VPC topology modeling with group boundaries, service declarations with icon presets (server, database, cloud, disk, internet, key, user), port/side directional connections (`R`, `L`, `T`, `B`), and element deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

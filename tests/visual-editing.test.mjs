@@ -113,6 +113,16 @@ import {
   packetFields,
   addPacketField,
   deletePacketField,
+  isArchitecture,
+  architectureGroups,
+  architectureServices,
+  architectureEdges,
+  addArchitectureGroup,
+  deleteArchitectureGroup,
+  addArchitectureService,
+  deleteArchitectureService,
+  addArchitectureEdge,
+  deleteArchitectureEdge,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -895,15 +905,79 @@ test("Packet / Bytefield diagram visual modeling: parsing, addition, deletion, v
   assert.throws(() => deletePacketField(pkt, ""), /Start bit required/);
 });
 
+test("Architecture diagram visual modeling: groups, services, edges, additions, deletions, validation", () => {
+  let arch = `architecture-beta
+    group vpc(cloud)[Virtual Private Cloud]
+    service client(internet)[Web Client]
+    service gateway(server)[API Gateway] in vpc
+    service auth(key)[Auth Service] in vpc
+    service db(database)[Aurora DB] in vpc
 
+    client:R -- L:gateway
+    gateway:B -- T:auth
+    gateway:R -- L:db
+`;
 
+  assert.equal(isArchitecture({ format: "mermaid", source: arch }), true);
+  assert.equal(isArchitecture({ format: "mermaid", source: "architecture\n service a" }), true);
+  assert.equal(isArchitecture({ format: "mermaid", source: "flowchart TD\n A-->B" }), false);
+  assert.equal(isArchitecture({ format: "d2", source: arch }), false);
 
+  let grps = architectureGroups(arch);
+  assert.equal(grps.length, 1);
+  assert.equal(grps[0].id, "vpc");
+  assert.equal(grps[0].icon, "cloud");
+  assert.equal(grps[0].title, "Virtual Private Cloud");
 
+  let svcs = architectureServices(arch);
+  assert.equal(svcs.length, 4);
+  assert.equal(svcs[0].id, "client");
+  assert.equal(svcs[0].inGroup, null);
+  assert.equal(svcs[1].id, "gateway");
+  assert.equal(svcs[1].inGroup, "vpc");
 
+  let edges = architectureEdges(arch);
+  assert.equal(edges.length, 3);
+  assert.equal(edges[0].from, "client");
+  assert.equal(edges[0].fromSide, "R");
+  assert.equal(edges[0].to, "gateway");
+  assert.equal(edges[0].toSide, "L");
 
+  // Add group
+  arch = addArchitectureGroup(arch, "dmz", "DMZ Network", "server");
+  assert.match(arch, /group dmz\(server\)\[DMZ Network\]/);
 
+  // Add service
+  arch = addArchitectureService(arch, "waf", "Web App Firewall", "server", "dmz");
+  assert.match(arch, /service waf\(server\)\[Web App Firewall\] in dmz/);
 
+  // Add edge
+  arch = addArchitectureEdge(arch, "waf", "R", "gateway", "L", true);
+  assert.match(arch, /waf:R --> L:gateway/);
 
+  // Delete service (should cascade delete its connections)
+  arch = deleteArchitectureService(arch, "auth");
+  assert.doesNotMatch(arch, /service auth/);
+  assert.doesNotMatch(arch, /gateway:B -- T:auth/);
 
+  // Delete group (should remove group and unassign services)
+  arch = deleteArchitectureGroup(arch, "dmz");
+  assert.doesNotMatch(arch, /group dmz/);
+  assert.doesNotMatch(arch, /in dmz/);
 
+  // Delete edge
+  arch = deleteArchitectureEdge(arch, "client", "gateway");
+  assert.doesNotMatch(arch, /client:R -- L:gateway/);
 
+  svcs = architectureServices(arch);
+  assert.equal(svcs.some((s) => s.id === "auth"), false);
+  assert.equal(svcs.some((s) => s.id === "waf"), true);
+
+  assert.throws(() => addArchitectureGroup(arch, ""), /Group ID required/);
+  assert.throws(() => deleteArchitectureGroup(arch, ""), /Group ID required/);
+  assert.throws(() => addArchitectureService(arch, ""), /Service ID required/);
+  assert.throws(() => deleteArchitectureService(arch, ""), /Service ID required/);
+  assert.throws(() => addArchitectureEdge(arch, "", "R", "to", "L"), /Source service required/);
+  assert.throws(() => addArchitectureEdge(arch, "from", "R", "", "L"), /Target service required/);
+  assert.throws(() => deleteArchitectureEdge(arch, "", "to"), /From and To required/);
+});
