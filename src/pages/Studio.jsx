@@ -6362,6 +6362,85 @@ export default function Studio() {
                         say(e.message);
                       }
                     }}
+                    onRenameNode={(newLabel) => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        updateSource(
+                          document.id,
+                          renameFlowchartNode(document.source, nodeId, newLabel),
+                        );
+                        setSelected((prev) =>
+                          prev ? { ...prev, label: newLabel } : null,
+                        );
+                        setLabel(newLabel);
+                        say(`Renamed node to "${newLabel}"`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onChangeShape={(newShape) => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        updateSource(
+                          document.id,
+                          changeFlowchartNodeShape(
+                            document.source,
+                            nodeId,
+                            newShape,
+                          ),
+                        );
+                        setShape(newShape);
+                        say(`Updated node shape to ${newShape}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onStyleNode={(colorKey) => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        updateSource(
+                          document.id,
+                          styleFlowchartNode(
+                            document.source,
+                            nodeId,
+                            colorKey,
+                          ),
+                        );
+                        say(`Applied ${colorKey} style to ${nodeId}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onCanvasDoubleClick={() => {
+                      if (!isFlowchart(document)) return;
+                      try {
+                        if (nodeId) {
+                          const res = addFlowchartChild(
+                            document.source,
+                            nodeId,
+                            "Next step",
+                            edgeArrow,
+                          );
+                          updateSource(document.id, res.source);
+                          setSelected({
+                            id: `flowchart-${res.childId}-0`,
+                            label: res.childLabel,
+                          });
+                          setLabel(res.childLabel);
+                          say(`Added connected step ${res.childId}`);
+                        } else {
+                          const updated = addFlowchartNode(
+                            document.source,
+                            "New Step",
+                            shape || "rectangle",
+                          );
+                          updateSource(document.id, updated);
+                          say("Added new step to diagram");
+                        }
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
                     presentation={presentation}
                   />
                   {preview.error && (

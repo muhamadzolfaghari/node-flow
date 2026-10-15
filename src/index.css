@@ -208,6 +208,55 @@
   cursor: pointer;
 }
 
+/* Interactive Selected Node Highlight & Glow */
+.mermaid-stage g.node {
+  cursor: pointer;
+}
+.mermaid-stage g.node.is-selected rect,
+.mermaid-stage g.node.is-selected polygon,
+.mermaid-stage g.node.is-selected circle,
+.mermaid-stage g.node.is-selected ellipse,
+.mermaid-stage g.node.is-selected path:not(.flowchart-link) {
+  stroke: #38bdf8 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: none !important;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 6px #38bdf8) drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6)) !important;
+  animation: node-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.theme-light .mermaid-stage g.node.is-selected rect,
+.theme-light .mermaid-stage g.node.is-selected polygon,
+.theme-light .mermaid-stage g.node.is-selected circle,
+.theme-light .mermaid-stage g.node.is-selected ellipse,
+.theme-light .mermaid-stage g.node.is-selected path:not(.flowchart-link) {
+  stroke: #0284c7 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 14px rgba(2, 132, 199, 0.85)) drop-shadow(0 0 4px #0284c7) drop-shadow(0 6px 16px rgba(0, 0, 0, 0.15)) !important;
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 4px #38bdf8);
+  }
+  50% {
+    filter: drop-shadow(0 0 22px rgba(56, 189, 248, 1)) drop-shadow(0 0 8px #7dd3fc);
+  }
+}
+
+/* Canvas Tool Mode Cursors */
+.studio-canvas.tool-pointer {
+  cursor: default;
+}
+.studio-canvas.tool-pointer.is-dragging {
+  cursor: grabbing;
+}
+.studio-canvas.tool-hand {
+  cursor: grab;
+}
+.studio-canvas.tool-hand.is-dragging {
+  cursor: grabbing;
+}
+
 /* Subgraphs / Clusters: Refined enterprise glassmorphism */
 .mermaid-stage g.cluster rect {
   rx: 14px;
