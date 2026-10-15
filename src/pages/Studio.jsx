@@ -45,6 +45,7 @@ import {
   Crosshair,
   Clock,
   Split,
+  LineChart,
 } from "lucide-react";
 import {
   Button,
@@ -187,6 +188,11 @@ import {
   sankeyLinks,
   addSankeyLink,
   deleteSankeyLink,
+  isXyChart,
+  xyChartData,
+  updateXyChartTitle,
+  addXyChartSeries,
+  deleteXyChartSeries,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -323,6 +329,10 @@ export default function Studio() {
     [sankeySrc, setSankeySrc] = useState(""),
     [sankeyDst, setSankeyDst] = useState(""),
     [sankeyVal, setSankeyVal] = useState(""),
+    // XY Chart modeling state
+    [xySeriesType, setXySeriesType] = useState("bar"),
+    [xySeriesVals, setXySeriesVals] = useState(""),
+    [xyTitleInput, setXyTitleInput] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -369,6 +379,9 @@ export default function Studio() {
   }, [document?.source]);
   const sankeyFlows = useMemo(() => {
     return isSankey(document) ? sankeyLinks(document.source) : [];
+  }, [document?.source]);
+  const xyInfo = useMemo(() => {
+    return isXyChart(document) ? xyChartData(document.source) : null;
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3577,6 +3590,153 @@ export default function Studio() {
                       >
                         <Plus className="size-3.5" />
                         Flow
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isXyChart(document) && xyInfo && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <LineChart className="size-3.5 text-primary" />
+                  <span>XY chart tools</span>
+                </div>
+
+                <div className="mt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-1">
+                    Chart title
+                  </span>
+                  <div className="flex gap-1.5">
+                    <Input
+                      aria-label="XY chart title"
+                      className="h-8 text-xs flex-1"
+                      placeholder={xyInfo.title || "Chart title..."}
+                      value={xyTitleInput}
+                      onChange={(e) => setXyTitleInput(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            updateXyChartTitle(document.source, xyTitleInput),
+                          );
+                          setXyTitleInput("");
+                          say("Chart title updated");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </div>
+
+                {xyInfo.series.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Data series ({xyInfo.series.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {xyInfo.series.map((s, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 uppercase font-mono"
+                            >
+                              {s.type}
+                            </Badge>
+                            <span className="truncate font-mono text-[11px] text-muted-foreground">
+                              [{s.values.slice(0, 4).join(", ")}
+                              {s.values.length > 4 ? "…" : ""}]
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              updateSource(
+                                document.id,
+                                deleteXyChartSeries(document.source, idx),
+                              );
+                              say(`Removed ${s.type} series`);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add data series
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        Type:
+                      </span>
+                      <div className="flex gap-1">
+                        {["bar", "line"].map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setXySeriesType(t)}
+                            className={`rounded px-2 py-0.5 text-[11px] font-medium uppercase transition ${
+                              xySeriesType === t
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="XY series values"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Values: 10, 25, 42, 60"
+                        value={xySeriesVals}
+                        onChange={(e) => setXySeriesVals(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addXyChartSeries(
+                                document.source,
+                                xySeriesType,
+                                xySeriesVals,
+                              ),
+                            );
+                            setXySeriesVals("");
+                            say(`Added ${xySeriesType} series`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Series
                       </Button>
                     </div>
                   </div>

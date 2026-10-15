@@ -83,6 +83,11 @@ import {
   sankeyLinks,
   addSankeyLink,
   deleteSankeyLink,
+  isXyChart,
+  xyChartData,
+  updateXyChartTitle,
+  addXyChartSeries,
+  deleteXyChartSeries,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -604,6 +609,43 @@ test("sankey diagram visual modeling: links, addition, deletion, validation", ()
   assert.throws(() => addSankeyLink(sk, "Source", "Target", -5), /positive number/);
   assert.throws(() => addSankeyLink(sk, "Source", "Target", "invalid"), /positive number/);
 });
+
+test("xy chart visual modeling: title, series addition, deletion, validation", () => {
+  let xy = `xychart-beta
+    title "System Latency vs Request Rate"
+    x-axis ["100 req/s", "500 req/s", "1000 req/s"]
+    y-axis "Latency (ms)" 0 --> 300
+    bar [15, 28, 55]
+    line [120, 160, 210]`;
+
+  assert.equal(isXyChart({ format: "mermaid", source: xy }), true);
+  let data = xyChartData(xy);
+  assert.equal(data.title, "System Latency vs Request Rate");
+  assert.deepEqual(data.xAxis, ["100 req/s", "500 req/s", "1000 req/s"]);
+  assert.equal(data.yAxis.label, "Latency (ms)");
+  assert.equal(data.yAxis.min, 0);
+  assert.equal(data.yAxis.max, 300);
+  assert.equal(data.series.length, 2);
+  assert.equal(data.series[0].type, "bar");
+  assert.deepEqual(data.series[0].values, [15, 28, 55]);
+  assert.equal(data.series[1].type, "line");
+
+  xy = updateXyChartTitle(xy, "Benchmark Latency Profile");
+  assert.match(xy, /title "Benchmark Latency Profile"/);
+
+  xy = addXyChartSeries(xy, "bar", [20, 35, 70]);
+  assert.match(xy, /bar \[20, 35, 70\]/);
+
+  xy = deleteXyChartSeries(xy, 1); // remove line series
+  data = xyChartData(xy);
+  assert.equal(data.series.length, 2);
+  assert.equal(data.series.every((s) => s.type === "bar"), true);
+
+  assert.throws(() => updateXyChartTitle(xy, ""), /Title required/);
+  assert.throws(() => addXyChartSeries(xy, "bar", []), /numerical value required/);
+  assert.throws(() => addXyChartSeries(xy, "bar", ["invalid"]), /numerical value required/);
+});
+
 
 
 

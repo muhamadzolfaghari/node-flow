@@ -79,6 +79,7 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **Quadrant Charts**: Eisenhower and feature prioritization matrices with point coordinates ([x, y]), custom item addition, and point deletion.
 - **Timelines & Timing Diagrams**: Milestone period organization, event addition with detailed descriptions, and event deletion.
 - **Sankey Diagrams**: Interactive flow funnel modeling with source-target nodes, flow volume weights, and flow link deletion.
+- **XY Metric Charts**: Performance benchmark and metrics modeling with interactive title updates, bar/line series addition, and series deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

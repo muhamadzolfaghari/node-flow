@@ -1504,6 +1504,110 @@ export function deleteSankeyLink(source, srcNode, dstNode) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* XY CHART VISUAL MODELING                                                   */
+/* -------------------------------------------------------------------------- */
+
+export const isXyChart = (doc) =>
+  doc?.format === "mermaid" && /^\s*xychart(?:-beta)?\b/m.test(doc.source);
+
+export function xyChartData(source) {
+  let title = "";
+  let xAxis = [];
+  let yAxis = { label: "", min: 0, max: 100 };
+  const series = [];
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const tMatch = line.match(/^\s*title\s+"?(.*?)"?\s*$/i);
+    if (tMatch) {
+      title = tMatch[1].trim();
+      continue;
+    }
+    const xMatch = line.match(/^\s*x-axis\s+\[(.*?)\]/i);
+    if (xMatch) {
+      xAxis = xMatch[1]
+        .split(",")
+        .map((s) => s.trim().replace(/^["']|["']$/g, "").trim())
+        .filter(Boolean);
+      continue;
+    }
+    const yMatch = line.match(
+      /^\s*y-axis\s*(?:"(.*?)"\s*)?([0-9.]+)\s*-->\s*([0-9.]+)/i,
+    );
+    if (yMatch) {
+      yAxis = {
+        label: (yMatch[1] || "").trim(),
+        min: parseFloat(yMatch[2]) || 0,
+        max: parseFloat(yMatch[3]) || 100,
+      };
+      continue;
+    }
+    const sMatch = line.match(/^\s*(bar|line)\s*\[(.*?)\]/i);
+    if (sMatch) {
+      const type = sMatch[1].toLowerCase();
+      const values = sMatch[2]
+        .split(",")
+        .map((v) => parseFloat(v.trim()))
+        .filter((n) => !isNaN(n));
+      series.push({ type, values });
+    }
+  }
+
+  return { title, xAxis, yAxis, series };
+}
+
+export function updateXyChartTitle(source, title) {
+  if (!title.trim()) throw new Error("Title required.");
+  const safeTitle = `"${title.replace(/"/g, "'").trim()}"`;
+  const lines = source.split("\n");
+  let found = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*title\b/i.test(lines[i])) {
+      lines[i] = `    title ${safeTitle}`;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*xychart(?:-beta)?/i.test(lines[i])) {
+        lines.splice(i + 1, 0, `    title ${safeTitle}`);
+        found = true;
+        break;
+      }
+    }
+  }
+  return lines.join("\n");
+}
+
+export function addXyChartSeries(source, type = "bar", values = []) {
+  const cleanType = type.toLowerCase() === "line" ? "line" : "bar";
+  const nums = (Array.isArray(values) ? values : String(values).split(","))
+    .map((v) => parseFloat(String(v).trim()))
+    .filter((n) => !isNaN(n));
+  if (nums.length === 0)
+    throw new Error("At least one numerical value required.");
+  const seriesLine = `    ${cleanType} [${nums.join(", ")}]`;
+  return `${source.trimEnd()}\n${seriesLine}\n`;
+}
+
+export function deleteXyChartSeries(source, index) {
+  const lines = source.split("\n");
+  let sCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*(bar|line)\s*\[/i.test(lines[i])) {
+      if (sCount === index) {
+        lines.splice(i, 1);
+        return lines.join("\n");
+      }
+      sCount++;
+    }
+  }
+  return lines.join("\n");
+}
+
+
 
 
 
