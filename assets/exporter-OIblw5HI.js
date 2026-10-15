@@ -1,5 +1,5 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/jszip.min-CG2W26fe.js","assets/vendor-react-CuR4BcWE.js","assets/vendor-ui-Df4SqoBz.js"])))=>i.map(i=>d[i]);
-import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR as J,aS as Z,aT as Q,aU as K,aV as tt,aW as et,aX as nt}from"./vendor-react-CuR4BcWE.js";import{c as $}from"./index-PhlqTsi8.js";import{a as ot}from"./ui-CeDa3Ppl.js";import{_ as M}from"./vendor-mermaid-De2Sn5hg.js";import{embedSourceInSvg as at}from"./svg-metadata-DemCTHvq.js";function gt({...d}){return h.jsx(X,{"data-slot":"dialog",...d})}function it({...d}){return h.jsx(q,{"data-slot":"dialog-portal",...d})}function st({className:d,...t}){return h.jsx(V,{"data-slot":"dialog-overlay",className:$("fixed inset-0 z-50 bg-black/50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",d),...t})}function ft({className:d,children:t,showCloseButton:e=!0,...n}){return h.jsxs(it,{"data-slot":"dialog-portal",children:[h.jsx(st,{}),h.jsxs(H,{"data-slot":"dialog-content",className:$("fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",d),...n,children:[t,e&&h.jsxs(N,{"data-slot":"dialog-close",className:"absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",children:[h.jsx(W,{}),h.jsx("span",{className:"sr-only",children:"Close"})]})]})]})}function ht({className:d,...t}){return h.jsx("div",{"data-slot":"dialog-header",className:$("flex flex-col gap-2 text-center sm:text-left",d),...t})}function ut({className:d,showCloseButton:t=!1,children:e,...n}){return h.jsxs("div",{"data-slot":"dialog-footer",className:$("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",d),...n,children:[e,t&&h.jsx(N,{asChild:!0,children:h.jsx(ot,{variant:"outline",children:"Close"})})]})}function xt({className:d,...t}){return h.jsx(G,{"data-slot":"dialog-title",className:$("text-lg leading-none font-semibold",d),...t})}function bt({className:d,...t}){return h.jsx(Y,{"data-slot":"dialog-description",className:$("text-sm text-muted-foreground",d),...t})}function yt({...d}){return h.jsx(Z,{"data-slot":"dropdown-menu",...d})}function vt({...d}){return h.jsx(Q,{"data-slot":"dropdown-menu-trigger",...d})}function wt({className:d,sideOffset:t=4,...e}){return h.jsx(K,{children:h.jsx(tt,{"data-slot":"dropdown-menu-content",sideOffset:t,className:$("z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",d),...e})})}function St({className:d,inset:t,variant:e="default",...n}){return h.jsx(nt,{"data-slot":"dropdown-menu-item","data-inset":t,"data-variant":e,className:$("relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",d),...n})}function kt({className:d,inset:t,...e}){return h.jsx(et,{"data-slot":"dropdown-menu-label","data-inset":t,className:$("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",d),...e})}function Bt({className:d,...t}){return h.jsx(J,{"data-slot":"dropdown-menu-separator",className:$("-mx-1 my-1 h-px bg-border",d),...t})}function Tt({className:d,...t}){return h.jsx("span",{"data-slot":"dropdown-menu-shortcut",className:$("ml-auto text-xs tracking-widest text-muted-foreground",d),...t})}const rt=`
+import{j as h,aK as X,aL as W,aM as N,X as G,aN as H,aO as Y,aP as q,aQ as V,aR as J,aS as Z,aT as Q,aU as K,aV as tt,aW as et,aX as nt}from"./vendor-react-CuR4BcWE.js";import{c as $}from"./index-CFFL3Pwk.js";import{a as ot}from"./ui-BIdEOTG4.js";import{_ as M}from"./vendor-mermaid-De2Sn5hg.js";import{embedSourceInSvg as at}from"./svg-metadata-DemCTHvq.js";function gt({...d}){return h.jsx(X,{"data-slot":"dialog",...d})}function it({...d}){return h.jsx(q,{"data-slot":"dialog-portal",...d})}function st({className:d,...t}){return h.jsx(V,{"data-slot":"dialog-overlay",className:$("fixed inset-0 z-50 bg-black/50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",d),...t})}function ft({className:d,children:t,showCloseButton:n=!0,...e}){return h.jsxs(it,{"data-slot":"dialog-portal",children:[h.jsx(st,{}),h.jsxs(W,{"data-slot":"dialog-content",className:$("fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",d),...e,children:[t,n&&h.jsxs(N,{"data-slot":"dialog-close",className:"absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",children:[h.jsx(G,{}),h.jsx("span",{className:"sr-only",children:"Close"})]})]})]})}function ht({className:d,...t}){return h.jsx("div",{"data-slot":"dialog-header",className:$("flex flex-col gap-2 text-center sm:text-left",d),...t})}function ut({className:d,showCloseButton:t=!1,children:n,...e}){return h.jsxs("div",{"data-slot":"dialog-footer",className:$("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",d),...e,children:[n,t&&h.jsx(N,{asChild:!0,children:h.jsx(ot,{variant:"outline",children:"Close"})})]})}function xt({className:d,...t}){return h.jsx(H,{"data-slot":"dialog-title",className:$("text-lg leading-none font-semibold",d),...t})}function bt({className:d,...t}){return h.jsx(Y,{"data-slot":"dialog-description",className:$("text-sm text-muted-foreground",d),...t})}function yt({...d}){return h.jsx(Z,{"data-slot":"dropdown-menu",...d})}function vt({...d}){return h.jsx(Q,{"data-slot":"dropdown-menu-trigger",...d})}function wt({className:d,sideOffset:t=4,...n}){return h.jsx(K,{children:h.jsx(tt,{"data-slot":"dropdown-menu-content",sideOffset:t,className:$("z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",d),...n})})}function St({className:d,inset:t,variant:n="default",...e}){return h.jsx(nt,{"data-slot":"dropdown-menu-item","data-inset":t,"data-variant":n,className:$("relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",d),...e})}function kt({className:d,inset:t,...n}){return h.jsx(et,{"data-slot":"dropdown-menu-label","data-inset":t,className:$("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",d),...n})}function Bt({className:d,...t}){return h.jsx(J,{"data-slot":"dropdown-menu-separator",className:$("-mx-1 my-1 h-px bg-border",d),...t})}function Tt({className:d,...t}){return h.jsx("span",{"data-slot":"dropdown-menu-shortcut",className:$("ml-auto text-xs tracking-widest text-muted-foreground",d),...t})}const rt=`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   text, .node text, .label text {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -104,8 +104,8 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
     stroke: #38bdf866 !important;
     fill-opacity: 0.14 !important;
   }
-`;class $t{static sanitizeFilename(t){return(t||"diagram").toLowerCase().replace(/[^a-z0-9_-]/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"")||"mermaid-diagram"}static downloadBlob(t,e){const n=URL.createObjectURL(t),o=document.createElement("a");o.href=n,o.download=e,document.body.appendChild(o),o.click(),document.body.removeChild(o),setTimeout(()=>URL.revokeObjectURL(n),600)}static downloadSource(t,e="diagram"){const n=`${this.sanitizeFilename(e)}.mmd`,o=new Blob([t],{type:"text/vnd.mermaid;charset=utf-8"});this.downloadBlob(o,n)}static getCleanSvgString(t,e={}){var y;if(!t)return null;const{background:n="transparent",padding:o=0}=e,a=t.cloneNode(!0);a.getAttribute("xmlns")||a.setAttribute("xmlns","http://www.w3.org/2000/svg"),a.getAttribute("xmlns:xlink")||a.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");let l=a.querySelector("defs");l||(l=document.createElementNS("http://www.w3.org/2000/svg","defs"),a.insertBefore(l,a.firstChild));const r=document.createElementNS("http://www.w3.org/2000/svg","style");r.textContent=rt,l.appendChild(r);const i=(y=t.viewBox)==null?void 0:y.baseVal;let f=(i==null?void 0:i.width)||t.clientWidth||1200,m=(i==null?void 0:i.height)||t.clientHeight||800;if(o>0){const v=((i==null?void 0:i.x)||0)-o,k=((i==null?void 0:i.y)||0)-o,u=f+o*2,c=m+o*2;if(a.setAttribute("viewBox",`${v} ${k} ${u} ${c}`),a.setAttribute("width",`${u}`),a.setAttribute("height",`${c}`),n&&n!=="transparent"){const s=document.createElementNS("http://www.w3.org/2000/svg","rect");s.setAttribute("x",`${v}`),s.setAttribute("y",`${k}`),s.setAttribute("width",`${u}`),s.setAttribute("height",`${c}`),s.setAttribute("fill",n),a.insertBefore(s,a.firstChild)}}else if(n&&n!=="transparent"){const v=(i==null?void 0:i.x)||0,k=(i==null?void 0:i.y)||0,u=document.createElementNS("http://www.w3.org/2000/svg","rect");u.setAttribute("x",`${v}`),u.setAttribute("y",`${k}`),u.setAttribute("width",`${f}`),u.setAttribute("height",`${m}`),u.setAttribute("fill",n),a.insertBefore(u,a.firstChild)}let g=new XMLSerializer().serializeToString(a);return g.startsWith("<?xml")||(g=`<?xml version="1.0" encoding="UTF-8"?>
-`+g),e.source&&(g=at(g,e.source,e.format||"mermaid")),g}static async renderToCanvas(t,e={}){var v;const{scale:n=2,background:o="#080c14",padding:a=32}=e,l=t.querySelector("svg");if(!l)throw new Error("No diagram found to render.");const r=this.getCleanSvgString(l,{background:"transparent",padding:a}),i=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(r)}`,f=(v=l.viewBox)==null?void 0:v.baseVal;let m=(f==null?void 0:f.width)||l.clientWidth||1200,b=(f==null?void 0:f.height)||l.clientHeight||800;t.classList.contains("is-gantt")&&(m=Math.max(m,2400));const g=m+a*2,y=b+a*2;return new Promise((k,u)=>{const c=new Image;c.onload=()=>{try{const s=document.createElement("canvas");s.width=Math.round(g*n),s.height=Math.round(y*n);const p=s.getContext("2d");if(!p){u(new Error("Canvas 2D context not available"));return}if(p.imageSmoothingEnabled=!0,p.imageSmoothingQuality="high",o&&o!=="transparent"){if(o==="#080c14"||o==="studio-dark"){const x=p.createLinearGradient(0,0,s.width,s.height);x.addColorStop(0,"#0f172a"),x.addColorStop(.5,"#0a0f1d"),x.addColorStop(1,"#050811"),p.fillStyle=x}else p.fillStyle=o;p.fillRect(0,0,s.width,s.height)}else p.clearRect(0,0,s.width,s.height);p.scale(n,n),p.drawImage(c,0,0,g,y),k({canvas:s,width:s.width,height:s.height})}catch(s){u(s)}},c.onerror=()=>{u(new Error("Failed to rasterize diagram SVG into canvas."))},c.src=i})}static async renderToBlob(t,e={}){const{format:n="image/png",quality:o=.95}=e,{canvas:a,width:l,height:r}=await this.renderToCanvas(t,e);return new Promise((i,f)=>{a.toBlob(m=>{m?i({blob:m,width:l,height:r}):f(new Error(`Failed to encode canvas as ${n}`))},n,o)})}static async downloadPng(t,e="diagram",n={}){const o=typeof n=="number"?{scale:n}:n,{blob:a}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:32,...o,format:"image/png"}),l=`${this.sanitizeFilename(e)}.png`;this.downloadBlob(a,l)}static async downloadWebp(t,e="diagram",n={}){const{blob:o}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:32,...n,format:"image/webp"}),a=`${this.sanitizeFilename(e)}.webp`;this.downloadBlob(o,a)}static async downloadJpeg(t,e="diagram",n={}){const{blob:o}=await this.renderToBlob(t,{scale:2,background:"#ffffff",padding:32,...n,format:"image/jpeg",quality:.95}),a=`${this.sanitizeFilename(e)}.jpg`;this.downloadBlob(o,a)}static downloadSvg(t,e="diagram",n={}){const o=t.querySelector("svg");if(!o)throw new Error("No diagram found to export.");const a=this.getCleanSvgString(o,n),l=new Blob([a],{type:"image/svg+xml;charset=utf-8"}),r=`${this.sanitizeFilename(e)}.svg`;this.downloadBlob(l,r)}static async copyImageToClipboard(t,e={}){if(typeof navigator>"u"||!navigator.clipboard||typeof ClipboardItem>"u")throw new Error("Direct image clipboard copying is not supported in this browser.");const{blob:n}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:24,...e,format:"image/png"}),o=new ClipboardItem({"image/png":n});return await navigator.clipboard.write([o]),!0}static async downloadPdf(t,e="diagram",n={}){const{pageSize:o="fit",background:a="#ffffff",padding:l=32}=n,{blob:r,width:i,height:f}=await this.renderToBlob(t,{scale:3,background:a,padding:l,format:"image/jpeg",quality:.96}),m=await r.arrayBuffer(),b=new Uint8Array(m),g=this.synthesizePdfFromJpeg(b,i,f,{pageSize:o,title:e}),y=new Blob([g],{type:"application/pdf"}),v=`${this.sanitizeFilename(e)}.pdf`;this.downloadBlob(y,v)}static async downloadPptx(t,e="diagram",n={}){const{background:o="#ffffff",padding:a=32}=n,{blob:l,width:r,height:i}=await this.renderToBlob(t,{scale:3,background:o,padding:a,format:"image/png"}),f=(await M(async()=>{const{default:w}=await import("./jszip.min-CG2W26fe.js").then(T=>T.j);return{default:w}},__vite__mapDeps([0,1,2]))).default,m=new f,b=12192e3,g=6858e3,y=b-1219200,v=g-1219200,k=Math.min(y/r,v/i),u=Math.round(r*k),c=Math.round(i*k),s=Math.round((b-u)/2),p=Math.round((g-c)/2);m.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+`;class $t{static sanitizeFilename(t){return(t||"diagram").toLowerCase().replace(/[^a-z0-9_-]/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"")||"mermaid-diagram"}static downloadBlob(t,n){const e=URL.createObjectURL(t),o=document.createElement("a");o.href=e,o.download=n,document.body.appendChild(o),o.click(),document.body.removeChild(o),setTimeout(()=>URL.revokeObjectURL(e),600)}static downloadSource(t,n="diagram"){const e=`${this.sanitizeFilename(n)}.mmd`,o=new Blob([t],{type:"text/vnd.mermaid;charset=utf-8"});this.downloadBlob(o,e)}static getCleanSvgString(t,n={}){var w;if(!t)return null;const{background:e="transparent",padding:o=0}=n,a=t.cloneNode(!0);a.getAttribute("xmlns")||a.setAttribute("xmlns","http://www.w3.org/2000/svg"),a.getAttribute("xmlns:xlink")||a.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");let l=a.querySelector("defs");l||(l=document.createElementNS("http://www.w3.org/2000/svg","defs"),a.insertBefore(l,a.firstChild));const r=document.createElementNS("http://www.w3.org/2000/svg","style");r.textContent=rt,l.appendChild(r);const i=(w=t.viewBox)==null?void 0:w.baseVal;let f=(i==null?void 0:i.width)||t.clientWidth||1200,m=(i==null?void 0:i.height)||t.clientHeight||800;if(o>0){const S=((i==null?void 0:i.x)||0)-o,B=((i==null?void 0:i.y)||0)-o,x=f+o*2,p=m+o*2;if(a.setAttribute("viewBox",`${S} ${B} ${x} ${p}`),a.setAttribute("width",`${x}`),a.setAttribute("height",`${p}`),e&&e!=="transparent"){const s=document.createElementNS("http://www.w3.org/2000/svg","rect");s.setAttribute("x",`${S}`),s.setAttribute("y",`${B}`),s.setAttribute("width",`${x}`),s.setAttribute("height",`${p}`);const c=typeof e=="string"&&(e.startsWith("radial")||e.startsWith("linear"))?"#080c14":e;s.setAttribute("fill",c),a.insertBefore(s,a.firstChild)}}else if(e&&e!=="transparent"){const S=(i==null?void 0:i.x)||0,B=(i==null?void 0:i.y)||0,x=document.createElementNS("http://www.w3.org/2000/svg","rect");x.setAttribute("x",`${S}`),x.setAttribute("y",`${B}`),x.setAttribute("width",`${f}`),x.setAttribute("height",`${m}`);const p=typeof e=="string"&&(e.startsWith("radial")||e.startsWith("linear"))?"#080c14":e;x.setAttribute("fill",p),a.insertBefore(x,a.firstChild)}let g=new XMLSerializer().serializeToString(a);return g.startsWith("<?xml")||(g=`<?xml version="1.0" encoding="UTF-8"?>
+`+g),n.source&&(g=at(g,n.source,n.format||"mermaid")),g}static async renderToCanvas(t,n={}){var S;const{scale:e=2,background:o="#080c14",padding:a=32}=n,l=t.querySelector("svg");if(!l)throw new Error("No diagram found to render.");const r=this.getCleanSvgString(l,{background:"transparent",padding:a}),i=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(r)}`,f=(S=l.viewBox)==null?void 0:S.baseVal;let m=(f==null?void 0:f.width)||l.clientWidth||1200,v=(f==null?void 0:f.height)||l.clientHeight||800;t.classList.contains("is-gantt")&&(m=Math.max(m,2400));const g=m+a*2,w=v+a*2;return new Promise((B,x)=>{const p=new Image;p.onload=()=>{try{const s=document.createElement("canvas");s.width=Math.round(g*e),s.height=Math.round(w*e);const c=s.getContext("2d");if(!c){x(new Error("Canvas 2D context not available"));return}if(c.imageSmoothingEnabled=!0,c.imageSmoothingQuality="high",o&&o!=="transparent"){if(o==="#080c14"||o==="studio-dark"){const u=c.createLinearGradient(0,0,s.width,s.height);u.addColorStop(0,"#0f172a"),u.addColorStop(.5,"#0a0f1d"),u.addColorStop(1,"#050811"),c.fillStyle=u}else if(o==="ambient"||typeof o=="string"&&o.startsWith("radial")){const u=s.width/2,b=s.height/2,T=Math.max(u,b),y=c.createRadialGradient(u,b,0,u,b,T);y.addColorStop(0,"#172554"),y.addColorStop(1,"#030712"),c.fillStyle=y}else try{c.fillStyle=o}catch{c.fillStyle="#080c14"}c.fillRect(0,0,s.width,s.height)}else c.clearRect(0,0,s.width,s.height);c.scale(e,e),c.drawImage(p,0,0,g,w),B({canvas:s,width:s.width,height:s.height})}catch(s){x(s)}},p.onerror=()=>{x(new Error("Failed to rasterize diagram SVG into canvas."))},p.src=i})}static async renderToBlob(t,n={}){const{format:e="image/png",quality:o=.95}=n,{canvas:a,width:l,height:r}=await this.renderToCanvas(t,n);return new Promise((i,f)=>{a.toBlob(m=>{m?i({blob:m,width:l,height:r}):f(new Error(`Failed to encode canvas as ${e}`))},e,o)})}static async downloadPng(t,n="diagram",e={}){const o=typeof e=="number"?{scale:e}:e,{blob:a}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:32,...o,format:"image/png"}),l=`${this.sanitizeFilename(n)}.png`;this.downloadBlob(a,l)}static async downloadWebp(t,n="diagram",e={}){const{blob:o}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:32,...e,format:"image/webp"}),a=`${this.sanitizeFilename(n)}.webp`;this.downloadBlob(o,a)}static async downloadJpeg(t,n="diagram",e={}){const{blob:o}=await this.renderToBlob(t,{scale:2,background:"#ffffff",padding:32,...e,format:"image/jpeg",quality:.95}),a=`${this.sanitizeFilename(n)}.jpg`;this.downloadBlob(o,a)}static downloadSvg(t,n="diagram",e={}){const o=t.querySelector("svg");if(!o)throw new Error("No diagram found to export.");const a=this.getCleanSvgString(o,e),l=new Blob([a],{type:"image/svg+xml;charset=utf-8"}),r=`${this.sanitizeFilename(n)}.svg`;this.downloadBlob(l,r)}static async copyImageToClipboard(t,n={}){if(typeof navigator>"u"||!navigator.clipboard||typeof ClipboardItem>"u")throw new Error("Direct image clipboard copying is not supported in this browser.");const{blob:e}=await this.renderToBlob(t,{scale:2,background:"#080c14",padding:24,...n,format:"image/png"}),o=new ClipboardItem({"image/png":e});return await navigator.clipboard.write([o]),!0}static async downloadPdf(t,n="diagram",e={}){const{pageSize:o="fit",background:a="#ffffff",padding:l=32}=e,{blob:r,width:i,height:f}=await this.renderToBlob(t,{scale:3,background:a,padding:l,format:"image/jpeg",quality:.96}),m=await r.arrayBuffer(),v=new Uint8Array(m),g=this.synthesizePdfFromJpeg(v,i,f,{pageSize:o,title:n}),w=new Blob([g],{type:"application/pdf"}),S=`${this.sanitizeFilename(n)}.pdf`;this.downloadBlob(w,S)}static async downloadPptx(t,n="diagram",e={}){const{background:o="#ffffff",padding:a=32}=e,{blob:l,width:r,height:i}=await this.renderToBlob(t,{scale:3,background:o,padding:a,format:"image/png"}),f=(await M(async()=>{const{default:b}=await import("./jszip.min-CG2W26fe.js").then(T=>T.j);return{default:b}},__vite__mapDeps([0,1,2]))).default,m=new f,v=12192e3,g=6858e3,w=v-1219200,S=g-1219200,B=Math.min(w/r,S/i),x=Math.round(r*B),p=Math.round(i*B),s=Math.round((v-x)/2),c=Math.round((g-p)/2);m.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
@@ -124,7 +124,7 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
   <p:sldIdLst>
     <p:sldId id="256" r:id="rId1"/>
   </p:sldIdLst>
-  <p:sldSz cx="${b}" cy="${g}" type="screen16x9"/>
+  <p:sldSz cx="${v}" cy="${g}" type="screen16x9"/>
   <p:notesSz cx="6858000" cy="9144000"/>
 </p:presentation>`),m.file("ppt/slides/_rels/slide1.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -148,7 +148,7 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
       </p:grpSpPr>
       <p:pic>
         <p:nvPicPr>
-          <p:cNvPr id="2" name="${this.sanitizeFilename(e)}"/>
+          <p:cNvPr id="2" name="${this.sanitizeFilename(n)}"/>
           <p:cNvPicPr>
             <a:picLocks noChangeAspect="1"/>
           </p:cNvPicPr>
@@ -162,8 +162,8 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
         </p:blipFill>
         <p:spPr>
           <a:xfrm>
-            <a:off x="${s}" y="${p}"/>
-            <a:ext cx="${u}" cy="${c}"/>
+            <a:off x="${s}" y="${c}"/>
+            <a:ext cx="${x}" cy="${p}"/>
           </a:xfrm>
           <a:prstGeom prst="rect">
             <a:avLst/>
@@ -175,25 +175,25 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
   <p:clrMapOvr>
     <a:masterClrMapping/>
   </p:clrMapOvr>
-</p:sld>`),m.file("ppt/media/image1.png",l);const x=await m.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"});this.downloadBlob(x,`${this.sanitizeFilename(e)}.pptx`)}static async downloadProjectDeckPptx(t,e="Project Presentation",n={}){const{background:o="#ffffff",padding:a=32}=n,l=(await M(async()=>{const{default:c}=await import("./jszip.min-CG2W26fe.js").then(s=>s.j);return{default:c}},__vite__mapDeps([0,1,2]))).default,r=new l,i=12192e3,f=6858e3,m=i-1219200,b=f-1219200,g=[];for(let c=0;c<t.length;c++){const s=t[c];let p=s.blob,x=s.width,w=s.height;if(!p&&s.container)try{const T=await this.renderToBlob(s.container,{scale:3,background:o,padding:a,format:"image/png"});p=T.blob,x=T.width,w=T.height}catch(T){console.warn(`Could not render slide ${c+1}:`,T)}p&&x&&w&&g.push({title:s.title||`Slide ${c+1}`,blob:p,width:x,height:w})}if(g.length===0)throw new Error("No valid slides available to generate presentation deck.");let y=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+</p:sld>`),m.file("ppt/media/image1.png",l);const u=await m.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"});this.downloadBlob(u,`${this.sanitizeFilename(n)}.pptx`)}static async downloadProjectDeckPptx(t,n="Project Presentation",e={}){const{background:o="#ffffff",padding:a=32}=e,l=(await M(async()=>{const{default:p}=await import("./jszip.min-CG2W26fe.js").then(s=>s.j);return{default:p}},__vite__mapDeps([0,1,2]))).default,r=new l,i=12192e3,f=6858e3,m=i-1219200,v=f-1219200,g=[];for(let p=0;p<t.length;p++){const s=t[p];let c=s.blob,u=s.width,b=s.height;if(!c&&s.container)try{const T=await this.renderToBlob(s.container,{scale:3,background:o,padding:a,format:"image/png"});c=T.blob,u=T.width,b=T.height}catch(T){console.warn(`Could not render slide ${p+1}:`,T)}c&&u&&b&&g.push({title:s.title||`Slide ${p+1}`,blob:c,width:u,height:b})}if(g.length===0)throw new Error("No valid slides available to generate presentation deck.");let w=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Default Extension="png" ContentType="image/png"/>
   <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
-`,v=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+`,S=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-`,k=`<p:sldIdLst>
+`,B=`<p:sldIdLst>
 `;r.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
-</Relationships>`),g.forEach((c,s)=>{const p=s+1,x=`rId${p}`;y+=`  <Override PartName="/ppt/slides/slide${p}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
-`,v+=`  <Relationship Id="${x}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${p}.xml"/>
-`,k+=`    <p:sldId id="${256+s}" r:id="${x}"/>
-`;const w=Math.min(m/c.width,b/c.height),T=Math.round(c.width*w),B=Math.round(c.height*w),P=Math.round((i-T)/2),D=Math.round((f-B)/2);r.file(`ppt/slides/_rels/slide${p}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+</Relationships>`),g.forEach((p,s)=>{const c=s+1,u=`rId${c}`;w+=`  <Override PartName="/ppt/slides/slide${c}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
+`,S+=`  <Relationship Id="${u}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${c}.xml"/>
+`,B+=`    <p:sldId id="${256+s}" r:id="${u}"/>
+`;const b=Math.min(m/p.width,v/p.height),T=Math.round(p.width*b),y=Math.round(p.height*b),P=Math.round((i-T)/2),D=Math.round((f-y)/2);r.file(`ppt/slides/_rels/slide${c}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${p}.png"/>
-</Relationships>`),r.file(`ppt/slides/slide${p}.xml`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${c}.png"/>
+</Relationships>`),r.file(`ppt/slides/slide${c}.xml`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
   <p:cSld>
     <p:spTree>
@@ -212,7 +212,7 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
       </p:grpSpPr>
       <p:pic>
         <p:nvPicPr>
-          <p:cNvPr id="2" name="${this.sanitizeFilename(c.title)}"/>
+          <p:cNvPr id="2" name="${this.sanitizeFilename(p.title)}"/>
           <p:cNvPicPr>
             <a:picLocks noChangeAspect="1"/>
           </p:cNvPicPr>
@@ -227,7 +227,7 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
         <p:spPr>
           <a:xfrm>
             <a:off x="${P}" y="${D}"/>
-            <a:ext cx="${T}" cy="${B}"/>
+            <a:ext cx="${T}" cy="${y}"/>
           </a:xfrm>
           <a:prstGeom prst="rect">
             <a:avLst/>
@@ -239,51 +239,51 @@ import{j as h,aK as X,aL as H,aM as N,X as W,aN as G,aO as Y,aP as q,aQ as V,aR 
   <p:clrMapOvr>
     <a:masterClrMapping/>
   </p:clrMapOvr>
-</p:sld>`),r.file(`ppt/media/image${p}.png`,c.blob)}),y+="</Types>",v+="</Relationships>",k+="  </p:sldIdLst>",r.file("[Content_Types].xml",y),r.file("ppt/_rels/presentation.xml.rels",v),r.file("ppt/presentation.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+</p:sld>`),r.file(`ppt/media/image${c}.png`,p.blob)}),w+="</Types>",S+="</Relationships>",B+="  </p:sldIdLst>",r.file("[Content_Types].xml",w),r.file("ppt/_rels/presentation.xml.rels",S),r.file("ppt/presentation.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
   <p:sldMasterIdLst/>
-  ${k}
+  ${B}
   <p:sldSz cx="${i}" cy="${f}" type="screen16x9"/>
   <p:notesSz cx="6858000" cy="9144000"/>
-</p:presentation>`);const u=await r.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"});this.downloadBlob(u,`${this.sanitizeFilename(e)}_presentation_deck.pptx`)}static downloadIllustratorSvg(t,e,n={}){const o=t==null?void 0:t.querySelector("svg");if(!o)return;let l=this.getCleanSvgString(o,n);l.includes("xmlns:i=")||(l=l.replace("<svg ",'<svg xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" xmlns:x="http://ns.adobe.com/Extensibility/1.0/" '));const r=new Blob([l],{type:"image/svg+xml;charset=utf-8"});this.downloadBlob(r,`${this.sanitizeFilename(e)}_illustrator.svg`)}static synthesizePdfFromJpeg(t,e,n,o={}){const{pageSize:a="fit",title:l="Mermaid Diagram"}=o;let r,i,f,m,b,g;const y={"a4-landscape":{w:841.89,h:595.28},"a4-portrait":{w:595.28,h:841.89},"letter-landscape":{w:792,h:612},"letter-portrait":{w:612,h:792}};if(y[a]){r=y[a].w,i=y[a].h;const S=36,C=r-S*2,E=i-S*2,I=e/n;C/E>I?(g=E,b=E*I):(b=C,g=C/I),f=(r-b)/2,m=(i-g)/2}else b=Math.max(200,e*.48),g=Math.max(150,n*.48),r=b+48,i=g+48,f=24,m=24;const v=r.toFixed(2),k=i.toFixed(2),u=f.toFixed(2),c=m.toFixed(2),s=b.toFixed(2),p=g.toFixed(2),x=[],w=[],T=new TextEncoder;function B(S){x.push(T.encode(S))}function P(S){x.push(S)}function D(){return x.reduce((S,C)=>S+C.length,0)}B(`%PDF-1.4
+</p:presentation>`);const x=await r.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"});this.downloadBlob(x,`${this.sanitizeFilename(n)}_presentation_deck.pptx`)}static downloadIllustratorSvg(t,n,e={}){const o=t==null?void 0:t.querySelector("svg");if(!o)return;let l=this.getCleanSvgString(o,e);l.includes("xmlns:i=")||(l=l.replace("<svg ",'<svg xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" xmlns:x="http://ns.adobe.com/Extensibility/1.0/" '));const r=new Blob([l],{type:"image/svg+xml;charset=utf-8"});this.downloadBlob(r,`${this.sanitizeFilename(n)}_illustrator.svg`)}static synthesizePdfFromJpeg(t,n,e,o={}){const{pageSize:a="fit",title:l="Mermaid Diagram"}=o;let r,i,f,m,v,g;const w={"a4-landscape":{w:841.89,h:595.28},"a4-portrait":{w:595.28,h:841.89},"letter-landscape":{w:792,h:612},"letter-portrait":{w:612,h:792}};if(w[a]){r=w[a].w,i=w[a].h;const k=36,C=r-k*2,E=i-k*2,I=n/e;C/E>I?(g=E,v=E*I):(v=C,g=C/I),f=(r-v)/2,m=(i-g)/2}else v=Math.max(200,n*.48),g=Math.max(150,e*.48),r=v+48,i=g+48,f=24,m=24;const S=r.toFixed(2),B=i.toFixed(2),x=f.toFixed(2),p=m.toFixed(2),s=v.toFixed(2),c=g.toFixed(2),u=[],b=[],T=new TextEncoder;function y(k){u.push(T.encode(k))}function P(k){u.push(k)}function D(){return u.reduce((k,C)=>k+C.length,0)}y(`%PDF-1.4
 %âãÏÓ
-`),w[1]=D(),B(`1 0 obj
+`),b[1]=D(),y(`1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
-`),w[2]=D(),B(`2 0 obj
+`),b[2]=D(),y(`2 0 obj
 << /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
-`),w[3]=D(),B(`3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${v} ${k}] /Resources << /XObject << /Im1 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>
+`),b[3]=D(),y(`3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${S} ${B}] /Resources << /XObject << /Im1 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>
 endobj
-`),w[4]=D(),B(`4 0 obj
-<< /Type /XObject /Subtype /Image /Width ${e} /Height ${n} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${t.length} >>
+`),b[4]=D(),y(`4 0 obj
+<< /Type /XObject /Subtype /Image /Width ${n} /Height ${e} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${t.length} >>
 stream
-`),P(t),B(`
+`),P(t),y(`
 endstream
 endobj
-`),w[5]=D();const F=`q
-${s} 0 0 ${p} ${u} ${c} cm
+`),b[5]=D();const R=`q
+${s} 0 0 ${c} ${x} ${p} cm
 /Im1 Do
 Q
-`,_=T.encode(F);B(`5 0 obj
+`,_=T.encode(R);y(`5 0 obj
 << /Length ${_.length} >>
 stream
-${F}endstream
+${R}endstream
 endobj
-`),w[6]=D();const L=(l||"Mermaid Diagram").replace(/[()\\]/g,""),O=new Date().toISOString().replace(/[-:T]/g,"").slice(0,14);B(`6 0 obj
+`),b[6]=D();const L=(l||"Mermaid Diagram").replace(/[()\\]/g,""),O=new Date().toISOString().replace(/[-:T]/g,"").slice(0,14);y(`6 0 obj
 << /Title (${L}) /Creator (NodeFlow) /Producer (NodeFlow PDF Engine) /CreationDate (D:${O}Z) >>
 endobj
-`);const A=D();B(`xref
+`);const A=D();y(`xref
 0 7
 0000000000 65535 f 
-`);for(let S=1;S<=6;S++){const C=String(w[S]).padStart(10,"0");B(`${C} 00000 n 
-`)}B(`trailer
+`);for(let k=1;k<=6;k++){const C=String(b[k]).padStart(10,"0");y(`${C} 00000 n 
+`)}y(`trailer
 << /Size 7 /Root 1 0 R /Info 6 0 R >>
 startxref
 ${A}
 %%EOF
-`);const U=D(),R=new Uint8Array(U);let j=0;for(const S of x)R.set(S,j),j+=S.length;return R}static downloadStandaloneHtml(t,e,n="diagram"){const o=t.querySelector("svg");if(!o)throw new Error("No diagram found to export.");const a=this.getCleanSvgString(o,{background:"transparent"}),l=n||"Mermaid Diagram",r=`<!doctype html>
+`);const U=D(),F=new Uint8Array(U);let j=0;for(const k of u)F.set(k,j),j+=k.length;return F}static downloadStandaloneHtml(t,n,e="diagram"){const o=t.querySelector("svg");if(!o)throw new Error("No diagram found to export.");const a=this.getCleanSvgString(o,{background:"transparent"}),l=e||"Mermaid Diagram",r=`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -361,7 +361,7 @@ ${A}
         <button id="closeSourceBtn" type="button">✕ Close</button>
       </div>
     </div>
-    <pre><code>${z(e)}</code></pre>
+    <pre><code>${z(n)}</code></pre>
   </div>
 
   <script>
@@ -445,7 +445,7 @@ ${A}
         drawer.classList.remove('open');
       };
       document.getElementById('copySourceBtn').onclick = () => {
-        navigator.clipboard.writeText(${JSON.stringify(e)});
+        navigator.clipboard.writeText(${JSON.stringify(n)});
         alert('Mermaid syntax copied to clipboard!');
       };
 
@@ -459,8 +459,8 @@ ${A}
     })();
   <\/script>
 </body>
-</html>`,i=new Blob([r],{type:"text/html;charset=utf-8"}),f=`${this.sanitizeFilename(n)}.html`;this.downloadBlob(i,f)}static generateEmbedSnippets(t,e,n="diagram"){const o="```mermaid\n"+t.trim()+"\n```",a=`<pre class="mermaid">
+</html>`,i=new Blob([r],{type:"text/html;charset=utf-8"}),f=`${this.sanitizeFilename(e)}.html`;this.downloadBlob(i,f)}static generateEmbedSnippets(t,n,e="diagram"){const o="```mermaid\n"+t.trim()+"\n```",a=`<pre class="mermaid">
 ${t.trim()}
 </pre>
-<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({ startOnLoad: true });<\/script>`;let l="",r="";const i=e.querySelector("svg");return i&&(r=this.getCleanSvgString(i),l=`data:image/svg+xml;utf8,${encodeURIComponent(r)}`),{markdown:o,html:a,dataUri:l,svg:r}}static async copySvg(t){const e=t.querySelector("svg");if(!e)throw new Error("No diagram found to copy.");const n=this.getCleanSvgString(e);await navigator.clipboard.writeText(n)}static async copyMarkdown(t){const e="```mermaid\n"+t.trim()+"\n```";await navigator.clipboard.writeText(e)}}function z(d){return String(d||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}export{Tt as D,$t as E,Bt as a,yt as b,vt as c,wt as d,kt as e,gt as f,ft as g,ht as h,xt as i,bt as j,ut as k,St as l};
-//# sourceMappingURL=exporter-CR4GLesW.js.map
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({ startOnLoad: true });<\/script>`;let l="",r="";const i=n.querySelector("svg");return i&&(r=this.getCleanSvgString(i),l=`data:image/svg+xml;utf8,${encodeURIComponent(r)}`),{markdown:o,html:a,dataUri:l,svg:r}}static async copySvg(t){const n=t.querySelector("svg");if(!n)throw new Error("No diagram found to copy.");const e=this.getCleanSvgString(n);await navigator.clipboard.writeText(e)}static async copyMarkdown(t){const n="```mermaid\n"+t.trim()+"\n```";await navigator.clipboard.writeText(n)}}function z(d){return String(d||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}export{Tt as D,$t as E,Bt as a,yt as b,vt as c,wt as d,kt as e,gt as f,ft as g,ht as h,xt as i,bt as j,ut as k,St as l};
+//# sourceMappingURL=exporter-OIblw5HI.js.map
