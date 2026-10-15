@@ -13,6 +13,8 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
   - *Flowcharts:* select labeled nodes, rename labels, switch node shapes (8 shapes: rectangle, rounded, stadium, subroutine, cylinder, circle, diamond, hexagon), apply color accent palettes, switch layout direction (TD, LR, BT, RL), duplicate nodes with style cloning, connect existing nodes with customizable arrow styles (solid, dotted, thick, open, etc.), inspect incoming and outgoing connections with one-click edge disconnection, quick-add connected child steps, and delete nodes with clean edge cascade.
   - *Sequence diagrams:* visual participant and actor management, message passing with arrow styles (synchronous, dotted reply, async, failure), and clean participant deletion.
   - *Class diagrams:* class creation, attribute and method declarations, UML relationships (inheritance, composition, aggregation, association, dependency, realization), and class deletion.
+  - *State diagrams:* visual state declaration with descriptive labels, state transition connector with event triggers, state removal, and initial/terminal state integration (`[*]`).
+  - *Entity-Relationship (ER) diagrams:* visual entity management, typed attributes with primary key (PK) / foreign key (FK) indicators, relational cardinality connectors (`||--||`, `||--o{`, `}|--|{`, `|o--||`, etc.), and entity deletion.
   - *Diagram look & themes:* one-click render look toggle (Classic vector vs. Hand-drawn sketchy) and Mermaid theme selection (Default, Neutral, Dark, Forest, Base) managed through clean frontmatter directives. Changes update source in real time.
 - **Canvas:** pan, zoom, fit, center, minimap navigation, grid styles, wheel pan/zoom modes, arrow-key navigation, pinch zoom, and presentation mode with a laser pointer.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
@@ -21,7 +23,7 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
 
 ## Supported source formats
 
-All 32 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry. Full matrix: [docs/FORMATS-ALL.md](docs/FORMATS-ALL.md). Syntax-error database: [docs/SYNTAX-ERROR-DB.md](docs/SYNTAX-ERROR-DB.md). 50-phase plan: [docs/UNIVERSAL-50-PHASE-PLAN.md](docs/UNIVERSAL-50-PHASE-PLAN.md).
+All 33 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry. Full matrix: [docs/FORMATS-ALL.md](docs/FORMATS-ALL.md). Syntax-error database: [docs/SYNTAX-ERROR-DB.md](docs/SYNTAX-ERROR-DB.md). 50-phase plan: [docs/UNIVERSAL-50-PHASE-PLAN.md](docs/UNIVERSAL-50-PHASE-PLAN.md).
 
 | Format | Input | Editing and preview scope |
 | --- | --- | --- |
@@ -42,6 +44,7 @@ All 32 entries are available in the new-file dialog, file inspector, and import 
 | FreeMind | `.mm`, detected `.xml` | Topic hierarchy to a mindmap. |
 | OPML | `.opml`, detected `.xml` | Outline hierarchy to a mindmap. |
 | XMind | `.xmind` | First sheet of ZEN or legacy workbooks becomes an editable Mermaid mindmap. The imported workbook is retained separately; current mindmaps export to a new XMind workbook. |
+| StarUML | `.mdj` | StarUML JSON models (`_type: Project` / `UMLClass`) with attributes, operations, and UML generalizations / associations compiled to editable class diagrams. |
 | Source code | `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.java`, `.cs`, `.go`, `.rs`, `.kt`, `.swift`, `.php`, `.rb`, `.cpp`, `.c` | Best-effort class/struct/enum extraction to UML. Imported code is not executed. |
 | JSON Schema / DBML / Prisma / Protobuf / ERD text / YAML | `.schema.json`, `.dbml`, `.prisma`, `.proto`, `.erd`, `.yaml`, `.yml` (+ content detection) | Schemas and models to class/ER diagrams. |
 | UML XMI / SysML v2 / ArchiMate / DMN / Visio / Gliffy / Excalidraw | `.xmi`, `.uml`, `.sysml`, `.dmn`, `.vdx`, `.gliffy`, `.excalidraw` (+ content detection) | Vendor UML/BPMN/whiteboard sources to editable Mermaid. |

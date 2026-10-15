@@ -29,6 +29,17 @@ import {
   addClassDiagramMember,
   connectClassDiagramClasses,
   deleteClassDiagramClass,
+  isState,
+  stateDiagramStates,
+  addStateDiagramState,
+  connectStateDiagramStates,
+  deleteStateDiagramState,
+  isErDiagram,
+  erDiagramEntities,
+  addErDiagramEntity,
+  addErDiagramAttribute,
+  connectErDiagramEntities,
+  deleteErDiagramEntity,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -224,5 +235,56 @@ test("class diagram visual modeling: classes, members, connections, deletion", (
   assert.doesNotMatch(cls, /class Admin\b/);
   assert.doesNotMatch(cls, /User <\|-- Admin/);
 });
+
+test("state diagram visual modeling: states, transitions, deletion", () => {
+  let stateDoc = `stateDiagram-v2
+  [*] --> Still
+  Still --> [*]
+  state "Crash Recovery" as Crash
+  Still --> Moving : evMove`;
+
+  assert.equal(isState({ format: "mermaid", source: stateDoc }), true);
+  const states = stateDiagramStates(stateDoc);
+  assert.equal(states.length >= 4, true);
+  assert.equal(states.some((s) => s.id === "Still"), true);
+  assert.equal(states.some((s) => s.id === "Crash"), true);
+  assert.equal(states.some((s) => s.id === "Moving"), true);
+
+  stateDoc = addStateDiagramState(stateDoc, "Paused", "Paused Execution");
+  assert.match(stateDoc, /state "Paused Execution" as Paused/);
+
+  stateDoc = connectStateDiagramStates(stateDoc, "Moving", "Paused", "evPause");
+  assert.match(stateDoc, /Moving --> Paused : evPause/);
+
+  stateDoc = deleteStateDiagramState(stateDoc, "Crash");
+  assert.doesNotMatch(stateDoc, /Crash Recovery/);
+});
+
+test("er diagram visual modeling: entities, attributes, relations, deletion", () => {
+  let erDoc = `erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  CUSTOMER {
+    string id PK
+  }`;
+
+  assert.equal(isErDiagram({ format: "mermaid", source: erDoc }), true);
+  const entities = erDiagramEntities(erDoc);
+  assert.equal(entities.length, 2);
+  assert.equal(entities.some((e) => e.id === "CUSTOMER"), true);
+  assert.equal(entities.some((e) => e.id === "ORDER"), true);
+
+  erDoc = addErDiagramEntity(erDoc, "INVOICE");
+  assert.match(erDoc, /INVOICE \{/);
+
+  erDoc = addErDiagramAttribute(erDoc, "CUSTOMER", "string", "email");
+  assert.match(erDoc, /string email/);
+
+  erDoc = connectErDiagramEntities(erDoc, "ORDER", "INVOICE", "||--||", "generates");
+  assert.match(erDoc, /ORDER \|\|--\|\| INVOICE : "generates"/);
+
+  erDoc = deleteErDiagramEntity(erDoc, "INVOICE");
+  assert.doesNotMatch(erDoc, /INVOICE/);
+});
+
 
 

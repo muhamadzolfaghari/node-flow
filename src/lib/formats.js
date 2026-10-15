@@ -385,6 +385,19 @@ export const FORMATS = [
     sample:
       "class User {\n  id: string;\n  name: string;\n}\nclass Admin extends User {\n  permissions: string[];\n}",
   },
+  {
+    id: "staruml",
+    name: "StarUML",
+    ext: "mdj",
+    extensions: ["mdj"],
+    language: "json",
+    mode: "Derived",
+    family: "UML",
+    description:
+      "StarUML model JSON (.mdj) containing UMLClass, UMLAttribute, UMLOperation, and UMLGeneralization.",
+    sample:
+      '{\n  "_type": "Project",\n  "name": "AppModel",\n  "ownedElements": [\n    {\n      "_type": "UMLClass",\n      "_id": "c1",\n      "name": "User",\n      "attributes": [\n        { "name": "id", "type": "string", "visibility": "private" }\n      ],\n      "operations": [\n        { "name": "login", "parameters": [{ "direction": "return", "type": "boolean" }] }\n      ]\n    }\n  ]\n}',
+  },
 ];
 export const getFormat = (id) =>
   FORMATS.find((format) => format.id === id) || FORMATS[0];
@@ -444,6 +457,7 @@ export function detectFormat(name = "", source = "") {
   if (/"stage"\s*:\s*\{|"objects"\s*:\s*\[/.test(source)) return "gliffy";
   // JSON-schema: object with properties/$defs/definitions
   if (/^\s*\{/.test(source) && /"(properties|definitions|\$defs)"\s*:/.test(source)) return "jsonschema";
+  if (/"_type"\s*:\s*"Project"|"_type"\s*:\s*"UMLClass"/.test(source)) return "staruml";
   if (/\btype\s+\w+\s*\{[^}]*:/.test(source) && /:\s*(String|ID|Int|Float|Boolean)/.test(source)) return "graphql";
   if (["md", "markdown", "txt"].includes(ext)) return "markdown";
   // yaml fallback: generic mapping
@@ -611,6 +625,11 @@ export async function compileDocument(document) {
       code = (
         await import("../utils/importers/code-to-uml.js")
       ).parseCodeToClassDiagram(source);
+      break;
+    case "staruml":
+      code = (
+        await import("../utils/importers/staruml.js")
+      ).parseStarUmlToMermaid(source);
       break;
     default:
       throw new Error(`Unsupported format: ${format}`);

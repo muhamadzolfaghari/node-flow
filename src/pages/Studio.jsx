@@ -122,6 +122,18 @@ import {
   connectClassDiagramClasses,
   deleteClassDiagramClass,
   CLASS_RELATIONS,
+  isState,
+  stateDiagramStates,
+  addStateDiagramState,
+  connectStateDiagramStates,
+  deleteStateDiagramState,
+  isErDiagram,
+  erDiagramEntities,
+  addErDiagramEntity,
+  addErDiagramAttribute,
+  connectErDiagramEntities,
+  deleteErDiagramEntity,
+  ER_RELATIONS,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -197,6 +209,22 @@ export default function Studio() {
     [clsTo, setClsTo] = useState(""),
     [clsRel, setClsRel] = useState("inheritance"),
     [clsRelLabel, setClsRelLabel] = useState(""),
+    // State diagram modeling state
+    [stateId, setStateId] = useState(""),
+    [stateLabel, setStateLabel] = useState(""),
+    [stateFrom, setStateFrom] = useState(""),
+    [stateTo, setStateTo] = useState(""),
+    [stateEvent, setStateEvent] = useState(""),
+    // ER diagram modeling state
+    [erEntity, setErEntity] = useState(""),
+    [erAttrTarget, setErAttrTarget] = useState(""),
+    [erAttrType, setErAttrType] = useState("string"),
+    [erAttrName, setErAttrName] = useState(""),
+    [erAttrKey, setErAttrKey] = useState(""),
+    [erFrom, setErFrom] = useState(""),
+    [erTo, setErTo] = useState(""),
+    [erRel, setErRel] = useState("||--o{"),
+    [erRelLabel, setErRelLabel] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -210,6 +238,12 @@ export default function Studio() {
   }, [document?.source]);
   const clsList = useMemo(() => {
     return isClassDiagram(document) ? classDiagramClasses(document.source) : [];
+  }, [document?.source]);
+  const stateList = useMemo(() => {
+    return isState(document) ? stateDiagramStates(document.source) : [];
+  }, [document?.source]);
+  const erList = useMemo(() => {
+    return isErDiagram(document) ? erDiagramEntities(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -1612,6 +1646,403 @@ export default function Studio() {
                     >
                       <GitBranch className="size-3.5" />
                       Connect classes
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {isState(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">State diagram tools</p>
+                {stateList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      States ({stateList.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-auto">
+                      {stateList.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                        >
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            🔄
+                          </span>
+                          <span className="truncate max-w-[100px]">{s.label}</span>
+                          {s.id !== "[*]" && (
+                            <button
+                              type="button"
+                              title={`Remove ${s.label}`}
+                              aria-label={`Remove state ${s.label}`}
+                              className="text-muted-foreground hover:text-destructive shrink-0 ml-0.5"
+                              onClick={() => {
+                                try {
+                                  updateSource(
+                                    document.id,
+                                    deleteStateDiagramState(
+                                      document.source,
+                                      s.id,
+                                    ),
+                                  );
+                                  say(`Removed state ${s.label}`);
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              }}
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add new state
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="New state identifier"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="State ID (e.g. InReview)"
+                        value={stateId}
+                        onChange={(e) => setStateId(e.target.value)}
+                      />
+                      <Input
+                        aria-label="New state label"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Label / Title (optional)"
+                        value={stateLabel}
+                        onChange={(e) => setStateLabel(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addStateDiagramState(
+                              document.source,
+                              stateId,
+                              stateLabel,
+                            ),
+                          );
+                          setStateId("");
+                          setStateLabel("");
+                          say("State added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add state
+                    </Button>
+                  </div>
+                </div>
+                {stateList.length >= 2 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Add state transition
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        aria-label="Transition source state"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={stateFrom}
+                        onChange={(e) => setStateFrom(e.target.value)}
+                      >
+                        <option value="">From…</option>
+                        {stateList.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Transition target state"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={stateTo}
+                        onChange={(e) => setStateTo(e.target.value)}
+                      >
+                        <option value="">To…</option>
+                        {stateList.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Input
+                      aria-label="Transition event label"
+                      className="mt-2 h-8 text-xs"
+                      placeholder="Event / trigger label (e.g. approve)"
+                      value={stateEvent}
+                      onChange={(e) => setStateEvent(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            connectStateDiagramStates(
+                              document.source,
+                              stateFrom,
+                              stateTo,
+                              stateEvent,
+                            ),
+                          );
+                          setStateEvent("");
+                          say("Transition added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <ArrowRight className="size-3.5" />
+                      Connect transition
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {isErDiagram(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">ER diagram tools</p>
+                {erList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Entities ({erList.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-auto">
+                      {erList.map((ent) => (
+                        <div
+                          key={ent.id}
+                          className="flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                        >
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            🗃️
+                          </span>
+                          <span className="truncate max-w-[100px]">{ent.label}</span>
+                          <button
+                            type="button"
+                            title={`Remove ${ent.label}`}
+                            aria-label={`Remove entity ${ent.label}`}
+                            className="text-muted-foreground hover:text-destructive shrink-0 ml-0.5"
+                            onClick={() => {
+                              try {
+                                updateSource(
+                                  document.id,
+                                  deleteErDiagramEntity(
+                                    document.source,
+                                    ent.id,
+                                  ),
+                                );
+                                say(`Removed entity ${ent.label}`);
+                              } catch (err) {
+                                say(err.message);
+                              }
+                            }}
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add new entity
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New entity name"
+                      className="h-8 text-xs font-mono"
+                      placeholder="Entity name (e.g. CUSTOMER)"
+                      value={erEntity}
+                      onChange={(e) => setErEntity(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addErDiagramEntity(document.source, erEntity),
+                          );
+                          setErEntity("");
+                          say("Entity added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add entity
+                    </Button>
+                  </div>
+                </div>
+                {erList.length > 0 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Add entity attribute
+                    </span>
+                    <div className="grid gap-2">
+                      <select
+                        aria-label="Target entity for attribute"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={erAttrTarget}
+                        onChange={(e) => setErAttrTarget(e.target.value)}
+                      >
+                        <option value="">Select entity…</option>
+                        {erList.map((ent) => (
+                          <option key={ent.id} value={ent.id}>
+                            {ent.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <Input
+                          aria-label="Attribute type"
+                          className="h-8 text-xs font-mono"
+                          placeholder="Type (string, int)"
+                          value={erAttrType}
+                          onChange={(e) => setErAttrType(e.target.value)}
+                        />
+                        <Input
+                          aria-label="Attribute name"
+                          className="h-8 text-xs font-mono"
+                          placeholder="Name (user_id)"
+                          value={erAttrName}
+                          onChange={(e) => setErAttrName(e.target.value)}
+                        />
+                        <Input
+                          aria-label="Attribute key"
+                          className="h-8 text-xs font-mono"
+                          placeholder="Key (PK, FK)"
+                          value={erAttrKey}
+                          onChange={(e) => setErAttrKey(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addErDiagramAttribute(
+                                document.source,
+                                erAttrTarget,
+                                erAttrType,
+                                erAttrName,
+                                erAttrKey,
+                              ),
+                            );
+                            setErAttrName("");
+                            setErAttrKey("");
+                            say("Attribute added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Add attribute
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {erList.length >= 2 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Connect entities (Relationship)
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        aria-label="Relationship source entity"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={erFrom}
+                        onChange={(e) => setErFrom(e.target.value)}
+                      >
+                        <option value="">From entity…</option>
+                        {erList.map((ent) => (
+                          <option key={ent.id} value={ent.id}>
+                            {ent.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Relationship target entity"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={erTo}
+                        onChange={(e) => setErTo(e.target.value)}
+                      >
+                        <option value="">To entity…</option>
+                        {erList.map((ent) => (
+                          <option key={ent.id} value={ent.id}>
+                            {ent.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <select
+                      aria-label="ER relationship cardinality"
+                      className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                      value={erRel}
+                      onChange={(e) => setErRel(e.target.value)}
+                    >
+                      {Object.entries(ER_RELATIONS).map(([k, v]) => (
+                        <option key={k} value={v.symbol}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      aria-label="ER relationship label"
+                      className="mt-2 h-8 text-xs"
+                      placeholder="Label (e.g. places, contains)"
+                      value={erRelLabel}
+                      onChange={(e) => setErRelLabel(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            connectErDiagramEntities(
+                              document.source,
+                              erFrom,
+                              erTo,
+                              erRel,
+                              erRelLabel,
+                            ),
+                          );
+                          setErRelLabel("");
+                          say("Entities connected");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <GitBranch className="size-3.5" />
+                      Connect entities
                     </Button>
                   </div>
                 )}

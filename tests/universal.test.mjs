@@ -115,3 +115,60 @@ test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml", async () =>
   assert.match(mod.mermaidMindmapToMarkdown(mm), /- A/);
   assert.match(mod.mermaidMindmapToOpml(mm), /<opml/);
 });
+
+test("StarUML (.mdj) import and compilation to Mermaid classDiagram", async () => {
+  const { detectFormat, compileDocument } = await import("../src/lib/formats.js");
+  const { parseStarUmlToMermaid } = await import("../src/utils/importers/staruml.js");
+
+  const starUmlSample = JSON.stringify({
+    _type: "Project",
+    name: "BankingSystem",
+    ownedElements: [
+      {
+        _type: "UMLClass",
+        _id: "cls_acc",
+        name: "BankAccount",
+        attributes: [
+          { name: "balance", type: "number", visibility: "private" },
+          { name: "accountNumber", type: "string", visibility: "public" }
+        ],
+        operations: [
+          {
+            name: "deposit",
+            parameters: [
+              { name: "amount", type: "number" },
+              { direction: "return", type: "boolean" }
+            ]
+          }
+        ]
+      },
+      {
+        _type: "UMLClass",
+        _id: "cls_savings",
+        name: "SavingsAccount",
+        attributes: [
+          { name: "interestRate", type: "number", visibility: "protected" }
+        ]
+      },
+      {
+        _type: "UMLGeneralization",
+        source: { $ref: "cls_savings" },
+        target: { $ref: "cls_acc" }
+      }
+    ]
+  });
+
+  assert.equal(detectFormat("model.mdj", starUmlSample), "staruml");
+
+  const mmd = parseStarUmlToMermaid(starUmlSample);
+  assert.match(mmd, /classDiagram/);
+  assert.match(mmd, /class BankAccount \{/);
+  assert.match(mmd, /-number balance/);
+  assert.match(mmd, /\+deposit\(amount: number\): boolean/);
+  assert.match(mmd, /class SavingsAccount \{/);
+  assert.match(mmd, /SavingsAccount <\|-- BankAccount/);
+
+  const compiled = await compileDocument({ format: "staruml", source: starUmlSample });
+  assert.match(compiled.code, /classDiagram/);
+});
+

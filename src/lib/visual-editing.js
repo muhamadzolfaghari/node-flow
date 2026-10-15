@@ -587,4 +587,206 @@ export function deleteClassDiagramClass(source, className) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* STATE DIAGRAM VISUAL MODELING                                               */
+/* -------------------------------------------------------------------------- */
+
+export const isState = (doc) =>
+  doc?.format === "mermaid" &&
+  /^\s*stateDiagram(?:-v2)?\b/m.test(doc.source);
+
+export const STATE_TRANSITIONS = {
+  normal: { symbol: "-->", label: "Transition (-->)" },
+};
+
+export function stateDiagramStates(source) {
+  const map = new Map();
+  map.set("[*]", { id: "[*]", label: "[*] (Start / End)" });
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const aliasMatch = line.match(
+      /^\s*state\s+"([^"]+)"\s+as\s+([A-Za-z0-9_]+)/i,
+    );
+    if (aliasMatch) {
+      map.set(aliasMatch[2], {
+        id: aliasMatch[2],
+        label: `${aliasMatch[1]} (${aliasMatch[2]})`,
+      });
+      continue;
+    }
+    const stateMatch = line.match(/^\s*state\s+([A-Za-z0-9_]+)\b/i);
+    if (stateMatch && stateMatch[1] !== "[*]") {
+      if (!map.has(stateMatch[1])) {
+        map.set(stateMatch[1], { id: stateMatch[1], label: stateMatch[1] });
+      }
+    }
+    const transMatch = line.match(
+      /^\s*(\[\*\]|[A-Za-z0-9_]+)\s*-->\s*(\[\*\]|[A-Za-z0-9_]+)/,
+    );
+    if (transMatch) {
+      if (!map.has(transMatch[1]))
+        map.set(transMatch[1], { id: transMatch[1], label: transMatch[1] });
+      if (!map.has(transMatch[2]))
+        map.set(transMatch[2], { id: transMatch[2], label: transMatch[2] });
+    }
+  }
+  return [...map.values()];
+}
+
+export function addStateDiagramState(source, stateName, label = "") {
+  if (!stateName.trim()) throw new Error("State identifier is required.");
+  const id = stateName.trim().replace(/\s+/g, "_");
+  const desc = label.trim();
+  if (desc) {
+    return `${source.trimEnd()}\n  state "${safeLabel(desc)}" as ${id}\n`;
+  }
+  return `${source.trimEnd()}\n  state ${id}\n`;
+}
+
+export function connectStateDiagramStates(source, from, to, label = "") {
+  if (!from || !to) throw new Error("Select from and to states.");
+  const lbl = label.trim() ? ` : ${safeLabel(label.trim())}` : "";
+  return `${source.trimEnd()}\n  ${from} --> ${to}${lbl}\n`;
+}
+
+export function deleteStateDiagramState(source, stateId) {
+  if (!stateId || stateId === "[*]")
+    throw new Error("Select a valid state to remove.");
+  const escaped = escapeRegex(stateId);
+  let updated = source.replace(
+    new RegExp(
+      `(^|\\n)[ \\t]*state\\s+(?:"[^"]*"\\s+as\\s+)?${escaped}\\s*\\{[\\s\\S]*?\\}`,
+      "g",
+    ),
+    "",
+  );
+  const lines = updated.split("\n").filter((line) => {
+    if (
+      new RegExp(`^\\s*state\\s+(?:"[^"]*"\\s+as\\s+)?${escaped}\\b`, "i").test(
+        line,
+      )
+    )
+      return false;
+    if (new RegExp(`^\\s*${escaped}\\s*:`, "i").test(line)) return false;
+    if (new RegExp(`(?:-->|--)\\s*${escaped}\\b`, "i").test(line)) return false;
+    if (new RegExp(`^\\s*${escaped}\\s*-->`, "i").test(line)) return false;
+    return true;
+  });
+  return lines.join("\n");
+}
+
+/* -------------------------------------------------------------------------- */
+/* ENTITY-RELATIONSHIP (ER) DIAGRAM VISUAL MODELING                           */
+/* -------------------------------------------------------------------------- */
+
+export const isErDiagram = (doc) =>
+  doc?.format === "mermaid" && /^\s*erDiagram\b/m.test(doc.source);
+
+export const ER_RELATIONS = {
+  oneToOne: { symbol: "||--||", label: "Exactly one to Exactly one (||--||)" },
+  oneToMany: {
+    symbol: "||--o{",
+    label: "Zero or more to Exactly one (||--o{)",
+  },
+  oneOrMoreToMany: {
+    symbol: "}|--|{",
+    label: "One or more to One or more (}|--|{)",
+  },
+  zeroOrOneToOne: {
+    symbol: "|o--||",
+    label: "Zero or one to Exactly one (|o--||)",
+  },
+  zeroOrOneToMany: {
+    symbol: "|o--o{",
+    label: "Zero or one to Zero or more (|o--o{)",
+  },
+  manyToMany: { symbol: "}o--o{", label: "Zero or more to Zero or more (}o--o{)" },
+};
+
+export function erDiagramEntities(source) {
+  const map = new Map();
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const blockMatch = line.match(/^\s*([A-Za-z0-9_-]+)\s*\{/);
+    if (blockMatch && blockMatch[1] !== "erDiagram") {
+      map.set(blockMatch[1], { id: blockMatch[1], label: blockMatch[1] });
+    }
+    const relMatch = line.match(
+      /^\s*([A-Za-z0-9_-]+)\s*([|{}o-]+)\s*([A-Za-z0-9_-]+)\s*:/,
+    );
+    if (relMatch) {
+      if (!map.has(relMatch[1]))
+        map.set(relMatch[1], { id: relMatch[1], label: relMatch[1] });
+      if (!map.has(relMatch[3]))
+        map.set(relMatch[3], { id: relMatch[3], label: relMatch[3] });
+    }
+  }
+  return [...map.values()];
+}
+
+export function addErDiagramEntity(source, entityName) {
+  if (!entityName.trim()) throw new Error("Entity name is required.");
+  const id = entityName.trim().replace(/\s+/g, "_");
+  return `${source.trimEnd()}\n  ${id} {\n  }\n`;
+}
+
+export function addErDiagramAttribute(
+  source,
+  entityName,
+  type,
+  name,
+  key = "",
+) {
+  if (!entityName || !type.trim() || !name.trim()) {
+    throw new Error("Entity, attribute type, and attribute name are required.");
+  }
+  const cleanType = type.trim();
+  const cleanName = name.trim().replace(/\s+/g, "_");
+  const cleanKey = key.trim() ? ` ${key.trim()}` : "";
+  const attrLine = `    ${cleanType} ${cleanName}${cleanKey}`;
+  const blockRegex = new RegExp(
+    `(^|\\n)([ \\t]*${escapeRegex(entityName)}\\s*\\{[\\s\\S]*?\\})`,
+    "m",
+  );
+  if (blockRegex.test(source)) {
+    return source.replace(blockRegex, (_, prefix, block) => {
+      const updatedBlock = block.replace(
+        /\n?[ \t]*\}[ \t]*$/,
+        `\n${attrLine}\n  }`,
+      );
+      return `${prefix}${updatedBlock}`;
+    });
+  }
+  return `${source.trimEnd()}\n  ${entityName} {\n${attrLine}\n  }\n`;
+}
+
+export function connectErDiagramEntities(
+  source,
+  from,
+  to,
+  relType = "||--o{",
+  label = "relates",
+) {
+  if (!from || !to) throw new Error("Select two entities to connect.");
+  const lbl = label.trim() ? ` : "${safeLabel(label.trim())}"` : " : relates";
+  return `${source.trimEnd()}\n  ${from} ${relType} ${to}${lbl}\n`;
+}
+
+export function deleteErDiagramEntity(source, entityName) {
+  if (!entityName) throw new Error("Select an entity to remove.");
+  const escaped = escapeRegex(entityName);
+  let updated = source.replace(
+    new RegExp(`(^|\\n)[ \\t]*${escaped}\\s*\\{[\\s\\S]*?\\}`, "g"),
+    "",
+  );
+  const lines = updated.split("\n").filter((line) => {
+    if (new RegExp(`^\\s*${escaped}\\s*\\{`, "i").test(line)) return false;
+    if (new RegExp(`^\\s*${escaped}\\s*[|{}o-]+`, "i").test(line)) return false;
+    if (new RegExp(`[|{}o-]+\\s*${escaped}\\s*:`, "i").test(line)) return false;
+    return true;
+  });
+  return lines.join("\n");
+}
+
+
 
