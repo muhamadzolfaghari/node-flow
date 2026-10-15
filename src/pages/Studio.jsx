@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   AlertCircle,
   GitBranch,
+  GitCommit,
   Copy,
   Save,
   Shapes,
@@ -134,6 +135,18 @@ import {
   connectErDiagramEntities,
   deleteErDiagramEntity,
   ER_RELATIONS,
+  isMindmap,
+  MINDMAP_SHAPES,
+  mindmapNodes,
+  addMindmapChild,
+  deleteMindmapNode,
+  isGitGraph,
+  GIT_COMMIT_TYPES,
+  gitGraphBranches,
+  addGitCommit,
+  addGitBranch,
+  checkoutGitBranch,
+  mergeGitBranch,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -225,6 +238,18 @@ export default function Studio() {
     [erTo, setErTo] = useState(""),
     [erRel, setErRel] = useState("||--o{"),
     [erRelLabel, setErRelLabel] = useState(""),
+    // Mindmap modeling state
+    [mmParent, setMmParent] = useState(""),
+    [mmChild, setMmChild] = useState(""),
+    [mmShape, setMmShape] = useState("default"),
+    // GitGraph modeling state
+    [gitCommitMsg, setGitCommitMsg] = useState(""),
+    [gitCommitTag, setGitCommitTag] = useState(""),
+    [gitCommitType, setGitCommitType] = useState("NORMAL"),
+    [gitBranchName, setGitBranchName] = useState(""),
+    [gitCheckoutTarget, setGitCheckoutTarget] = useState(""),
+    [gitMergeBranch, setGitMergeBranch] = useState(""),
+    [gitMergeTag, setGitMergeTag] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -244,6 +269,12 @@ export default function Studio() {
   }, [document?.source]);
   const erList = useMemo(() => {
     return isErDiagram(document) ? erDiagramEntities(document.source) : [];
+  }, [document?.source]);
+  const mmList = useMemo(() => {
+    return isMindmap(document) ? mindmapNodes(document.source) : [];
+  }, [document?.source]);
+  const gitBranches = useMemo(() => {
+    return isGitGraph(document) ? gitGraphBranches(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -2046,6 +2077,329 @@ export default function Studio() {
                     </Button>
                   </div>
                 )}
+              </div>
+            )}
+            {isMindmap(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">Mindmap tools</p>
+                {mmList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Topic Hierarchy ({mmList.length})
+                    </span>
+                    <div className="flex flex-col gap-1 max-h-36 overflow-auto p-1 border rounded bg-muted/20">
+                      {mmList.map((m, idx) => (
+                        <div
+                          key={`${m.text}-${idx}`}
+                          className="flex items-center justify-between gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                          style={{
+                            paddingLeft: `${Math.max(6, (m.indent - 2) * 6)}px`,
+                          }}
+                        >
+                          <div className="flex items-center gap-1 truncate">
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              🧠
+                            </span>
+                            <span className="truncate">{m.text}</span>
+                            {m.shape !== "default" && (
+                              <span className="text-[9px] text-muted-foreground font-mono">
+                                ({m.shape})
+                              </span>
+                            )}
+                          </div>
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              title={`Remove ${m.text}`}
+                              aria-label={`Remove mindmap branch ${m.text}`}
+                              className="text-muted-foreground hover:text-destructive shrink-0 ml-1"
+                              onClick={() => {
+                                try {
+                                  updateSource(
+                                    document.id,
+                                    deleteMindmapNode(document.source, m.text),
+                                  );
+                                  say(`Removed ${m.text}`);
+                                } catch (err) {
+                                  say(err.message);
+                                }
+                              }}
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {mmList.length > 0 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Add subtopic / branch
+                    </span>
+                    <div className="grid gap-2">
+                      <select
+                        aria-label="Parent mindmap topic"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={mmParent}
+                        onChange={(e) => setMmParent(e.target.value)}
+                      >
+                        <option value="">Select parent topic…</option>
+                        {mmList.map((m, idx) => (
+                          <option key={`${m.text}-${idx}`} value={m.text}>
+                            {"— ".repeat(Math.max(0, (m.indent - 2) / 2))}
+                            {m.text}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <Input
+                          aria-label="New subtopic text"
+                          className="h-8 text-xs flex-1"
+                          placeholder="Subtopic label"
+                          value={mmChild}
+                          onChange={(e) => setMmChild(e.target.value)}
+                        />
+                        <select
+                          aria-label="Subtopic shape"
+                          className="h-8 rounded-md border bg-background px-2 text-xs shrink-0"
+                          value={mmShape}
+                          onChange={(e) => setMmShape(e.target.value)}
+                        >
+                          {Object.entries(MINDMAP_SHAPES).map(([k, v]) => (
+                            <option key={k} value={k}>
+                              {v.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addMindmapChild(
+                                document.source,
+                                mmParent || mmList[0]?.text,
+                                mmChild,
+                                mmShape,
+                              ),
+                            );
+                            setMmChild("");
+                            say("Subtopic added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Add subtopic
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {isGitGraph(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">Git graph tools</p>
+                {gitBranches.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Branches ({gitBranches.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-auto">
+                      {gitBranches.map((b) => (
+                        <div
+                          key={b.id}
+                          className="flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                        >
+                          <GitBranch className="size-3 text-muted-foreground" />
+                          <span className="font-mono text-xs">{b.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Create new commit
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Commit message ID"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Commit ID / msg (e.g. Add auth)"
+                        value={gitCommitMsg}
+                        onChange={(e) => setGitCommitMsg(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Commit tag"
+                        className="h-8 text-xs w-24 shrink-0 font-mono"
+                        placeholder="Tag (v1.0)"
+                        value={gitCommitTag}
+                        onChange={(e) => setGitCommitTag(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Commit type"
+                        className="h-8 rounded-md border bg-background px-2 text-xs flex-1"
+                        value={gitCommitType}
+                        onChange={(e) => setGitCommitType(e.target.value)}
+                      >
+                        {Object.entries(GIT_COMMIT_TYPES).map(([k, v]) => (
+                          <option key={k} value={k}>
+                            {v.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addGitCommit(
+                                document.source,
+                                gitCommitMsg,
+                                gitCommitTag,
+                                gitCommitType,
+                              ),
+                            );
+                            setGitCommitMsg("");
+                            setGitCommitTag("");
+                            say("Commit added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <GitCommit className="size-3.5" />
+                        Commit
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Branch operations
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="New branch name"
+                        className="h-8 text-xs font-mono flex-1"
+                        placeholder="Branch name (feature/api)"
+                        value={gitBranchName}
+                        onChange={(e) => setGitBranchName(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addGitBranch(document.source, gitBranchName),
+                            );
+                            setGitBranchName("");
+                            say("Branch created");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Branch
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Checkout target branch"
+                        className="h-8 rounded-md border bg-background px-2 text-xs flex-1"
+                        value={gitCheckoutTarget}
+                        onChange={(e) => setGitCheckoutTarget(e.target.value)}
+                      >
+                        <option value="">Checkout branch…</option>
+                        {gitBranches.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              checkoutGitBranch(
+                                document.source,
+                                gitCheckoutTarget,
+                              ),
+                            );
+                            say(`Checked out ${gitCheckoutTarget}`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        Checkout
+                      </Button>
+                    </div>
+                    {gitBranches.length >= 2 && (
+                      <div className="grid grid-cols-2 gap-2 mt-1">
+                        <select
+                          aria-label="Merge branch"
+                          className="h-8 rounded-md border bg-background px-2 text-xs"
+                          value={gitMergeBranch}
+                          onChange={(e) => setGitMergeBranch(e.target.value)}
+                        >
+                          <option value="">Merge branch…</option>
+                          {gitBranches.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.label}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs shrink-0"
+                          onClick={() => {
+                            try {
+                              updateSource(
+                                document.id,
+                                mergeGitBranch(
+                                  document.source,
+                                  gitMergeBranch,
+                                  gitMergeTag,
+                                ),
+                              );
+                              say(`Merged ${gitMergeBranch}`);
+                            } catch (err) {
+                              say(err.message);
+                            }
+                          }}
+                        >
+                          <GitBranch className="size-3.5" />
+                          Merge
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
             <Button

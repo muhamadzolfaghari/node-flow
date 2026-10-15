@@ -40,6 +40,16 @@ import {
   addErDiagramAttribute,
   connectErDiagramEntities,
   deleteErDiagramEntity,
+  isMindmap,
+  mindmapNodes,
+  addMindmapChild,
+  deleteMindmapNode,
+  isGitGraph,
+  gitGraphBranches,
+  addGitCommit,
+  addGitBranch,
+  checkoutGitBranch,
+  mergeGitBranch,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -285,6 +295,56 @@ test("er diagram visual modeling: entities, attributes, relations, deletion", ()
   erDoc = deleteErDiagramEntity(erDoc, "INVOICE");
   assert.doesNotMatch(erDoc, /INVOICE/);
 });
+
+test("mindmap visual modeling: topic hierarchy, child addition, and branch deletion", () => {
+  let mm = `mindmap
+  root((Core Architecture))
+    Backend
+      API
+      Database
+    Frontend
+      React UI`;
+
+  assert.equal(isMindmap({ format: "mermaid", source: mm }), true);
+  const nodes = mindmapNodes(mm);
+  assert.equal(nodes.length, 6);
+  assert.equal(nodes[0].text, "Core Architecture");
+  assert.equal(nodes[0].shape, "circle");
+
+  mm = addMindmapChild(mm, "Frontend", "Tailwind CSS", "rounded");
+  assert.match(mm, /\(Tailwind CSS\)/);
+
+  mm = deleteMindmapNode(mm, "Backend");
+  assert.doesNotMatch(mm, /Backend/);
+  assert.doesNotMatch(mm, /Database/);
+  assert.match(mm, /React UI/);
+});
+
+test("gitGraph visual modeling: branches, commits, checkout, merge", () => {
+  let git = `gitGraph
+  commit id: "Initial commit"`;
+
+  assert.equal(isGitGraph({ format: "mermaid", source: git }), true);
+  let branches = gitGraphBranches(git);
+  assert.equal(branches.some((b) => b.id === "main"), true);
+
+  git = addGitBranch(git, "feature/auth");
+  assert.match(git, /branch feature\/auth/);
+
+  git = checkoutGitBranch(git, "feature/auth");
+  assert.match(git, /checkout feature\/auth/);
+
+  git = addGitCommit(git, "Implement JWT", "v0.1", "HIGHLIGHT");
+  assert.match(git, /commit id: "Implement JWT" tag: "v0.1" type: HIGHLIGHT/);
+
+  git = checkoutGitBranch(git, "main");
+  git = mergeGitBranch(git, "feature/auth", "v1.0");
+  assert.match(git, /merge feature\/auth tag: "v1.0"/);
+
+  branches = gitGraphBranches(git);
+  assert.equal(branches.some((b) => b.id === "feature/auth"), true);
+});
+
 
 
 

@@ -788,5 +788,188 @@ export function deleteErDiagramEntity(source, entityName) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* MINDMAP VISUAL MODELING                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const isMindmap = (doc) =>
+  doc?.format === "mermaid" && /^\s*mindmap\b/m.test(doc.source);
+
+export const MINDMAP_SHAPES = {
+  default: { label: "Default text" },
+  circle: { label: "Circle ((...))" },
+  rounded: { label: "Rounded (...)" },
+  square: { label: "Square [...]" },
+  cloud: { label: "Cloud )...(" },
+  bang: { label: "Bang ))!...!((" },
+};
+
+export function parseMindmapNode(raw) {
+  const match = raw.match(
+    /^([A-Za-z0-9_-]+)?(\(\(|\)\)|\)|\[|\()([^\n]+?)(\)\)|\(\(|\(|\]|\))$/,
+  );
+  if (match) {
+    const id = match[1] || "";
+    const open = match[2];
+    const text = match[3];
+    let shape = "rounded";
+    if (open === "((") shape = "circle";
+    else if (open === "))") shape = "bang";
+    else if (open === ")") shape = "cloud";
+    else if (open === "[") shape = "square";
+    return { id, text, shape };
+  }
+  return { id: "", text: raw, shape: "default" };
+}
+
+export function mindmapNodes(source) {
+  const lines = source.split("\n");
+  const nodes = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*%%/.test(line) || /^\s*mindmap\b/.test(line) || !line.trim())
+      continue;
+    const indent = line.match(/^(\s*)/)[1].length;
+    const raw = line.trim();
+    const parsed = parseMindmapNode(raw);
+    nodes.push({
+      lineIndex: i,
+      indent,
+      text: parsed.text,
+      id: parsed.id,
+      shape: parsed.shape,
+      raw,
+    });
+  }
+  return nodes;
+}
+
+export function addMindmapChild(source, parentText, childText, shape = "default") {
+  if (!childText.trim()) throw new Error("Child node text is required.");
+  const lines = source.split("\n");
+  let parentIndex = -1;
+  let parentIndent = 2;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes(parentText)) {
+      parentIndex = i;
+      parentIndent = line.match(/^(\s*)/)[1].length;
+      break;
+    }
+  }
+  if (parentIndex === -1)
+    throw new Error("Parent node not found in mindmap.");
+  let childIndent = parentIndent + 2;
+  let cleanChild = safeLabel(childText.trim());
+  if (shape === "circle") cleanChild = `((${cleanChild}))`;
+  else if (shape === "square") cleanChild = `[${cleanChild}]`;
+  else if (shape === "rounded") cleanChild = `(${cleanChild})`;
+  else if (shape === "cloud") cleanChild = `)${cleanChild}(`;
+  else if (shape === "bang") cleanChild = `))${cleanChild}((`;
+
+  let insertAt = parentIndex + 1;
+  while (insertAt < lines.length) {
+    const l = lines[insertAt];
+    if (!l.trim()) {
+      let hasMoreChildren = false;
+      for (let k = insertAt + 1; k < lines.length; k++) {
+        if (lines[k].trim()) {
+          const kInd = lines[k].match(/^(\s*)/)[1].length;
+          if (kInd > parentIndent) hasMoreChildren = true;
+          break;
+        }
+      }
+      if (!hasMoreChildren) break;
+      insertAt++;
+      continue;
+    }
+    const ind = l.match(/^(\s*)/)[1].length;
+    if (ind <= parentIndent) break;
+    insertAt++;
+  }
+  lines.splice(insertAt, 0, " ".repeat(childIndent) + cleanChild);
+  return lines.join("\n");
+}
+
+export function deleteMindmapNode(source, targetText) {
+  if (!targetText.trim()) throw new Error("Select node to delete.");
+  const lines = source.split("\n");
+  let targetIndex = -1;
+  let targetIndent = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes(targetText)) {
+      targetIndex = i;
+      targetIndent = line.match(/^(\s*)/)[1].length;
+      break;
+    }
+  }
+  if (targetIndex === -1) throw new Error("Node not found.");
+  let countToRemove = 1;
+  while (targetIndex + countToRemove < lines.length) {
+    const nextLine = lines[targetIndex + countToRemove];
+    if (!nextLine.trim()) {
+      countToRemove++;
+      continue;
+    }
+    const nextIndent = nextLine.match(/^(\s*)/)[1].length;
+    if (nextIndent <= targetIndent) break;
+    countToRemove++;
+  }
+  lines.splice(targetIndex, countToRemove);
+  return lines.join("\n");
+}
+
+/* -------------------------------------------------------------------------- */
+/* GITGRAPH VISUAL MODELING                                                   */
+/* -------------------------------------------------------------------------- */
+
+export const isGitGraph = (doc) =>
+  doc?.format === "mermaid" && /^\s*gitGraph\b/m.test(doc.source);
+
+export const GIT_COMMIT_TYPES = {
+  NORMAL: { label: "Normal commit" },
+  HIGHLIGHT: { label: "Highlight commit" },
+  REVERSE: { label: "Reverse commit" },
+};
+
+export function gitGraphBranches(source) {
+  const branches = new Set(["main"]);
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const match = line.match(/^\s*branch\s+([A-Za-z0-9_/-]+)/);
+    if (match) {
+      branches.add(match[1]);
+    }
+  }
+  return [...branches].map((b) => ({ id: b, label: b }));
+}
+
+export function addGitCommit(source, msg = "", tag = "", type = "NORMAL") {
+  let line = "  commit";
+  if (msg.trim()) line += ` id: "${safeLabel(msg.trim())}"`;
+  if (tag.trim()) line += ` tag: "${safeLabel(tag.trim())}"`;
+  if (type && type !== "NORMAL") line += ` type: ${type}`;
+  return `${source.trimEnd()}\n${line}\n`;
+}
+
+export function addGitBranch(source, branchName) {
+  if (!branchName.trim()) throw new Error("Branch name is required.");
+  const name = branchName.trim().replace(/\s+/g, "-");
+  return `${source.trimEnd()}\n  branch ${name}\n`;
+}
+
+export function checkoutGitBranch(source, branchName) {
+  if (!branchName.trim()) throw new Error("Branch name is required.");
+  return `${source.trimEnd()}\n  checkout ${branchName.trim()}\n`;
+}
+
+export function mergeGitBranch(source, branchName, tag = "") {
+  if (!branchName.trim()) throw new Error("Select branch to merge.");
+  const tagPart = tag.trim() ? ` tag: "${safeLabel(tag.trim())}"` : "";
+  return `${source.trimEnd()}\n  merge ${branchName.trim()}${tagPart}\n`;
+}
+
+
 
 

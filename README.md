@@ -15,6 +15,8 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
   - *Class diagrams:* class creation, attribute and method declarations, UML relationships (inheritance, composition, aggregation, association, dependency, realization), and class deletion.
   - *State diagrams:* visual state declaration with descriptive labels, state transition connector with event triggers, state removal, and initial/terminal state integration (`[*]`).
   - *Entity-Relationship (ER) diagrams:* visual entity management, typed attributes with primary key (PK) / foreign key (FK) indicators, relational cardinality connectors (`||--||`, `||--o{`, `}|--|{`, `|o--||`, etc.), and entity deletion.
+  - *Mindmaps:* topic hierarchy viewer with indent visualization, subtopic branch insertion with custom shapes (circle, square, rounded, cloud, bang), and single-click branch subtree deletion.
+  - *Git graphs:* branch management, commit generation with tags and highlight types, branch checkout, and branch merging with release tags.
   - *Diagram look & themes:* one-click render look toggle (Classic vector vs. Hand-drawn sketchy) and Mermaid theme selection (Default, Neutral, Dark, Forest, Base) managed through clean frontmatter directives. Changes update source in real time.
 - **Canvas:** pan, zoom, fit, center, minimap navigation, grid styles, wheel pan/zoom modes, arrow-key navigation, pinch zoom, and presentation mode with a laser pointer.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
