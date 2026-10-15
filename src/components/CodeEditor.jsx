@@ -1,7 +1,7 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
 import { basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import {
   StreamLanguage,
   syntaxHighlighting,
@@ -15,27 +15,105 @@ import { yaml } from "@codemirror/lang-yaml";
 import { xml } from "@codemirror/lang-xml";
 import { markdown } from "@codemirror/lang-markdown";
 import { python } from "@codemirror/lang-python";
-import { autocompletion } from "@codemirror/autocomplete";
+import { autocompletion, snippetCompletion } from "@codemirror/autocomplete";
+import { linter, lintGutter } from "@codemirror/lint";
 import { undo, redo } from "@codemirror/commands";
 import { openSearchPanel } from "@codemirror/search";
 import { getFormat } from "../lib/formats.js";
+import { fixAnySyntax, testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
+import { explainError } from "../utils/syntax-error-db.js";
+import { Sparkles, CheckCircle2, AlertTriangle, Lightbulb, Check, ChevronDown, Wand2 } from "lucide-react";
 
-const keywords =
-  "flowchart graph sequenceDiagram classDiagram stateDiagram-v2 erDiagram mindmap gantt pie xychart-beta C4Context gitGraph journey timeline sankey-beta quadrantChart kanban block-beta requirementDiagram requirement functionalRequirement element satisfies traces packet-beta packet architecture-beta architecture service group in junction subgraph end participant actor class state direction title section autonumber".split(
-    " ",
-  );
+// Diagram types list for tokenizer & completions
+const diagramHeaders = [
+  "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram-v2", "stateDiagram",
+  "erDiagram", "mindmap", "gantt", "pie", "xychart-beta", "xychart", "C4Context", "C4Container",
+  "C4Component", "C4Dynamic", "C4Deployment", "gitGraph", "journey", "timeline", "sankey-beta",
+  "sankey", "quadrantChart", "kanban", "block-beta", "block", "requirementDiagram", "packet-beta",
+  "packet", "architecture-beta", "architecture", "digraph", "strict digraph", "d2"
+];
+
+// Structural and diagram keywords
+const keywords = [
+  ...diagramHeaders,
+  "subgraph", "end", "direction", "TB", "TD", "BT", "RL", "LR",
+  "participant", "actor", "boundary", "control", "entity", "database", "collections",
+  "create", "destroy", "box", "autonumber", "activate", "deactivate", "alt", "else", "opt",
+  "loop", "par", "critical", "break", "rect", "note", "over", "right of", "left of", "as",
+  "class", "interface", "enum", "state", "fork", "join", "choice",
+  "title", "accTitle", "accDescr", "section", "dateFormat", "axisFormat", "todayMarker",
+  "excludes", "includes", "commit", "branch", "checkout", "merge", "tag", "order", "id",
+  "group", "service", "in", "junction", "icon",
+  "requirement", "functionalRequirement", "interfaceRequirement", "performanceRequirement",
+  "designConstraint", "physicalRequirement", "element", "satisfies", "traces", "contains",
+  "copies", "derives", "verifies", "refines", "style", "classDef", "linkStyle", "interpolate"
+];
+
+// Rich Total Syntax Tokenizer for Mermaid, PlantUML, DOT, D2 & Architecture
 const diagramLanguage = StreamLanguage.define({
   token(stream) {
-    if (stream.match(/%%.*|\/\/.*|#.*|'.*$/)) return "comment";
-    if (stream.match(/"[^"]*"/)) return "string";
-    if (stream.match(/(?:-->|->>|-->>|--|->|<\|--)/)) return "operator";
-    if (stream.match(/\b\d+\b/)) return "number";
-    if (stream.match(new RegExp(`\\b(${keywords.join("|")})\\b`)))
-      return "keyword";
+    // 1. Directives and frontmatter (--- ... --- or %%{init: ...}%%)
+    if (stream.match(/^---[\s\S]*?---/) || stream.match(/^%%\{.*?\}%%/)) return "meta";
+
+    // 2. Comments (%%, //, #, ')
+    if (stream.match(/^%%.*$/) || stream.match(/^\/\/.*$/) || stream.match(/^#.*$/) || stream.match(/^'.*$/)) {
+      return "comment";
+    }
+
+    // 3. Quoted strings ("...", '...', `...`)
+    if (stream.match(/^"[^"]*"/) || stream.match(/^'[^']*'/) || stream.match(/^`[^`]*`/)) {
+      return "string";
+    }
+
+    // 4. Arrow and edge operators (20+ styles)
+    if (
+      stream.match(/^(?:-->|-->>|->>|-\)|--\)|-\.->|==>|~~~|--o|--x|o--o|x--x|<-->|<--|->|--|<\|--|\*--|o--|\.\.\|>|\.\.|\|\|--o\{|\}\|--\|\{|\|o--o\||\|o--o\{|\|\|--\|\||\}\|--\|\{|\}o--o\{)/)
+    ) {
+      return "operator";
+    }
+
+    // 5. Arrow inline text label |label|
+    if (stream.match(/^\|[^|\n]+\|/)) {
+      return "string";
+    }
+
+    // 6. Hex color codes (#1e293b, #38bdf8)
+    if (stream.match(/^#[0-9a-fA-F]{3,8}\b/)) {
+      return "number";
+    }
+
+    // 7. Numbers and units (e.g. 100, 20px, 1.5, 3d, 2w)
+    if (stream.match(/^\b\d+(?:\.\d+)?(?:px|em|pt|ms|s|%|d|w)?\b/)) {
+      return "number";
+    }
+
+    // 8. Node shape brackets and delimiters
+    if (stream.match(/^(?:\[\[|\]\]|\[\(|\)\]|\(\(|\)\)|\{\{|\}\}|\[\/|\/\]|\[\\|\\\]|\[|\]|\(|\)|\{|\})/)) {
+      return "bracket";
+    }
+
+    // 9. CSS style properties inside style/classDef
+    if (stream.match(/^(?:fill|stroke|stroke-width|stroke-dasharray|color|font-size|opacity|rx|ry):/)) {
+      return "propertyName";
+    }
+
+    // 10. Types in ER & Class diagrams
+    if (stream.match(/^\b(?:string|int|integer|boolean|bool|datetime|date|timestamp|uuid|float|double|PK|FK|UK)\b/i)) {
+      return "typeName";
+    }
+
+    // 11. Diagram keywords
+    for (const kw of keywords) {
+      if (stream.match(new RegExp(`^\\b${kw}\\b`))) {
+        return "keyword";
+      }
+    }
+
     stream.next();
     return null;
   },
 });
+
 function language(doc) {
   const name = doc.name.toLowerCase();
   switch (getFormat(doc.format).language) {
@@ -55,92 +133,350 @@ function language(doc) {
       return diagramLanguage;
   }
 }
+
+// Modern IDE Dark Theme for Editor & Diagnostics
 const theme = EditorView.theme(
   {
-    "&": { backgroundColor: "#0f1520", color: "#dce5f2", fontSize: "12px" },
+    "&": { backgroundColor: "#0c1017", color: "#dce5f2", fontSize: "12px", height: "100%" },
     ".cm-content": {
       fontFamily: "JetBrains Mono, monospace",
       padding: "16px 0",
-      caretColor: "#aac7ff",
+      caretColor: "#60a5fa",
     },
     ".cm-line": { padding: "0 16px", lineHeight: "22px" },
     ".cm-gutters": {
-      backgroundColor: "#0f1520",
-      color: "#5e708a",
+      backgroundColor: "#0c1017",
+      color: "#475569",
       border: "none",
-      minWidth: "42px",
+      borderRight: "1px solid #1e293b",
+      minWidth: "44px",
     },
-    ".cm-activeLineGutter": { backgroundColor: "#1a2638", color: "#b6c9e9" },
-    ".cm-activeLine": { backgroundColor: "#17223466" },
+    ".cm-activeLineGutter": { backgroundColor: "#1e293b", color: "#93c5fd" },
+    ".cm-activeLine": { backgroundColor: "#17223455" },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: "#2b4674",
+      backgroundColor: "#1e3a8a66",
     },
-    ".cm-cursor": { borderLeftColor: "#8bacff" },
-    ".cm-panels": { backgroundColor: "#17202c", color: "#dce5f2" },
+    ".cm-cursor": { borderLeftColor: "#60a5fa" },
+    ".cm-panels": { backgroundColor: "#111827", color: "#dce5f2" },
     ".cm-tooltip": {
-      backgroundColor: "#17202c",
-      border: "1px solid #34445b",
-      color: "#dce5f2",
+      backgroundColor: "#111827",
+      border: "1px solid #334155",
+      borderRadius: "6px",
+      color: "#e2e8f0",
+      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
+    },
+    // CodeMirror Lint Diagnostic Styles
+    ".cm-lintRange-error": {
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='m0 2.5 l2 -2 l2 2 l2 -2' fill='none' stroke='%23f43f5e' stroke-width='1.2'/%3E%3C/svg%3E")`,
+      backgroundPosition: "left bottom",
+      backgroundRepeat: "repeat-x",
+      paddingBottom: "1px",
+    },
+    ".cm-lintRange-warning": {
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='m0 2.5 l2 -2 l2 2 l2 -2' fill='none' stroke='%23f59e0b' stroke-width='1.2'/%3E%3C/svg%3E")`,
+      backgroundPosition: "left bottom",
+      backgroundRepeat: "repeat-x",
+      paddingBottom: "1px",
+    },
+    ".cm-lint-marker": {
+      display: "inline-block",
+      width: "8px",
+      height: "8px",
+      borderRadius: "50%",
+      cursor: "pointer",
+    },
+    ".cm-lint-marker-error": {
+      backgroundColor: "#f43f5e",
+      boxShadow: "0 0 6px #f43f5e88",
+    },
+    ".cm-lint-marker-warning": {
+      backgroundColor: "#f59e0b",
+      boxShadow: "0 0 6px #f59e0b88",
+    },
+    ".cm-diagnostic": {
+      padding: "6px 10px",
+      fontSize: "12px",
+      lineHeight: "18px",
+    },
+    ".cm-diagnostic-error": {
+      borderLeft: "3px solid #f43f5e",
+    },
+    ".cm-diagnosticAction": {
+      backgroundColor: "#3b82f6",
+      color: "#ffffff",
+      borderRadius: "4px",
+      padding: "2px 8px",
+      fontWeight: "600",
+      fontSize: "11px",
+      marginLeft: "8px",
+      cursor: "pointer",
+      border: "none",
+      transition: "background-color 0.15s ease",
+    },
+    ".cm-diagnosticAction:hover": {
+      backgroundColor: "#2563eb",
     },
   },
   { dark: true },
 );
+
+// High-Contrast Vibrant Syntax Token Colors
 const highlight = HighlightStyle.define([
-  { tag: tags.keyword, color: "#94b6ff" },
-  { tag: tags.string, color: "#83d5ad" },
-  { tag: tags.comment, color: "#657993" },
-  { tag: tags.number, color: "#f3c686" },
-  { tag: tags.operator, color: "#c0abf5" },
-  { tag: tags.typeName, color: "#7dd3fc" },
+  { tag: tags.keyword, color: "#93c5fd", fontWeight: "600" },
+  { tag: tags.string, color: "#86efac" },
+  { tag: tags.comment, color: "#64748b", fontStyle: "italic" },
+  { tag: tags.number, color: "#fcd34d" },
+  { tag: tags.operator, color: "#c084fc", fontWeight: "600" },
+  { tag: tags.typeName, color: "#38bdf8" },
+  { tag: tags.propertyName, color: "#f472b6" },
+  { tag: tags.bracket, color: "#94a3b8" },
+  { tag: tags.meta, color: "#fb923c" },
 ]);
+
+// Rich Contextual Autocomplete & Snippet Provider
+const diagramSnippets = [
+  snippetCompletion(
+    "flowchart TD\n  ${1:Start}[${2:Start Process}] --> ${3:Decision}{${4:Condition?}}\n  ${3:Decision} -->|Yes| ${5:Action}[${6:Execute Task}]\n  ${3:Decision} -->|No| ${7:Retry}[${8:Retry Task}]\n  ${5:Action} --> ${9:End}([${10:Complete}])",
+    { label: "flowchart TD", detail: "Flowchart top-to-bottom template", type: "snippet" }
+  ),
+  snippetCompletion(
+    "flowchart LR\n  ${1:A}[${2:Client}] --> ${3:B}[${4:API Gateway}] --> ${5:C}[(${6:Database})]",
+    { label: "flowchart LR", detail: "Flowchart left-to-right template", type: "snippet" }
+  ),
+  snippetCompletion(
+    "sequenceDiagram\n  autonumber\n  actor ${1:User}\n  participant ${2:API} as ${3:API Gateway}\n  participant ${4:DB} as ${5:Database}\n\n  ${1:User}->>${2:API}: ${6:POST /orders}\n  activate ${2:API}\n  ${2:API}->>${4:DB}: ${7:INSERT order}\n  ${4:DB}-->>${2:API}: ${8:Order Created}\n  ${2:API}-->>${1:User}: ${9:201 Created Response}\n  deactivate ${2:API}",
+    { label: "sequenceDiagram", detail: "Sequence diagram with actors & activations", type: "snippet" }
+  ),
+  snippetCompletion(
+    "classDiagram\n  class ${1:UserService} {\n    +${2:String} ${3:apiKey}\n    +${4:getUser}(id: ${5:String}) ${6:User}\n    +${7:saveUser}(user: ${6:User}) ${8:void}\n  }\n  class ${6:User} {\n    +${2:String} id\n    +${2:String} email\n  }\n  ${1:UserService} --> ${6:User}",
+    { label: "classDiagram", detail: "UML Class diagram with methods & relations", type: "snippet" }
+  ),
+  snippetCompletion(
+    "stateDiagram-v2\n  [*] --> ${1:Idle}\n  ${1:Idle} --> ${2:Processing}: submit\n  ${2:Processing} --> ${3:Approved}: approve\n  ${2:Processing} --> ${1:Idle}: reject\n  ${3:Approved} --> [*]",
+    { label: "stateDiagram-v2", detail: "State transition diagram template", type: "snippet" }
+  ),
+  snippetCompletion(
+    "erDiagram\n  ${1:CUSTOMER} ||--o{ ${2:ORDER} : places\n  ${1:CUSTOMER} {\n    string id PK\n    string email\n  }\n  ${2:ORDER} {\n    string id PK\n    string customer_id FK\n    float total\n  }",
+    { label: "erDiagram", detail: "Entity relationship schema with PK/FK", type: "snippet" }
+  ),
+  snippetCompletion(
+    "architecture-beta\n  group ${1:cloud}(cloud)[${2:Cloud VPC}]\n  service ${3:api}(server)[${4:API Gateway}] in ${1:cloud}\n  service ${5:db}(database)[${6:Primary DB}] in ${1:cloud}\n  ${3:api}:R --> L:${5:db}",
+    { label: "architecture-beta", detail: "Cloud Architecture diagram with VPC & services", type: "snippet" }
+  ),
+  snippetCompletion(
+    "packet-beta\n  0-15: \"${1:Source Port}\"\n  16-31: \"${2:Destination Port}\"\n  32-63: \"${3:Sequence Number}\"\n  64-95: \"${4:Acknowledgment Number}\"",
+    { label: "packet-beta", detail: "Binary Protocol & Bytefield packet header", type: "snippet" }
+  ),
+  snippetCompletion(
+    "C4Context\n  title ${1:System Context}\n  Person(${2:user}, \"${3:Customer}\", \"${4:User of the service}\")\n  System(${5:system}, \"${6:Platform}\", \"${7:Core banking service}\")\n  Rel(${2:user}, ${5:system}, \"${8:Uses}\", \"${9:HTTPS}\")",
+    { label: "C4Context", detail: "C4 System Context diagram", type: "snippet" }
+  ),
+  snippetCompletion(
+    "requirementDiagram\n  requirement ${1:req1} {\n    id: ${2:REQ-1}\n    text: ${3:System must respond within 100ms}\n    risk: ${4:medium}\n    verifymethod: ${5:test}\n  }",
+    { label: "requirementDiagram", detail: "Systems Engineering Requirement model", type: "snippet" }
+  ),
+  snippetCompletion(
+    "subgraph ${1:Cluster} [\"${2:Cluster Title}\"]\n  direction ${3:TB}\n  ${4:A} --> ${5:B}\nend",
+    { label: "subgraph", detail: "Flowchart subgraph container with direction", type: "snippet" }
+  ),
+  snippetCompletion(
+    "mindmap\n  root((\"${1:Central Theme}\"))\n    ${2:Strategy}\n      ${3:Product Roadmap}\n      ${4:Target Audience}\n    ${5:Architecture}\n      ${6:Frontend}\n      ${7:Backend Services}",
+    { label: "mindmap", detail: "Hierarchical mind map structure", type: "snippet" }
+  ),
+  snippetCompletion(
+    "gitGraph\n  commit\n  branch ${1:feature}\n  checkout ${1:feature}\n  commit id: \"${2:feat(ui): add editor}\"\n  checkout main\n  merge ${1:feature}",
+    { label: "gitGraph", detail: "Git trunk-based branching workflow", type: "snippet" }
+  ),
+  // Flowchart Node Shapes
+  snippetCompletion('${1:id}["${2:Rectangle}"]', { label: "node-rect", detail: "Node: Rectangle [label]", type: "variable" }),
+  snippetCompletion('${1:id}("${2:Rounded}")', { label: "node-round", detail: "Node: Rounded (label)", type: "variable" }),
+  snippetCompletion('${1:id}(["${2:Stadium}"])', { label: "node-stadium", detail: "Node: Stadium ([label])", type: "variable" }),
+  snippetCompletion('${1:id}[["${2:Subroutine}"]]', { label: "node-subroutine", detail: "Node: Subroutine [[label]]", type: "variable" }),
+  snippetCompletion('${1:id}[("${2:Database})"]', { label: "node-cylinder", detail: "Node: Cylinder [(label)]", type: "variable" }),
+  snippetCompletion('${1:id}(("${2:Circle})")', { label: "node-circle", detail: "Node: Circle ((label))", type: "variable" }),
+  snippetCompletion('${1:id}{"${2:Decision?}"}', { label: "node-diamond", detail: "Node: Diamond {label}", type: "variable" }),
+  snippetCompletion('${1:id}{{"${2:Hexagon}"}}', { label: "node-hexagon", detail: "Node: Hexagon {{label}}", type: "variable" }),
+  // Style and Decorator snippets
+  snippetCompletion('style ${1:NodeId} fill:${2:#1e293b},stroke:${3:#38bdf8},stroke-width:2px,color:#fff', { label: "style", detail: "Node style directive", type: "property" }),
+  snippetCompletion('classDef ${1:accent} fill:${2:#0284c7},stroke:${3:#38bdf8},color:#fff', { label: "classDef", detail: "Reusable class style definition", type: "property" }),
+  snippetCompletion('linkStyle ${1:0} stroke:${2:#f59e0b},stroke-width:2px', { label: "linkStyle", detail: "Connection link style directive", type: "property" }),
+];
+
+const keywordCompletions = keywords.map((label) => ({
+  label,
+  type: "keyword",
+}));
+
 const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
-  const host = useRef(null),
-    editor = useRef(null),
-    latest = useRef({ document, onChange }),
-    states = useRef(new Map()),
-    currentId = useRef(null),
-    compartment = useRef(new Compartment());
+  const host = useRef(null);
+  const editor = useRef(null);
+  const latest = useRef({ document, onChange });
+  const states = useRef(new Map());
+  const currentId = useRef(null);
+  const compartment = useRef(new Compartment());
+
+  // Interactive AI Fix & Status Banner State
+  const [syntaxStatus, setSyntaxStatus] = useState({ valid: true, error: null, line: null, raw: null });
+  const [fixBusy, setFixBusy] = useState(false);
+  const [fixSuccessMsg, setFixSuccessMsg] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   latest.current = { document, onChange };
-  const createState = (doc) =>
-    EditorState.create({
-      doc: doc.source,
-      extensions: [
-        basicSetup,
-        theme,
-        syntaxHighlighting(highlight),
-        compartment.current.of(language(doc)),
-        EditorView.contentAttributes.of({
-          "aria-label": "Diagram source code",
-          spellcheck: "false",
-        }),
-        autocompletion({
-          override:
-            doc.format === "mermaid" || doc.format === "graphviz"
-              ? [
-                  (context) => {
-                    const word = context.matchBefore(/\w*/);
-                    if (!word || (word.from === word.to && !context.explicit))
-                      return null;
-                    return {
-                      from: word.from,
-                      options: keywords.map((label) => ({
-                        label,
-                        type: "keyword",
-                      })),
-                    };
-                  },
-                ]
-              : undefined,
-        }),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged)
-            latest.current.onChange(
-              currentId.current,
-              update.state.doc.toString(),
-            );
-        }),
-      ],
-    });
+
+  // Explanations from the syntax error database when errors occur
+  const explanations = useMemo(() => {
+    if (syntaxStatus.valid || !document?.source) return [];
+    return explainError(document.source, document.format || "mermaid", syntaxStatus.raw || syntaxStatus.error || "");
+  }, [syntaxStatus, document?.source, document?.format]);
+
+  // Execute AI Quick Fix directly
+  const runAiFix = useCallback(async () => {
+    if (!editor.current || !latest.current.document) return;
+    const view = editor.current;
+    const docText = view.state.doc.toString();
+    const docFmt = latest.current.document.format || "mermaid";
+    setFixBusy(true);
+
+    try {
+      const result = await fixAnySyntax(docText, docFmt, syntaxStatus.raw || syntaxStatus.error || "");
+      if (result.success && result.fixedCode && result.fixedCode !== docText) {
+        // Dispatch atomic transaction preserving history
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: result.fixedCode },
+        });
+        latest.current.onChange(currentId.current, result.fixedCode);
+        const fixSummary = (result.fixes && result.fixes.length > 0) ? result.fixes[0] : "Repaired syntax";
+        setFixSuccessMsg(fixSummary);
+        setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+        setShowSuggestions(false);
+        setTimeout(() => setFixSuccessMsg(null), 4000);
+      }
+    } catch (e) {
+      console.warn("AI Quick Fix execution error:", e);
+    } finally {
+      setFixBusy(false);
+    }
+  }, [syntaxStatus]);
+
+  // Real-time As-You-Type CodeMirror Linter Extension
+  const syntaxLinter = useMemo(() => {
+    return linter(
+      async (view) => {
+        const code = view.state.doc.toString();
+        if (!code.trim()) {
+          setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+          return [];
+        }
+
+        const fmt = latest.current.document?.format || "mermaid";
+        let error = null;
+
+        if (fmt === "mermaid") {
+          const v = await testMermaidSyntax(code);
+          if (!v.valid) error = v.error;
+        } else if (fmt === "json") {
+          try {
+            JSON.parse(code);
+          } catch (e) {
+            error = e.message;
+          }
+        } else {
+          // Derived format verification
+          try {
+            const { compileDocument } = await import("../lib/formats.js");
+            const compiled = await compileDocument({ format: fmt, source: code });
+            const v = await testMermaidSyntax(compiled.code);
+            if (!v.valid) error = v.error;
+          } catch (e) {
+            error = e.message;
+          }
+        }
+
+        if (!error) {
+          setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+          return [];
+        }
+
+        const details = parseErrorDetails(error, code);
+        setSyntaxStatus({
+          valid: false,
+          error: details.message,
+          line: details.line,
+          raw: details.raw,
+        });
+
+        const lineNum = Math.max(1, Math.min(details.line, view.state.doc.lines));
+        const lineObj = view.state.doc.line(lineNum);
+        const from = lineObj.from;
+        const to = lineObj.to > from ? lineObj.to : Math.min(view.state.doc.length, from + 1);
+
+        return [
+          {
+            from,
+            to,
+            severity: "error",
+            message: details.message,
+            actions: [
+              {
+                name: "⚡ AI Quick Fix",
+                apply() {
+                  runAiFix();
+                },
+              },
+            ],
+          },
+        ];
+      },
+      { delay: 280 }
+    );
+  }, [runAiFix]);
+
+  const createState = useCallback(
+    (doc) =>
+      EditorState.create({
+        doc: doc.source,
+        extensions: [
+          basicSetup,
+          theme,
+          syntaxHighlighting(highlight),
+          compartment.current.of(language(doc)),
+          lintGutter(),
+          syntaxLinter,
+          keymap.of([
+            {
+              key: "Alt-f",
+              run: () => {
+                runAiFix();
+                return true;
+              },
+            },
+          ]),
+          EditorView.contentAttributes.of({
+            "aria-label": "Diagram source code",
+            spellcheck: "false",
+          }),
+          autocompletion({
+            override: [
+              (context) => {
+                const word = context.matchBefore(/\w*/);
+                if (!word || (word.from === word.to && !context.explicit)) return null;
+                return {
+                  from: word.from,
+                  options: [...diagramSnippets, ...keywordCompletions],
+                };
+              },
+            ],
+          }),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              latest.current.onChange(currentId.current, update.state.doc.toString());
+            }
+          }),
+        ],
+      }),
+    [syntaxLinter, runAiFix]
+  );
+
   useEffect(() => {
     if (!document) return;
     editor.current = new EditorView({
@@ -152,7 +488,8 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
       editor.current?.destroy();
       editor.current = null;
     };
-  }, []);
+  }, [createState, document]);
+
   useEffect(() => {
     if (!document || !editor.current) return;
     const view = editor.current;
@@ -161,7 +498,7 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
       currentId.current = document.id;
       view.setState(states.current.get(document.id) || createState(document));
     }
-    if (view.state.doc.toString() !== document.source)
+    if (view.state.doc.toString() !== document.source) {
       view.dispatch({
         changes: {
           from: 0,
@@ -169,10 +506,12 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
           insert: document.source,
         },
       });
+    }
     view.dispatch({
       effects: compartment.current.reconfigure(language(document)),
     });
-  }, [document?.id, document?.source, document?.format, document?.name]);
+  }, [document?.id, document?.source, document?.format, document?.name, createState]);
+
   useImperativeHandle(ref, () => ({
     undo: () => editor.current && undo(editor.current),
     redo: () => editor.current && redo(editor.current),
@@ -192,6 +531,126 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange }, ref) {
       }
     },
   }));
-  return <div ref={host} className="code-mirror" />;
+
+  return (
+    <div className="flex h-full flex-col min-h-0 bg-[#0c1017]">
+      {/* Floating AI Diagnostic, Fix & Autocomplete Status Bar */}
+      <div className="flex shrink-0 items-center justify-between border-b border-[#1e293b] bg-[#0f172a]/95 px-3 py-1.5 text-[11px] backdrop-blur select-none z-10">
+        <div className="flex items-center gap-2 overflow-hidden">
+          {syntaxStatus.valid ? (
+            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-medium truncate">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Valid syntax</span>
+              <span className="text-slate-500">·</span>
+              <span className="text-slate-400 uppercase tracking-wider text-[10px]">{document?.format || "mermaid"}</span>
+            </span>
+          ) : (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <span className="inline-flex items-center gap-1.5 text-rose-400 font-medium truncate">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-500 animate-pulse" />
+                <span className="truncate">
+                  Line {syntaxStatus.line || 1}: {syntaxStatus.error || "Syntax error detected"}
+                </span>
+              </span>
+
+              {/* ⚡ One-Click AI Quick Fix Button */}
+              <button
+                type="button"
+                onClick={runAiFix}
+                disabled={fixBusy}
+                className="inline-flex items-center gap-1 rounded bg-gradient-to-r from-blue-600 to-indigo-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow hover:from-blue-500 hover:to-indigo-500 active:scale-95 transition disabled:opacity-50"
+                title="Instant repair with AI & universal fixer (Alt+F)"
+              >
+                {fixBusy ? (
+                  <>
+                    <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Fixing…</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3 text-amber-300" />
+                    <span>AI Quick Fix</span>
+                  </>
+                )}
+              </button>
+
+              {/* 💡 Suggestion Dropdown Button */}
+              {explanations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions((prev) => !prev)}
+                  className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300 hover:bg-amber-500/20 transition"
+                  title="View cause and solution hints"
+                >
+                  <Lightbulb className="h-3 w-3 text-amber-400" />
+                  <span>Hints ({explanations.length})</span>
+                  <ChevronDown className={`h-2.5 w-2.5 transition-transform ${showSuggestions ? "rotate-180" : ""}`} />
+                </button>
+              )}
+            </div>
+          )}
+
+          {fixSuccessMsg && (
+            <span className="inline-flex items-center gap-1 text-emerald-400 font-medium animate-fadeIn">
+              <Check className="h-3 w-3" />
+              <span>{fixSuccessMsg}</span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-slate-400 text-[10px]">
+          <span className="hidden sm:inline text-slate-500">
+            <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[9px] text-slate-300">Tab</kbd> Autocomplete
+          </span>
+          <span className="hidden md:inline text-slate-500">
+            <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[9px] text-slate-300">Alt+F</kbd> AI Fix
+          </span>
+        </div>
+      </div>
+
+      {/* Suggestion Dropdown Popover */}
+      {showSuggestions && explanations.length > 0 && (
+        <div className="border-b border-[#334155] bg-[#111827] p-3 text-xs shadow-xl animate-fadeIn z-20 max-h-56 overflow-auto">
+          <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-800">
+            <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
+              <span>Diagnostic Hints & Syntax Fixes</span>
+            </span>
+            <button
+              onClick={() => setShowSuggestions(false)}
+              className="text-slate-400 hover:text-white text-[11px]"
+            >
+              ✕ Close
+            </button>
+          </div>
+          <div className="space-y-2">
+            {explanations.slice(0, 3).map((e) => (
+              <div key={e.id} className="rounded border border-slate-700 bg-slate-900/80 p-2">
+                <p className="font-semibold text-amber-300 text-[11px]">{e.symptom}</p>
+                <p className="text-slate-300 mt-0.5 text-[11px] leading-relaxed"><span className="text-slate-500 font-medium">Cause:</span> {e.cause}</p>
+                <div className="mt-1.5 grid grid-cols-2 gap-2 text-[10px] font-mono">
+                  <div className="rounded bg-rose-950/40 border border-rose-900/50 p-1.5 text-rose-300">
+                    <span className="text-rose-500 font-bold block mb-0.5">✗ Incorrect:</span>
+                    {e.exampleBad}
+                  </div>
+                  <div className="rounded bg-emerald-950/40 border border-emerald-900/50 p-1.5 text-emerald-300">
+                    <span className="text-emerald-500 font-bold block mb-0.5">✓ Correct:</span>
+                    {e.exampleGood}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CodeMirror Mounting Host */}
+      <div ref={host} className="code-mirror flex-1 min-h-0 overflow-hidden" />
+    </div>
+  );
 });
+
 export default CodeEditor;

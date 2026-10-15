@@ -86,7 +86,7 @@ test("error DB has 60+ entries and lookup works", async () => {
 });
 
 test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
-  const { fixAnySyntax } = await import("../src/utils/universal-fixer.js");
+  const { fixAnySyntax, parseErrorDetails } = await import("../src/utils/universal-fixer.js");
   const f1 = await fixAnySyntax("flowchart TD\n  A -> B", "mermaid");
   assert.equal(f1.success, true);
   assert.match(f1.fixedCode, /-->/);
@@ -96,9 +96,21 @@ test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
   assert.match(f3.fixedCode, /source,target/);
   const f4 = await fixAnySyntax("gantt\n  T :a, 2026-01-01, 3d", "mermaid");
   assert.equal(f4.success, true);
+  const fSeq = await fixAnySyntax("sequenceDiagram\n  A ->> B\n  C-->>D: response", "mermaid");
+  assert.match(fSeq.fixedCode, /A ->> B: call/);
+  const fPacket = await fixAnySyntax("packet\n  0-15: Source Port", "mermaid");
+  assert.match(fPacket.fixedCode, /packet-beta/);
+  assert.match(fPacket.fixedCode, /0-15: "Source Port"/);
+  const fArch = await fixAnySyntax("architecture\n  service api[API Gateway]", "mermaid");
+  assert.match(fArch.fixedCode, /architecture-beta/);
+  assert.match(fArch.fixedCode, /service api\(server\)\[API Gateway\]/);
+  const errDetails = parseErrorDetails("Parse error on line 4:\n...foo --> bar\n----^\nExpecting EOF, got MINUS");
+  assert.equal(errDetails.line, 4);
+  assert.equal(errDetails.column, 4);
+  assert.match(errDetails.message, /Expecting EOF/);
 });
 
-test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi", async () => {
+test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi/prisma/graphql/terraform", async () => {
   const mod = await import("../src/utils/exporters/mermaid-export.js");
   const seq = "sequenceDiagram\n  A->>B: GET /items\n  A->>B: POST /items";
   assert.match(mod.mermaidToPlantUml(seq), /@startuml/);
@@ -113,9 +125,16 @@ test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi", asy
   const er = "erDiagram\n  USERS ||--o{ ORDERS : places\n  USERS {\n    string id PK\n  }\n  ORDERS {\n    string id PK\n  }";
   assert.match(mod.mermaidErToSql(er), /CREATE TABLE/);
   assert.match(mod.mermaidErToDbml(er), /Table/);
+  assert.match(mod.mermaidErToPrisma(er), /model USERS/);
+  assert.match(mod.mermaidErToPrisma(er), /datasource db/);
   const cls = "classDiagram\n  class User {\n    +String id\n  }";
   assert.match(mod.mermaidClassToTypeScript(cls), /class User/);
   assert.match(mod.mermaidClassToXmi(cls), /xmi:XMI/);
+  assert.match(mod.mermaidClassToGraphql(cls), /type User/);
+  assert.match(mod.mermaidClassToGraphql(cls), /id: ID!/);
+  const arch = "architecture-beta\n  group vpc(cloud)[Prod VPC]\n  service db(database)[DB] in vpc";
+  assert.match(mod.mermaidArchitectureToTerraform(arch), /resource "aws_vpc" "vpc"/);
+  assert.match(mod.mermaidArchitectureToTerraform(arch), /resource "aws_db_instance" "db"/);
   const mm = "mindmap\n  root((R))\n    A\n    B";
   assert.match(mod.mermaidMindmapToMarkdown(mm), /- A/);
   assert.match(mod.mermaidMindmapToOpml(mm), /<opml/);

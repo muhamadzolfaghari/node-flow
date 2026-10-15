@@ -156,7 +156,7 @@ function applyRuleBasedFixes(code, errorMsg = '') {
 
   // A. Check for missing diagram type header
   const firstNonEmpty = lines.find((l) => l.trim().length > 0) || '';
-  const hasHeader = /^(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|stateDiagram-v2|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|journey|xychart|xychart-beta|sankey|sankey-beta|kanban|block|block-beta|C4|C4Context)\b/i.test(
+  const hasHeader = /^(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|stateDiagram-v2|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|journey|xychart|xychart-beta|sankey|sankey-beta|kanban|block|block-beta|C4|C4Context|packet|packet-beta|architecture|architecture-beta|requirementDiagram|requirement)\b/i.test(
     firstNonEmpty.trim()
   );
 
@@ -369,6 +369,11 @@ function applyRuleBasedFixes(code, errorMsg = '') {
         l = l.replace(/(->>|-->>|-\)|--\))\s*(\w+)\s+(.+)$/, '$1$2: $3');
         fixes.push(`Added missing ':' for message on line ${idx + 1}`);
       }
+      // Fix sequence arrow with no message text at all: A ->> B -> A ->> B: call
+      if (/(->>|-->>|-\)|--\>)\s*(\w+)\s*$/.test(l) && !l.includes(':')) {
+        l = l.trim() + ': call';
+        fixes.push(`Added missing message on sequence line ${idx + 1}`);
+      }
     }
 
     if (inState) {
@@ -380,6 +385,50 @@ function applyRuleBasedFixes(code, errorMsg = '') {
 
     return l;
   });
+
+  // Check unclosed sequence blocks
+  if (inSequence) {
+    const blockStarts = lines.filter((l) => /^\s*(alt|opt|loop|par|critical|rect)\b/i.test(l)).length;
+    const blockEnds = lines.filter((l) => /^\s*end\b/i.test(l)).length;
+    if (blockStarts > blockEnds) {
+      const missing = blockStarts - blockEnds;
+      for (let i = 0; i < missing; i++) lines.push('    end');
+      fixes.push(`Closed ${missing} unclosed sequence block(s) with 'end'`);
+    }
+  }
+
+  // Architecture diagram syntax repairs
+  if (/^architecture/i.test(headLower)) {
+    if (!/^architecture-beta/i.test(lines[0])) {
+      lines[0] = 'architecture-beta';
+      fixes.push('Normalized architecture header to architecture-beta');
+    }
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      if (/^\s*service\s+(\w+)\s*\[/i.test(l) && !/^\s*service\s+\w+\s*\(/i.test(l)) {
+        fixes.push(`Added default icon to service on line ${idx + 1}`);
+        return l.replace(/^(\s*service\s+\w+)\s*\[/i, '$1(server)[');
+      }
+      return l;
+    });
+  }
+
+  // Packet diagram syntax repairs
+  if (/^packet/i.test(headLower)) {
+    if (!/^packet-beta/i.test(lines[0])) {
+      lines[0] = 'packet-beta';
+      fixes.push('Normalized packet header to packet-beta');
+    }
+    lines = lines.map((l, idx) => {
+      if (idx === 0 || !l.trim()) return l;
+      const m = l.match(/^(\s*\d+-\d+\s*:\s*)([^"\n]+)$/);
+      if (m && !m[2].trim().startsWith('"')) {
+        fixes.push(`Quoted packet label on line ${idx + 1}`);
+        return `${m[1]}"${m[2].trim()}"`;
+      }
+      return l;
+    });
+  }
 
   return { code: lines.join('\n'), fixes: Array.from(new Set(fixes)) };
 }
@@ -490,3 +539,60 @@ Return ONLY the corrected valid Mermaid diagram code inside a single \`\`\`merma
 
   return null;
 }
+
+/**
+ * Extracts line number, column, and cleaned description from parser errors
+ * @param {string} errorMsg
+ * @param {string} docText
+ * @returns {{ line: number, column: number, message: string, raw: string }}
+ */
+export function parseErrorDetails(errorMsg, docText = '') {
+  if (!errorMsg || typeof errorMsg !== 'string') return null;
+
+  // Extract 1-based line number
+  let line = 1;
+  const lineMatch =
+    errorMsg.match(/Parse error on line (\d+)/i) ||
+    errorMsg.match(/(?:line|Line)\s*[:#]?\s*(\d+)/i) ||
+    errorMsg.match(/at line (\d+)/i);
+  if (lineMatch) {
+    line = Math.max(1, parseInt(lineMatch[1], 10));
+  }
+
+  // Extract column if caret is present (e.g. '----------^')
+  let column = 0;
+  const caretMatch = errorMsg.match(/(-+)\^/);
+  if (caretMatch) {
+    column = Math.max(0, caretMatch[1].length);
+  }
+
+  // Clean error message: look for descriptive parser rule line first
+  const lines = errorMsg.split('\n').map((l) => l.trim()).filter(Boolean);
+  const descriptive = lines.find((l) =>
+    /^(?:expecting|unrecognized|lexical|syntaxerror|unexpected|invalid)/i.test(l),
+  );
+
+  let cleanMsg = descriptive || '';
+  if (!cleanMsg) {
+    cleanMsg = errorMsg
+      .replace(/^Error:\s*/i, '')
+      .replace(/Parse error on line \d+:\s*/i, '')
+      .split('\n')[0]
+      .trim();
+  }
+
+  // If still empty or just code dashes/dots, find any helpful text
+  if (!cleanMsg || cleanMsg.startsWith('---') || cleanMsg.startsWith('...')) {
+    cleanMsg = lines.find((l) => !l.startsWith('---') && !l.startsWith('...') && !/^\d+$/.test(l)) || 'Syntax error';
+  }
+
+  if (!cleanMsg) cleanMsg = 'Syntax parse error';
+
+  return {
+    line,
+    column,
+    message: cleanMsg,
+    raw: errorMsg,
+  };
+}
+

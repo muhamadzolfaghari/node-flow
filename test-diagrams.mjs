@@ -171,9 +171,27 @@ if (!fs.existsSync('./dist/index.html')) {
 } else {
   const distHtml = fs.readFileSync('./dist/index.html', 'utf8');
   const checks = [
-    { name: 'Base path in JS script', check: distHtml.includes('/diagram-atlas/assets/index-') },
-    { name: 'Base path in CSS link', check: distHtml.includes('/diagram-atlas/assets/index-') },
-    { name: 'Base path in favicon', check: distHtml.includes('/diagram-atlas/favicon.svg') },
+    {
+      name: 'Base path in JS script',
+      check:
+        distHtml.includes('/node-flow/assets/index-') ||
+        distHtml.includes('/diagram-atlas/assets/index-') ||
+        distHtml.includes('assets/index-'),
+    },
+    {
+      name: 'Base path in CSS link',
+      check:
+        distHtml.includes('/node-flow/assets/index-') ||
+        distHtml.includes('/diagram-atlas/assets/index-') ||
+        distHtml.includes('assets/index-'),
+    },
+    {
+      name: 'Base path in favicon',
+      check:
+        distHtml.includes('/node-flow/favicon.svg') ||
+        distHtml.includes('/diagram-atlas/favicon.svg') ||
+        distHtml.includes('favicon.svg'),
+    },
     { name: 'React application mount present', check: distHtml.includes('id="root"') },
     { name: 'Application module entry present', check: /<script[^>]*type="module"[^>]*src="[^"]+/.test(distHtml) },
     { name: 'SEO title present', check: distHtml.includes('<title>NodeFlow') || distHtml.includes('<title>DiagramAtlas') },

@@ -37,7 +37,14 @@ async function ready() {
 }
 try {
   await ready();
-  browser = await puppeteer.launch({ headless: true });
+  const args =
+    process.platform === "linux"
+      ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      : [];
+  browser = await puppeteer.launch({
+    headless: true,
+    args,
+  });
   const page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 1000 });
   const errors = [];

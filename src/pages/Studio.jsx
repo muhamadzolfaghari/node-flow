@@ -770,7 +770,7 @@ export default function Studio() {
           padding: 32,
         });
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
-      else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md" || kind === "openapi") {
+      else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md" || kind === "openapi" || kind === "prisma" || kind === "graphql" || kind === "terraform") {
         const mod = await import("../utils/exporters/mermaid-export.js");
         const map = {
           plantuml: ["mermaidToPlantUml", "puml"],
@@ -783,6 +783,9 @@ export default function Studio() {
           opml: ["mermaidMindmapToOpml", "opml"],
           md: ["mermaidMindmapToMarkdown", "md"],
           openapi: ["mermaidSequenceToOpenApiStub", "json"],
+          prisma: ["mermaidErToPrisma", "prisma"],
+          graphql: ["mermaidClassToGraphql", "graphql"],
+          terraform: ["mermaidArchitectureToTerraform", "tf"],
         };
         const [fn, ext] = map[kind];
         download(mod[fn](preview.code, title), `${title}.${ext}`);
@@ -5345,6 +5348,9 @@ export default function Studio() {
                 ["opml", "OPML outline (.opml)"],
                 ["md", "Markdown outline (.md)"],
                 ["openapi", "OpenAPI spec (.json)"],
+                ["prisma", "Prisma schema (.prisma)"],
+                ["graphql", "GraphQL schema (.graphql)"],
+                ["terraform", "Terraform HCL (.tf)"],
               ].map(([id, text]) => (
                 <Item
                   key={id}

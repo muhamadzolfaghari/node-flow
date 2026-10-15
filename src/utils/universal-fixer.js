@@ -4,7 +4,7 @@
  * + PlantUML, DOT, D2, SQL, GraphQL, OpenAPI/AsyncAPI, XML family,
  * HCL, CSV, Markdown, code stubs. LLM optional last resort.
  */
-import { testMermaidSyntax, fixMermaidSyntax } from './ai-syntax-fixer.js';
+import { testMermaidSyntax, fixMermaidSyntax, parseErrorDetails } from './ai-syntax-fixer.js';
 
 export async function fixAnySyntax(code, format = 'mermaid', errorMessage = '', opts = {}) {
   if (!code || typeof code !== 'string') return { success: false, error: 'No code provided.' };
@@ -113,4 +113,4 @@ function preFixByFormat(code, format) {
   return { code: cur, fixes };
 }
 
-export { testMermaidSyntax };
+export { testMermaidSyntax, parseErrorDetails };
