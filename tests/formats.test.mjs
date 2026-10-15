@@ -37,6 +37,14 @@ test("ambiguous spec extensions are detected by content", () => {
     detectFormat("diagram.txt", "sequenceDiagram\n A->>B: Hi"),
     "mermaid",
   );
+  assert.equal(
+    detectFormat("reqs.txt", "requirementDiagram\n functionalRequirement r1 { id: 1 }"),
+    "mermaid",
+  );
+  assert.equal(
+    detectFormat("network.txt", "packet-beta\n 0-15: \"Port\""),
+    "mermaid",
+  );
   assert.throws(
     () => detectFormat("unrelated.json", '{"hello":true}'),
     /Cannot identify/,
