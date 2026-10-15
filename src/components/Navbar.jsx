@@ -48,7 +48,7 @@ export default function Navbar() {
         <div className="mx-auto flex h-14 max-w-none items-center gap-3 px-4 sm:px-6">
           <Link
             to="/"
-            aria-label="DiagramAtlas home"
+            aria-label="NodeFlow home"
             className="flex shrink-0 items-center gap-2.5"
           >
             <span className="brand-mark">
