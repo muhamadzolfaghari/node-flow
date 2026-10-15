@@ -463,6 +463,19 @@ export const FORMATS = [
     sample:
       '{\n  "items": [\n    { "id": "1", "type": "sticky_note", "data": { "content": "Sprint Goal" } },\n    { "id": "2", "type": "card", "data": { "title": "Architecture Refactoring" } },\n    { "id": "3", "type": "connector", "startItem": { "id": "1" }, "endItem": { "id": "2" }, "caption": "Drives" }\n  ]\n}',
   },
+  {
+    id: "geojson",
+    name: "GeoJSON / Geospatial",
+    ext: "geojson",
+    extensions: ["geojson", "geo.json"],
+    language: "json",
+    mode: "Derived",
+    family: "Geospatial & Maps",
+    description:
+      "GeoJSON FeatureCollections, Map Layers, Vector Tile (MVT) schemas, and spatial topologies converted to visual diagrams.",
+    sample:
+      '{\n  "type": "FeatureCollection",\n  "features": [\n    {\n      "type": "Feature",\n      "properties": { "name": "Logistics Hub", "layer": "Distribution" },\n      "geometry": { "type": "Point", "coordinates": [-122.4, 37.7] }\n    },\n    {\n      "type": "Feature",\n      "properties": { "name": "Retail Store", "layer": "Fulfillment", "connectsTo": "Logistics Hub", "routeType": "Fleet Truck" },\n      "geometry": { "type": "Point", "coordinates": [-122.2, 37.8] }\n    }\n  ]\n}',
+  },
 ];
 export const getFormat = (id) =>
   FORMATS.find((format) => format.id === id) || FORMATS[0];
@@ -528,8 +541,8 @@ export function detectFormat(name = "", source = "") {
   if (/(?:xmlns:i="http:\/\/ns\.adobe\.com\/AdobeIllustrator|<i:pgf\b|Artboard\s+["']|%AI5_BeginLayer)/i.test(source)) return "illustrator";
   if (/(?:"document"\s*:\s*\{[^}]*"children"|"connectorStart"\s*:|"type"\s*:\s*"(?:FRAME|COMPONENT|STICKY)")/i.test(source)) return "figma";
   if (/<plist\b[^>]*>[\s\S]*<key>GraphicsList<\/key>/i.test(source) || /OmniGraffle/i.test(source)) return "omnigraffle";
-  if (/(?:"widgets"\s*:\s*\[|"startItem"\s*:|"sticky_note"|"type"\s*:\s*"connector")/i.test(source) || (/"items"\s*:\s*\[/i.test(source) && /"data"\s*:\s*\{/i.test(source))) return "miro";
   if (/\btype\s+\w+\s*\{[^}]*:/.test(source) && /:\s*(String|ID|Int|Float|Boolean)/.test(source)) return "graphql";
+  if (["geojson", "geo.json"].includes(ext) || /"FeatureCollection"|"coordinates"\s*:|vector_tile/i.test(source)) return "geojson";
   if (["md", "markdown", "txt"].includes(ext)) return "markdown";
   // yaml fallback: generic mapping
   if (["yaml", "yml"].includes(ext) && /^\s*[\w./-]+\s*:/m.test(source)) return "yaml";
@@ -726,6 +739,11 @@ export async function compileDocument(document) {
       code = (
         await import("../utils/importers/miro.js")
       ).parseMiroToMermaid(source);
+      break;
+    case "geojson":
+      code = (
+        await import("../utils/importers/geojson.js")
+      ).parseGeoJsonToMermaid(source);
       break;
     default:
       throw new Error(`Unsupported format: ${format}`);

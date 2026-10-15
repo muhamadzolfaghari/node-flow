@@ -42,11 +42,23 @@ const icons = {
 export default function Templates() {
   const [params, setParams] = useSearchParams(),
     q = params.get("q") || "",
-    category = params.get("category") || "All";
+    category = params.get("category") || "All",
+    role = params.get("role") || "All";
+
   const categories = [
     "All",
     ...new Set(DIAGRAM_TEMPLATES.map((t) => t.category)),
   ];
+
+  const roles = [
+    { id: "All", label: "All Roles" },
+    { id: "PM", label: "Product Managers (PM)" },
+    { id: "QA", label: "QA & Testing" },
+    { id: "Dev", label: "Developers & DevOps" },
+    { id: "Operations", label: "Operations & SOP" },
+    { id: "Academic", label: "Students & Academics" },
+  ];
+
   const setFilter = (key, value, replace = false) =>
     setParams(
       (previous) => {
@@ -57,24 +69,34 @@ export default function Templates() {
       },
       { replace },
     );
+
   const list = useMemo(
     () =>
-      DIAGRAM_TEMPLATES.filter(
-        (t) =>
-          (category === "All" || category === t.category) &&
-          (!q ||
-            `${t.title} ${t.kind} ${t.category} ${t.description} ${t.code}`
-              .toLowerCase()
-              .includes(q.toLowerCase())),
-      ),
-    [q, category],
+      DIAGRAM_TEMPLATES.filter((t) => {
+        const matchesCategory = category === "All" || category === t.category;
+        const matchesRole =
+          role === "All" ||
+          (role === "PM" && (t.role === "Product Manager" || t.category === "Product & Design")) ||
+          (role === "QA" && (t.role === "QA & Testing" || t.category === "QA & Testing")) ||
+          (role === "Dev" && (!t.role || t.role === "Developer" || ["UML Specification", "Architecture & Cloud", "Engineering & Data", "Software Architecture"].includes(t.category))) ||
+          (role === "Operations" && (t.role === "Operations & SOP" || t.category === "Business & Operations")) ||
+          (role === "Academic" && (t.role === "Student & Academic" || t.category === "Education & Research"));
+        const matchesQuery =
+          !q ||
+          `${t.title} ${t.kind} ${t.category} ${t.role || ""} ${t.description} ${t.code}`
+            .toLowerCase()
+            .includes(q.toLowerCase());
+        return matchesCategory && matchesRole && matchesQuery;
+      }),
+    [q, category, role],
   );
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
       <SectionHeader
         eyebrow="Start with a model"
         title="Template library"
-        desc="Examples for systems, data, product planning, and all 14 UML categories. Each template opens as an editable file in your project."
+        desc="Tailored diagrams for Product Managers, QA Engineers, Developers, Operations Teams, and Students. Each opens as an editable file in your local workspace."
         action={
           <Button variant="outline" asChild>
             <Link to="/studio">
@@ -83,7 +105,7 @@ export default function Templates() {
           </Button>
         }
       />
-      <div className="mt-8 grid gap-6 lg:grid-cols-[210px_1fr]">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[220px_1fr]">
         <aside>
           <div className="relative">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -95,8 +117,25 @@ export default function Templates() {
               onChange={(e) => setFilter("q", e.target.value, true)}
             />
           </div>
-          <p className="mb-3 mt-6 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Collections
+
+          <p className="mb-2 mt-5 text-[10px] font-semibold uppercase tracking-widest text-primary">
+            Target Audience & Role
+          </p>
+          <div className="flex flex-wrap gap-1 lg:grid">
+            {roles.map((r) => (
+              <button
+                key={r.id}
+                aria-pressed={role === r.id}
+                onClick={() => setFilter("role", r.id)}
+                className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-xs ${role === r.id ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:bg-accent"}`}
+              >
+                <span>{r.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <p className="mb-2 mt-6 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Categories
           </p>
           <div className="flex flex-wrap gap-1 lg:grid">
             {categories.map((c) => (
@@ -104,9 +143,9 @@ export default function Templates() {
                 key={c}
                 aria-pressed={category === c}
                 onClick={() => setFilter("category", c)}
-                className={`flex items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left text-xs ${category === c ? "bg-primary/10 text-blue-300" : "text-muted-foreground hover:bg-accent"}`}
+                className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-xs ${category === c ? "bg-primary/10 text-blue-300" : "text-muted-foreground hover:bg-accent"}`}
               >
-                <span>{c === "All" ? "All templates" : c}</span>
+                <span>{c === "All" ? "All categories" : c}</span>
                 <span className="text-[10px] opacity-70">
                   {c === "All"
                     ? DIAGRAM_TEMPLATES.length
@@ -116,8 +155,7 @@ export default function Templates() {
             ))}
           </div>
           <div className="mt-6 rounded-md border bg-card p-3 text-xs leading-5 text-muted-foreground">
-            UML classes, sequences, and states use native Mermaid types. Other
-            UML categories use adapted flowchart, class, or timeline templates.
+            Local-first visual studio. All templates support instant real-time editing, canvas visual modeling, and export.
           </div>
         </aside>
         <section>
@@ -125,7 +163,7 @@ export default function Templates() {
             <p className="text-xs text-muted-foreground">
               {list.length} templates{q && ` matching “${q}”`}
             </p>
-            {(q || category !== "All") && (
+            {(q || category !== "All" || role !== "All") && (
               <Button variant="ghost" size="sm" onClick={() => setParams({})}>
                 <X />
                 Clear filters
@@ -157,9 +195,14 @@ export default function Templates() {
                       <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground">
                         {t.description}
                       </p>
-                      <p className="mt-4 border-t pt-3 text-[10px] text-muted-foreground">
-                        {t.category}
-                      </p>
+                      <div className="mt-4 flex items-center justify-between border-t pt-3 text-[10px] text-muted-foreground">
+                        <span>{t.category}</span>
+                        {t.role && (
+                          <span className="rounded bg-accent/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                            {t.role}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 );

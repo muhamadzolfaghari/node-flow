@@ -1300,6 +1300,248 @@ Active Trial Users, Enterprise Contracts, 150
       Sarah for the new slide deck exporter
 `,
   },
+  // ==========================================
+  // CATEGORY 6: QA, TESTING & QUALITY ENGINEERING
+  // ==========================================
+  {
+    id: 'qa-defect-lifecycle',
+    title: 'QA Defect Lifecycle & Bug Triage Workflow',
+    category: 'QA & Testing',
+    role: 'QA & Testing',
+    kind: 'flowchart',
+    description: 'Complete defect state machine from discovery and triage prioritization to developer fix, QA verification, and production closure.',
+    code: `flowchart TD
+    NewBug["New Bug Reported"] --> Triage{"Triage Review"}
+    Triage -- "Invalid / Cannot Reproduce" --> Rejected["Rejected / Closed"]
+    Triage -- "Duplicate" --> Dup["Closed as Duplicate"]
+    Triage -- "Confirmed" --> Prioritize{"Severity Assessment"}
+    Prioritize -- "P0 Blocker" --> Hotfix["Immediate Hotfix Squad"]
+    Prioritize -- "P1 / P2" --> Backlog["Sprint Backlog"]
+    Hotfix --> DevFix["Developer Fix & PR"]
+    Backlog --> DevFix
+    DevFix --> CodeReview["Peer Code Review"]
+    CodeReview --> DeployQA["Deployed to QA Test Env"]
+    DeployQA --> ReTest{"QA Verification"}
+    ReTest -- "Failed" --> ReOpen["Reopened with Trace Logs"]
+    ReOpen --> DevFix
+    ReTest -- "Passed" --> PreProd["Staging Regression Pass"]
+    PreProd --> ProdDeploy["Deploy to Production"]
+    ProdDeploy --> Done["Closed & Verified in Prod"]
+`,
+  },
+  {
+    id: 'qa-cicd-quality-gate',
+    title: 'Automated CI/CD Quality Gate & Smoke Pipeline',
+    category: 'QA & Testing',
+    role: 'QA & Testing',
+    kind: 'flowchart',
+    description: 'Multi-stage continuous integration and release quality gates: unit tests, DB integration, headless browser E2E, and security scans.',
+    code: `flowchart LR
+    Commit["Code Commit"] --> Lint["Static Lint & Types"]
+    Lint --> Unit["Unit Tests (100% Pass)"]
+    Unit --> Gate1{"Gate 1: Fast Checks"}
+    Gate1 -- "Pass" --> Integration["Integration & DB Tests"]
+    Integration --> E2E["Headless Browser E2E"]
+    E2E --> Gate2{"Gate 2: Smoke Gate"}
+    Gate2 -- "Pass" --> SecurityScan["SAST & Dependency Audit"]
+    SecurityScan --> StagingDeploy["Deploy to Staging"]
+    StagingDeploy --> Perf["Load & Latency Benchmarks"]
+    Perf --> ReleaseSignoff["QA Release Signoff"]
+`,
+  },
+
+  // ==========================================
+  // CATEGORY 7: PRODUCT MANAGEMENT & USER STORIES
+  // ==========================================
+  {
+    id: 'pm-story-mapping',
+    title: 'Product Feature Backlog & User Story Map',
+    category: 'Product & Design',
+    role: 'Product Manager',
+    kind: 'flowchart',
+    description: 'Visual user story mapping organizing feature epics across user journey milestones and release slices (MVP vs V2).',
+    code: `flowchart TD
+    subgraph Backbone["User Journey Backbone"]
+        Discover["1. Discover Product"]
+        Eval["2. Evaluate & Sign Up"]
+        Onboard["3. First Diagram Created"]
+        Collab["4. Team Collaboration"]
+        Export["5. Presentation & Export"]
+    end
+
+    subgraph MVP["Release Slice 1: MVP"]
+        S1["Browse Template Library"]
+        S2["One-Click Workspace Launch"]
+        S3["Real-Time Live Preview"]
+        S4["Share Local File / URL"]
+        S5["SVG & PNG Download"]
+    end
+
+    subgraph V2["Release Slice 2: Team Pro"]
+        S6["Custom Theme Frontmatter"]
+        S7["Multi-Tab Workspace"]
+        S8["AI Quick-Fix Diagnostics"]
+        S9["Real-Time P2P WebRTC"]
+        S10["PowerPoint & PDF Export"]
+    end
+
+    Discover --> S1
+    S1 --> S6
+    Eval --> S2
+    S2 --> S7
+    Onboard --> S3
+    S3 --> S8
+    Collab --> S4
+    S4 --> S9
+    Export --> S5
+    S5 --> S10
+`,
+  },
+  {
+    id: 'sop-approval-process',
+    title: 'Standard Operating Procedure (SOP) & Approval',
+    category: 'Business & Operations',
+    role: 'Operations & SOP',
+    kind: 'flowchart',
+    description: 'Corporate governance and operational workflow for drafting, compliance review, executive sign-off, and staff rollout.',
+    code: `flowchart TD
+    Start["Initiate New Operational SOP"] --> Author["Department SME Drafts Document"]
+    Author --> Peer["Cross-Department Peer Review"]
+    Peer --> Changes{"Feedback Received?"}
+    Changes -- "Revisions Needed" --> Revise["Update Clauses & Risk Items"]
+    Revise --> Peer
+    Changes -- "Approved" --> Legal["Legal & Compliance Review"]
+    Legal --> Risk{"Compliance Risks?"}
+    Risk -- "High Risk" --> Mitigate["Remediate Compliance Clauses"]
+    Mitigate --> Legal
+    Risk -- "Compliant" --> VP["Executive / VP Final Sign-Off"]
+    VP --> Publish["Publish to Corporate Knowledge Base"]
+    Publish --> Training["Staff Training & Acknowledgment Log"]
+    Training --> ReviewAnnual["Scheduled Annual Review"]
+`,
+  },
+
+  // ==========================================
+  // CATEGORY 8: EDUCATION, RESEARCH & ACADEMIA
+  // ==========================================
+  {
+    id: 'academic-research-thesis',
+    title: 'Academic Research Thesis & Literature Map',
+    category: 'Education & Research',
+    role: 'Student & Academic',
+    kind: 'mindmap',
+    description: 'Comprehensive research structure covering theoretical foundations, empirical methodology, qualitative benchmarks, and limitations.',
+    code: `mindmap
+  root((Doctoral / Master Thesis))
+    Theoretical Foundation
+      Primary Paradigms
+        Distributed Systems Theory
+        Vector Graphics Compilation
+      Key Literature
+        Lamport Time & Orderings
+        Compiler Design Patterns
+    Research Methodology
+      Qualitative Analysis
+        User Interviews (N=40)
+        Observational Usability Labs
+      Quantitative Benchmarks
+        WASM vs JS Hash Speed
+        Frame Rendering Latency (60fps)
+    Empirical Results
+      Zero Cloud Data Leakage
+      3.7x Execution Acceleration
+    Discussion & Limitations
+      Browser Memory Boundaries
+      Mobile Screen Real Estate
+    Future Directions
+      Local Multi-Agent Synthesis
+      Hardware Accelerated WebGPU
+`,
+  },
+  {
+    id: 'scientific-method-lab',
+    title: 'Scientific Method & Lab Experiment Protocol',
+    category: 'Education & Research',
+    role: 'Student & Academic',
+    kind: 'flowchart',
+    description: 'Step-by-step scientific method protocol from observation and hypothesis testing to controlled experiment and peer-reviewed publication.',
+    code: `flowchart TD
+    Obs["1. Real-World Observation"] --> Question["2. Formulate Research Question"]
+    Question --> LitReview["3. Literature Review & Prior Art"]
+    LitReview --> Hypo["4. Formulate Testable Hypothesis"]
+    Hypo --> Protocol["5. Design Controlled Experiment"]
+    Protocol --> RunExp["6. Conduct Experiment & Gather Data"]
+    RunExp --> Analyze{"7. Statistical Data Analysis"}
+    Analyze -- "Hypothesis Supported" --> DrawConc["8. Draw Scientific Conclusions"]
+    Analyze -- "Hypothesis Refuted" --> Refine["Refine or Formulate New Hypothesis"]
+    Refine --> Protocol
+    DrawConc --> PeerReview["9. Peer Review & Publication"]
+    PeerReview --> Repeat["10. Independent Replication by Scientific Community"]
+`,
+  },
+  {
+    id: 'student-study-schedule',
+    title: 'Student Semester Course & Exam Plan',
+    category: 'Education & Research',
+    role: 'Student & Academic',
+    kind: 'timeline',
+    description: 'Semester timeline outlining foundation lectures, midterm review sessions, advanced topics, final projects, and exam blitz.',
+    code: `timeline
+    title Academic Semester & Exam Preparation Plan
+    section Weeks 1-4 Foundation
+        Orientation & Syllabus Review : Core Readings : Form Study Groups
+        Lecture Modules 1-3 : Weekly Lab Assignments : Concept Summaries
+    section Weeks 5-8 Midterm Sprint
+        Midterm Review Sessions : Practice Exams : Submit Research Proposal
+        Midterm Examinations : Grade Review & Office Hours : Adjust Study Habits
+    section Weeks 9-12 Deep Dive
+        Advanced Special Topics : Group Project Sprint : Draft Research Paper
+        Final Project Deliverable : Peer Presentations : Instructor Feedback
+    section Weeks 13-16 Finals
+        Comprehensive Review : Mock Exam Blitz : Formula & Mindmap Synthesis
+        Final Examinations : Semester Wrap-up & Project Portfolios
+`,
+  },
+
+  // ==========================================
+  // CATEGORY 9: GEOSPATIAL, GIS & VECTOR TILES
+  // ==========================================
+  {
+    id: 'geospatial-vector-tile-pipeline',
+    title: 'GIS Vector Tile Pyramid & Spatial Data Pipeline',
+    category: 'Engineering & Data',
+    role: 'Developer',
+    kind: 'flowchart',
+    description: 'End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.',
+    code: `flowchart TD
+    subgraph Ingestion["1. Spatial Data Ingestion"]
+        SHP["Shapefile / GeoJSON Raw Archives"]
+        GPS["Real-Time GPS Telemetry Stream"]
+        OSM["OpenStreetMap Planet Dumps"]
+    end
+
+    subgraph Processing["2. Spatial Processing & Storage"]
+        PostGIS[("PostgreSQL + PostGIS (H3 Spatial Indexes)")]
+        Tippecanoe["Tippecanoe Vector Tile Compressor"]
+        ProtobufGen["Mapbox Vector Tile (MVT / Protobuf) Encoder"]
+    end
+
+    subgraph Distribution["3. Global Vector Tile Distribution"]
+        S3["Cloud Object Storage (PMTiles / MBTiles)"]
+        CDN["Global Edge CDN Cache"]
+        MapClient["Maplibre / Mapbox Vector Tile Renderer"]
+    end
+
+    SHP --> PostGIS
+    GPS --> PostGIS
+    OSM --> PostGIS
+    PostGIS --> Tippecanoe
+    Tippecanoe --> ProtobufGen
+    ProtobufGen --> S3
+    S3 --> CDN
+    CDN --> MapClient
+`,
+  },
 ];
 
 export function getTemplateById(id) {

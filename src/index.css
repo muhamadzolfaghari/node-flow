@@ -47,12 +47,270 @@
 .skip-link:focus { top: 12px; }
 .command-dialog { position: fixed; top: 12vh; margin: 0 auto; padding: 0; width: min(560px, calc(100% - 32px)); max-height: 80vh; border: 1px solid var(--border); border-radius: 10px; background: var(--popover); color: var(--foreground); box-shadow: 0 24px 80px #0008; }
 .command-dialog::backdrop { background: #020617b8; }
-.dot-grid { background-image: radial-gradient(#52607955 1px, transparent 1px); background-size: 22px 22px; }
-.line-grid { background-image: linear-gradient(#52607922 1px, transparent 1px), linear-gradient(90deg,#52607922 1px,transparent 1px); background-size: 28px 28px; }
+.studio-stage-wrap {
+  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.08) 0%, rgba(99, 102, 241, 0.04) 35%, rgba(15, 23, 42, 0) 70%), #090d16;
+}
+.studio-stage-wrap.theme-light {
+  background: radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.06) 0%, rgba(56, 189, 248, 0.03) 35%, transparent 70%), #f8fafc;
+}
+.dot-grid {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+}
+.dot-grid.theme-light {
+  background-image: radial-gradient(rgba(100, 116, 139, 0.32) 1.25px, transparent 1.25px);
+}
+.line-grid {
+  background-image: linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.line-grid.theme-light {
+  background-image: linear-gradient(rgba(100, 116, 139, 0.14) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(100, 116, 139, 0.14) 1px, transparent 1px);
+}
 .studio-canvas { cursor: grab; }
 .studio-canvas:active { cursor: grabbing; }
-.mermaid-stage svg { max-width: none !important; }
-.mermaid-stage text { font-family: Inter, sans-serif !important; }
+
+/* Enterprise Modern Diagram Aesthetic */
+.mermaid-stage svg {
+  max-width: none !important;
+  filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.32));
+  overflow: visible;
+}
+.mermaid-stage text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+}
+.mermaid-stage .node text,
+.mermaid-stage .node .label {
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+}
+
+/* Flowchart Nodes: Sleek rounded corners, rich subtle drop-shadows & interactive hover */
+.mermaid-stage g.node rect,
+.mermaid-stage g.node polygon,
+.mermaid-stage g.node circle,
+.mermaid-stage g.node ellipse,
+.mermaid-stage g.node .label-container {
+  rx: 10px;
+  ry: 10px;
+  stroke-width: 1.75px !important;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.32));
+  transition: filter 0.2s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+/* Enterprise Harmonic Color Palette: Vibrant, purposeful colors for nodes */
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) .label-container {
+  fill: #0c1e33 !important;
+  stroke: #38bdf8 !important;
+}
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) .label-container {
+  fill: #1a1638 !important;
+  stroke: #818cf8 !important;
+}
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) .label-container {
+  fill: #08241b !important;
+  stroke: #34d399 !important;
+}
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) .label-container {
+  fill: #261908 !important;
+  stroke: #fbbf24 !important;
+}
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) .label-container {
+  fill: #280e1c !important;
+  stroke: #fb7185 !important;
+}
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) rect,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) polygon,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) circle,
+.mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) .label-container {
+  fill: #0a2530 !important;
+  stroke: #22d3ee !important;
+}
+
+/* Light Theme Color Harmonization */
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) circle {
+  fill: #f0f9ff !important;
+  stroke: #0284c7 !important;
+}
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) circle {
+  fill: #f5f3ff !important;
+  stroke: #6366f1 !important;
+}
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) circle {
+  fill: #ecfdf5 !important;
+  stroke: #059669 !important;
+}
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) circle {
+  fill: #fffbeb !important;
+  stroke: #d97706 !important;
+}
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) circle {
+  fill: #fff1f2 !important;
+  stroke: #e11d48 !important;
+}
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) rect,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) polygon,
+.theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) circle {
+  fill: #ecfeff !important;
+  stroke: #0891b2 !important;
+}
+
+/* Database Cylinder Shape: Rich elevated styling */
+.mermaid-stage g.node path:not(.flowchart-link) {
+  stroke-width: 1.75px !important;
+  stroke: #818cf8 !important;
+  fill: #1a1638 !important;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+}
+.theme-light .mermaid-stage g.node path:not(.flowchart-link) {
+  stroke: #6366f1 !important;
+  fill: #f5f3ff !important;
+}
+
+/* Interactive Hover Neon Glow */
+.mermaid-stage g.node:hover rect,
+.mermaid-stage g.node:hover polygon,
+.mermaid-stage g.node:hover circle,
+.mermaid-stage g.node:hover ellipse,
+.mermaid-stage g.node:hover path:not(.flowchart-link) {
+  stroke: #38bdf8 !important;
+  stroke-width: 2.2px !important;
+  filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.65)) drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45)) !important;
+  cursor: pointer;
+}
+
+/* Subgraphs / Clusters: Refined enterprise glassmorphism */
+.mermaid-stage g.cluster rect {
+  rx: 14px;
+  ry: 14px;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 6 4;
+  fill-opacity: 0.14 !important;
+  stroke: #38bdf866 !important;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.2));
+}
+
+/* Connectors & Lines: Smooth, crisp strokes */
+.mermaid-stage path.flowchart-link,
+.mermaid-stage .edgePath path,
+.mermaid-stage .messageLine0,
+.mermaid-stage .messageLine1 {
+  stroke: #38bdf8 !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+.theme-light .mermaid-stage path.flowchart-link,
+.theme-light .mermaid-stage .edgePath path,
+.theme-light .mermaid-stage .messageLine0,
+.theme-light .mermaid-stage .messageLine1 {
+  stroke: #2563eb !important;
+}
+
+.mermaid-stage marker path,
+.mermaid-stage marker polygon {
+  fill: #38bdf8 !important;
+  stroke: #38bdf8 !important;
+}
+.theme-light .mermaid-stage marker path,
+.theme-light .mermaid-stage marker polygon {
+  fill: #2563eb !important;
+  stroke: #2563eb !important;
+}
+
+.mermaid-stage g.edgePath:hover path,
+.mermaid-stage path.flowchart-link:hover {
+  stroke: #7dd3fc !important;
+  stroke-width: 2.6px !important;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.7));
+}
+
+/* Edge Labels: Translucent pill badges */
+.mermaid-stage .edgeLabel {
+  background-color: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(12px);
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  color: #e0f2fe !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .mermaid-stage .edgeLabel {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+  color: #1e293b !important;
+}
+
+/* Mindmap & Sequence: Rounded pills & elevated elements */
+.mermaid-stage .mindmap-node rect,
+.mermaid-stage .mindmap-node circle,
+.mermaid-stage g.classGroup rect {
+  rx: 10px;
+  ry: 10px;
+  stroke-width: 1.75px !important;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.32));
+}
+
+.mermaid-stage .actor {
+  rx: 10px;
+  ry: 10px;
+  stroke-width: 1.75px !important;
+  stroke: #818cf8 !important;
+  fill: #161c33 !important;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35)) !important;
+}
+.theme-light .mermaid-stage .actor {
+  stroke: #4f46e5 !important;
+  fill: #eef2ff !important;
+}
+.mermaid-stage .actor-line {
+  stroke: #475569 !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 5 4 !important;
+}
+.mermaid-stage .note {
+  rx: 8px;
+  ry: 8px;
+  stroke: #f59e0b !important;
+  stroke-width: 1.5px !important;
+  fill: rgba(245, 158, 11, 0.14) !important;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.3)) !important;
+}
+
 .code-area { font: 13px/21px 'JetBrains Mono', monospace; min-width: 0; }
 .code-mirror { height: 100%; min-height: 0; }
 .code-mirror .cm-editor { height: 100%; }

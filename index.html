@@ -10,6 +10,9 @@
   <link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   
+  <meta name="keywords" content="diagram editor, mermaid studio, plantuml converter, cloud architecture, er diagram, local-first diagram, drawio alternative, webassembly graphviz, geojson visualizer, generative engine optimization, answer engine optimization" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="NodeFlow" />
@@ -24,28 +27,77 @@
   <meta name="twitter:description" content="Open source, browser-based visual studio for diagrams, architecture, and mind maps with 30+ format converters." />
   <meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/favicon.svg" />
 
-  <!-- Structured Data (JSON-LD) -->
+  <!-- Structured Data (JSON-LD) for SEO, GEO & AEO -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "NodeFlow",
-    "url": "https://muhamadzolfaghari.github.io/node-flow/",
-    "description": "Browser-based, local-first visual diagramming and architecture studio supporting Mermaid, PlantUML, Draw.io, Graphviz, D2, SQL DDL, BPMN, and OpenAPI.",
-    "applicationCategory": "DesignApplication",
-    "operatingSystem": "All",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "featureList": [
-      "Local-first browser storage and privacy",
-      "30+ diagram and specification formats",
-      "Real-time syntax validation and diagnostics",
-      "Native WebAssembly Graphviz compiler",
-      "Vector SVG, PNG, and PDF exports",
-      "Presentation mode with laser pointer"
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://muhamadzolfaghari.github.io/node-flow/#webapp",
+        "name": "NodeFlow",
+        "url": "https://muhamadzolfaghari.github.io/node-flow/",
+        "description": "Browser-based, local-first visual diagramming and architecture studio supporting Mermaid, PlantUML, Draw.io, Graphviz, D2, SQL DDL, BPMN, GeoJSON, and OpenAPI.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "All",
+        "author": {
+          "@type": "Person",
+          "name": "Mohammad Zolfaghari",
+          "url": "https://github.com/muhamadzolfaghari"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Local-first browser storage with zero cloud telemetry",
+          "30+ diagram and specification formats",
+          "Real-time syntax validation and diagnostics",
+          "Native WebAssembly Graphviz compiler",
+          "GeoJSON and geospatial layer visualization",
+          "Vector SVG, PNG, and PDF exports",
+          "Presentation mode with laser pointer"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://muhamadzolfaghari.github.io/node-flow/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is NodeFlow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "NodeFlow is a 100% free, open-source, local-first visual studio for diagrams, architecture models, and data schemas. It executes entirely in your browser with no cloud telemetry."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does NodeFlow send my proprietary architecture diagrams to external servers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. NodeFlow runs entirely client-side inside the browser sandbox. All diagram rendering, WebAssembly Graphviz compilation, and project storage occur locally in IndexedDB and LocalStorage."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which formats are supported for import and conversion?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "NodeFlow supports over 30 formats including Mermaid, PlantUML, Graphviz DOT, Draw.io XML, D2, SQL DDL, DBML, Prisma, Protobuf, GeoJSON, OpenAPI, AsyncAPI, BPMN 2.0, C4 DSL, Terraform HCL, XMind, and Markdown outlines."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can NodeFlow visualize GeoJSON and GIS vector tiles?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. NodeFlow parses GeoJSON FeatureCollections, Map Layers, and Mapbox Vector Tile (MVT) protobuf schemas into interactive spatial topologies and hierarchy diagrams."
+            }
+          }
+        ]
+      }
     ]
   }
   </script>

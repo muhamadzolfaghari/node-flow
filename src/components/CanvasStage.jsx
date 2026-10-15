@@ -24,6 +24,7 @@ const CanvasStage = forwardRef(function CanvasStage(
   {
     containerRef,
     grid = "dots",
+    theme = "dark",
     status,
     documentId,
     selected,
@@ -31,6 +32,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     onQuickAdd,
     onDeleteSelected,
     onDuplicateSelected,
+    onContextMenu,
     presentation = false,
   },
   ref,
@@ -50,6 +52,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     onQuickAdd,
     onDeleteSelected,
     onDuplicateSelected,
+    onContextMenu,
     presentation,
     wheelMode,
   });
@@ -58,44 +61,91 @@ const CanvasStage = forwardRef(function CanvasStage(
     onQuickAdd,
     onDeleteSelected,
     onDuplicateSelected,
+    onContextMenu,
     presentation,
     wheelMode,
   };
-  const dimensions = () => {
+
+  /**
+   * Accurately determines content geometry bounding box.
+   * Eliminates dead whitespace offsets in charts by prioritizing actual node geometry.
+   */
+  const getContentBounds = () => {
     const svg = containerRef.current?.querySelector("svg");
-    const box = svg?.viewBox?.baseVal;
-    return {
-      w: box?.width || svg?.getBoundingClientRect().width || 1000,
-      h: box?.height || svg?.getBoundingClientRect().height || 700,
-    };
+    if (!svg) return { x: 0, y: 0, w: 1000, h: 700 };
+
+    let bbox = null;
+    try {
+      // Find main graphics container or nodes group for accurate bounds
+      const mainGroup =
+        svg.querySelector("g.output, g.root, g.nodes, g.clusters, g#my-svg, g") || svg;
+      if (typeof mainGroup.getBBox === "function") {
+        const b = mainGroup.getBBox();
+        if (b && b.width > 5 && b.height > 5) {
+          bbox = { x: b.x, y: b.y, w: b.width, h: b.height };
+        }
+      }
+    } catch {
+      // Fallback if SVG not yet attached in test runner
+    }
+
+    const box = svg.viewBox?.baseVal;
+    if (!bbox) {
+      if (box && box.width > 5 && box.height > 5) {
+        bbox = { x: box.x, y: box.y, w: box.width, h: box.height };
+      } else {
+        const rect = svg.getBoundingClientRect();
+        bbox = { x: 0, y: 0, w: rect.width || 1000, h: rect.height || 700 };
+      }
+    }
+
+    return bbox;
   };
+
+  const dimensions = () => {
+    const b = getContentBounds();
+    return { w: b.w, h: b.h };
+  };
+
   const apply = () => {
     if (canvasRef.current)
       canvasRef.current.style.transform = `translate3d(${camera.current.x}px,${camera.current.y}px,0) scale(${camera.current.z})`;
     setPosition({ ...camera.current });
   };
+
   const fit = () => {
     const s = stageRef.current;
     if (!s || !containerRef.current?.querySelector("svg")) return;
-    const d = dimensions();
-    setSize(d);
+    const b = getContentBounds();
+    setSize({ w: b.w, h: b.h });
+    const paddingX = 48;
+    const paddingY = 60;
     const z = Math.max(
       0.04,
-      Math.min(1.5, (s.clientWidth - 80) / d.w, (s.clientHeight - 100) / d.h),
+      Math.min(
+        1.25,
+        (s.clientWidth - paddingX) / Math.max(b.w, 10),
+        (s.clientHeight - paddingY) / Math.max(b.h, 10),
+      ),
     );
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
     camera.current = {
-      x: (s.clientWidth - d.w * z) / 2,
-      y: (s.clientHeight - d.h * z) / 2,
+      x: s.clientWidth / 2 - cx * z,
+      y: s.clientHeight / 2 - cy * z,
       z,
     };
     apply();
   };
+
   const center = () => {
     const s = stageRef.current;
     if (!s) return;
-    const d = dimensions();
-    camera.current.x = (s.clientWidth - d.w * camera.current.z) / 2;
-    camera.current.y = (s.clientHeight - d.h * camera.current.z) / 2;
+    const b = getContentBounds();
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    camera.current.x = s.clientWidth / 2 - cx * camera.current.z;
+    camera.current.y = s.clientHeight / 2 - cy * camera.current.z;
     apply();
   };
   const zoomBy = (factor, cx, cy) => {
@@ -305,11 +355,29 @@ const CanvasStage = forwardRef(function CanvasStage(
       resize.disconnect();
     };
   }, []);
+  const isLight = theme === "default" || theme === "neutral";
+
   return (
-    <div className="relative h-full min-h-[260px] w-full overflow-hidden bg-[#0c121c]">
+    <div
+      className={`studio-stage-wrap relative h-full min-h-[260px] w-full overflow-hidden transition-colors duration-300 ${
+        isLight ? "theme-light" : ""
+      }`}
+      onContextMenu={(e) => {
+        if (callbacks.current.onContextMenu) {
+          e.preventDefault();
+          callbacks.current.onContextMenu(e);
+        }
+      }}
+    >
       <div
         ref={stageRef}
-        className={`studio-canvas absolute inset-0 ${grid === "dots" ? "dot-grid" : grid === "lines" ? "line-grid" : ""}`}
+        className={`studio-canvas absolute inset-0 ${
+          grid === "dots"
+            ? `dot-grid ${isLight ? "theme-light" : ""}`
+            : grid === "lines"
+              ? `line-grid ${isLight ? "theme-light" : ""}`
+              : ""
+        }`}
         style={{
           touchAction: "none",
           backgroundPosition: `${position.x}px ${position.y}px`,
@@ -377,18 +445,23 @@ const CanvasStage = forwardRef(function CanvasStage(
       )}
       {presentation && laser && (
         <div
-          className="pointer-events-none absolute z-20 size-3 rounded-full bg-rose-400 shadow-[0_0_15px_4px_#fb7185]"
+          className={`pointer-events-none absolute z-20 size-3 rounded-full ${
+            isLight
+              ? "bg-rose-600 shadow-[0_0_15px_4px_#e11d48]"
+              : "bg-rose-400 shadow-[0_0_15px_4px_#fb7185]"
+          }`}
           style={{ left: laser.x - 6, top: laser.y - 6 }}
         />
       )}
       {minimap && thumbnail && (
         <button
           aria-label="Minimap navigation"
-          className="absolute bottom-16 right-3 hidden h-24 w-36 overflow-hidden rounded-md border bg-card p-2 md:block"
+          className="absolute bottom-16 right-3 hidden h-24 w-36 overflow-hidden rounded-md border bg-card/90 p-2 md:block shadow-2xl backdrop-blur-md"
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
-            const x = ((e.clientX - r.left) / r.width) * size.w,
-              y = ((e.clientY - r.top) / r.height) * size.h;
+            const b = getContentBounds();
+            const x = b.x + ((e.clientX - r.left) / r.width) * b.w,
+              y = b.y + ((e.clientY - r.top) / r.height) * b.h;
             camera.current.x =
               stageRef.current.clientWidth / 2 - x * camera.current.z;
             camera.current.y =
@@ -399,28 +472,32 @@ const CanvasStage = forwardRef(function CanvasStage(
           <img
             src={thumbnail}
             alt="Diagram minimap"
-            className="size-full object-contain opacity-80"
+            className="size-full object-contain opacity-85"
           />
-          <span className="absolute bottom-1 right-1 rounded bg-background/80 px-1 text-[9px] text-muted-foreground">
+          <span className="absolute bottom-1 right-1 rounded bg-background/80 px-1 text-[9px] font-medium text-muted-foreground">
             MINIMAP
           </span>
         </button>
       )}
-      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-md border bg-card p-1 shadow-xl">
+      <div className={`absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full border px-2.5 py-1 shadow-2xl backdrop-blur-xl ${
+        isLight
+          ? "border-slate-200/90 bg-white/95 text-slate-800 shadow-slate-300/50 ring-1 ring-black/5"
+          : "border-slate-700/60 bg-slate-900/90 text-slate-200 shadow-black/60 ring-1 ring-white/10"
+      }`}>
         <Tool title="Zoom out" onClick={() => zoomBy(0.8)}>
           <Minus />
         </Tool>
         <button
           aria-label="Reset zoom to 100%"
           onClick={reset}
-          className="w-12 rounded px-1 py-2 text-[11px] text-muted-foreground"
+          className="w-12 rounded px-1 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition"
         >
           {Math.round(position.z * 100)}%
         </button>
         <Tool title="Zoom in" onClick={() => zoomBy(1.25)}>
           <Plus />
         </Tool>
-        <span className="mx-1 h-5 border-l" />
+        <span className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Fit to view (F)" onClick={fit}>
           <Maximize />
         </Tool>

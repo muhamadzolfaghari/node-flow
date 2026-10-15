@@ -8,6 +8,7 @@ export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut } from './primitives/dropdown-menu.jsx'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './primitives/tabs.jsx'
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './primitives/tooltip.jsx'
+export { ContextMenu } from './ui/ContextMenu.jsx'
 
 export const badgeVariants = cva('inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap', {
   variants: { tone: {

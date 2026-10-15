@@ -51,6 +51,9 @@ import {
   ClipboardList,
   Binary,
   Network,
+  Minus,
+  RotateCcw,
+  Image,
 } from "lucide-react";
 import {
   Button,
@@ -73,6 +76,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
+  ContextMenu,
 } from "../components/ui.jsx";
 import CodeEditor from "../components/CodeEditor.jsx";
 import CanvasStage, { GridToggle } from "../components/CanvasStage.jsx";
@@ -279,6 +283,12 @@ export default function Studio() {
   const [theme, setTheme] = useState("dark"),
     [grid, setGrid] = useState("dots"),
     [toast, setToast] = useState(""),
+    [contextMenu, setContextMenu] = useState({
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      title: "",
+      items: [],
+    }),
     [dialog, setDialog] = useState(null),
     [format, setFormat] = useState("mermaid"),
     [name, setName] = useState(""),
@@ -847,6 +857,69 @@ export default function Studio() {
           p.activeId === id ? openIds[openIds.length - 1] || null : p.activeId,
       };
     });
+  const closeOtherTabs = (id) =>
+    updateProject((p) => ({
+      ...p,
+      openIds: [id],
+      activeId: id,
+    }));
+  const closeTabsToRight = (id) =>
+    updateProject((p) => {
+      const idx = p.openIds.indexOf(id);
+      if (idx === -1) return p;
+      const openIds = p.openIds.slice(0, idx + 1);
+      return {
+        ...p,
+        openIds,
+        activeId: openIds.includes(p.activeId) ? p.activeId : id,
+      };
+    });
+  const closeAllTabs = () =>
+    updateProject((p) => ({
+      ...p,
+      openIds: [],
+      activeId: null,
+    }));
+  const duplicateFile = (docId) => {
+    const doc = project.documents.find((d) => d.id === docId);
+    if (!doc) return;
+    const baseName = doc.name.replace(/\.[^.]+$/, "");
+    const ext = doc.name.split(".").pop();
+    const newName = `${baseName}-copy.${ext}`;
+    const newDoc = {
+      id: `doc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: newName,
+      format: doc.format,
+      source: doc.source,
+    };
+    updateProject((p) => ({
+      ...p,
+      documents: [...p.documents, newDoc],
+      openIds: [...p.openIds, newDoc.id],
+      activeId: newDoc.id,
+    }));
+    say(`Duplicated as "${newName}"`);
+  };
+  const deleteFile = (docId) => {
+    updateProject((p) => {
+      if (p.documents.length <= 1) {
+        say("Cannot delete the only file in project");
+        return p;
+      }
+      const documents = p.documents.filter((d) => d.id !== docId);
+      const openIds = p.openIds.filter((id) => id !== docId);
+      return {
+        ...p,
+        documents,
+        openIds,
+        activeId:
+          p.activeId === docId
+            ? openIds[0] || documents[0]?.id || null
+            : p.activeId,
+      };
+    });
+    say("File deleted");
+  };
   const chooseNode = (node) => {
     setSelected(node);
     setLabel(node.label);
@@ -942,8 +1015,47 @@ export default function Studio() {
             key={d.id}
             data-document-id={d.id}
             onClick={() => openDocument(d.id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({
+                isOpen: true,
+                position: { x: e.clientX, y: e.clientY },
+                title: d.name,
+                items: [
+                  {
+                    id: "open",
+                    label: "Open in Tab",
+                    icon: FileCode2,
+                    onClick: () => openDocument(d.id),
+                  },
+                  {
+                    id: "duplicate",
+                    label: "Duplicate File",
+                    icon: Copy,
+                    shortcut: "⌘D",
+                    onClick: () => duplicateFile(d.id),
+                  },
+                  {
+                    id: "copy-name",
+                    label: "Copy File Name",
+                    onClick: () => {
+                      navigator.clipboard?.writeText(d.name);
+                      say(`Copied "${d.name}"`);
+                    },
+                  },
+                  { divider: true },
+                  {
+                    id: "delete",
+                    label: "Delete File",
+                    icon: Trash2,
+                    danger: true,
+                    onClick: () => deleteFile(d.id),
+                  },
+                ],
+              });
+            }}
             className={cn(
-              "flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left text-xs",
+              "flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left text-xs transition-colors",
               d.id === project.activeId
                 ? "border-primary bg-primary/10 text-blue-200"
                 : "border-transparent text-muted-foreground hover:bg-accent",
@@ -5427,9 +5539,69 @@ export default function Studio() {
                   <div
                     key={id}
                     className={cn(
-                      "flex h-full shrink-0 items-center border-r",
-                      id === project.activeId ? "bg-card" : "bg-background",
+                      "flex h-full shrink-0 items-center border-r transition-colors group",
+                      id === project.activeId ? "bg-card" : "bg-background hover:bg-card/40",
                     )}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setContextMenu({
+                        isOpen: true,
+                        position: { x: e.clientX, y: e.clientY },
+                        title: d.name,
+                        items: [
+                          {
+                            id: "close",
+                            label: "Close Tab",
+                            icon: X,
+                            shortcut: "⌘W",
+                            onClick: () => closeTab(id),
+                          },
+                          {
+                            id: "close-others",
+                            label: "Close Others",
+                            disabled: project.openIds.length <= 1,
+                            onClick: () => closeOtherTabs(id),
+                          },
+                          {
+                            id: "close-right",
+                            label: "Close to the Right",
+                            disabled:
+                              project.openIds.indexOf(id) ===
+                              project.openIds.length - 1,
+                            onClick: () => closeTabsToRight(id),
+                          },
+                          {
+                            id: "close-all",
+                            label: "Close All Tabs",
+                            onClick: () => closeAllTabs(),
+                          },
+                          { divider: true },
+                          {
+                            id: "duplicate",
+                            label: "Duplicate File",
+                            icon: Copy,
+                            shortcut: "⌘D",
+                            onClick: () => duplicateFile(id),
+                          },
+                          {
+                            id: "copy-name",
+                            label: "Copy File Name",
+                            onClick: () => {
+                              navigator.clipboard?.writeText(d.name);
+                              say(`Copied "${d.name}"`);
+                            },
+                          },
+                          {
+                            id: "copy-source",
+                            label: "Copy Diagram Code",
+                            onClick: () => {
+                              navigator.clipboard?.writeText(d.source);
+                              say(`Copied ${d.name} source to clipboard`);
+                            },
+                          },
+                        ],
+                      });
+                    }}
                   >
                     <button
                       role="tab"
@@ -5578,8 +5750,83 @@ export default function Studio() {
                     status={preview.status}
                     documentId={document.id}
                     grid={grid}
+                    theme={theme}
                     selected={selected}
                     onSelect={chooseNode}
+                    onContextMenu={(e) => {
+                      setContextMenu({
+                        isOpen: true,
+                        position: { x: e.clientX, y: e.clientY },
+                        title: "Canvas Controls",
+                        items: [
+                          {
+                            id: "fit",
+                            label: "Fit to View",
+                            icon: Maximize,
+                            shortcut: "F",
+                            onClick: () => canvasRef.current?.fit(),
+                          },
+                          {
+                            id: "center",
+                            label: "Center Content",
+                            icon: Crosshair,
+                            shortcut: "C",
+                            onClick: () => canvasRef.current?.center(),
+                          },
+                          {
+                            id: "reset",
+                            label: "Reset Zoom (100%)",
+                            icon: RotateCcw,
+                            shortcut: "0",
+                            onClick: () => canvasRef.current?.reset(),
+                          },
+                          {
+                            id: "zoom-in",
+                            label: "Zoom In",
+                            icon: Plus,
+                            shortcut: "+",
+                            onClick: () => canvasRef.current?.zoomIn(),
+                          },
+                          {
+                            id: "zoom-out",
+                            label: "Zoom Out",
+                            icon: Minus,
+                            shortcut: "-",
+                            onClick: () => canvasRef.current?.zoomOut(),
+                          },
+                          { divider: true },
+                          {
+                            id: "export-svg",
+                            label: "Export Vector SVG",
+                            icon: Download,
+                            onClick: exportSvg,
+                          },
+                          {
+                            id: "export-png",
+                            label: "Export High-Res PNG",
+                            icon: Image,
+                            onClick: exportPng,
+                          },
+                          {
+                            id: "copy-code",
+                            label: "Copy Mermaid Source",
+                            icon: Copy,
+                            onClick: () => {
+                              navigator.clipboard?.writeText(document.source);
+                              say("Copied source to clipboard");
+                            },
+                          },
+                          { divider: true },
+                          {
+                            id: "quick-fix",
+                            label: "AI Diagnostics & Fix",
+                            icon: Sparkles,
+                            shortcut: "Alt+F",
+                            onClick: () => runAiFix(),
+                          },
+                        ],
+                      });
+                    }}
                     onQuickAdd={() => {
                       if (!isFlowchart(document) || !nodeId) return;
                       try {
@@ -6063,6 +6310,13 @@ export default function Studio() {
           {toast}
         </div>
       )}
+      <ContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        title={contextMenu.title}
+        items={contextMenu.items}
+        onClose={() => setContextMenu((c) => ({ ...c, isOpen: false }))}
+      />
     </div>
   );
 }

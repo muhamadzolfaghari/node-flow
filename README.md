@@ -48,6 +48,7 @@ All 34 entries are available in the new-file dialog, file inspector, and import 
 | XMind | `.xmind` | First sheet of ZEN or legacy workbooks becomes an editable Mermaid mindmap. The imported workbook is retained separately; current mindmaps export to a new XMind workbook. |
 | StarUML | `.mdj` | StarUML JSON models (`_type: Project` / `UMLClass`) with attributes, operations, and UML generalizations / associations compiled to editable class diagrams. |
 | Lucidchart | `.lucid`, detected `.csv` | Lucidchart CSV or JSON model export converted into editable Mermaid flowchart nodes and labeled line connections. |
+| GeoJSON / GIS | `.geojson`, `.geo.json` | GeoJSON FeatureCollections, spatial layers, Mapbox Vector Tile (MVT) protobuf schemas, and topological routes converted to structured diagrams. |
 | Source code | `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.java`, `.cs`, `.go`, `.rs`, `.kt`, `.swift`, `.php`, `.rb`, `.cpp`, `.c` | Best-effort class/struct/enum extraction to UML. Imported code is not executed. |
 | JSON Schema / DBML / Prisma / Protobuf / ERD text / YAML | `.schema.json`, `.dbml`, `.prisma`, `.proto`, `.erd`, `.yaml`, `.yml` (+ content detection) | Schemas and models to class/ER diagrams. |
 | UML XMI / SysML v2 / ArchiMate / DMN / Visio / Gliffy / Excalidraw | `.xmi`, `.uml`, `.sysml`, `.dmn`, `.vdx`, `.gliffy`, `.excalidraw` (+ content detection) | Vendor UML/BPMN/whiteboard sources to editable Mermaid. |
@@ -56,11 +57,15 @@ Reverse export: Mermaid class → PlantUML/TypeScript/UML-XMI, ER → SQL/DBML, 
 
 Derived previews are models of supported syntax, not lossless vendor renderers. Exporting original source preserves the source as edited; exporting Mermaid downloads the derived view. Unrecognized JSON/XML is rejected with an explanation instead of silently treated as Mermaid.
 
-### UML and chart templates
+### Cross-Disciplinary Templates & Role Workflows
 
-The library contains **32 starter templates**, including all **14 UML categories**. Class, sequence, and state templates use native Mermaid types. Object and profile models adapt class diagrams; timing models adapt timelines; use case, activity, component, deployment, package, composite structure, communication, and interaction overview models adapt flowcharts. This is not a complete UML metamodel or validator.
-
-Additional templates cover ER schemas, C4 context, cloud topology, product journeys, Kanban, Gantt, mindmaps, prioritization matrices, timelines, Sankey funnels, hardware blocks, Git graphs, XY charts, systems engineering requirements, and packet bytefield structures.
+The studio features curated templates tailored for every role across modern engineering and enterprise organizations:
+- **Product Managers (PM)**: User story mapping (backbone vs. MVP/V2 release slices), strategic quarterly OKRs, and customer journey maps.
+- **QA & Testing Engineers**: Defect triage lifecycles, automated CI/CD quality gates with multi-tier smoke checks, and regression verification flows.
+- **Developers & DevOps**: Cloud microservice architecture, ER schemas, git trunk flows, and GIS vector tile data pipelines.
+- **Operations & Business**: Standard Operating Procedures (SOP) with compliance review chains and corporate org charts.
+- **Students & Researchers**: Doctoral/master thesis structure maps, scientific method lab protocols, and semester course study plans.
+- **14 UML Specifications**: Class, sequence, state, component, deployment, usecase, activity, package, and timing models.
 
 ### Visual modeling suite
 

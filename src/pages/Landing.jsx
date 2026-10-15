@@ -13,6 +13,11 @@ import {
   FileCode2,
   Braces,
   CheckCircle2,
+  Target,
+  CheckSquare,
+  Terminal,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { Button, Badge, Card, CardContent } from "../components/ui.jsx";
 import { FORMATS } from "../lib/formats.js";
@@ -253,6 +258,89 @@ export default function Landing() {
             </CardContent>
           </Card>
         ))}
+      </section>
+      <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
+        <div className="mb-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Cross-Disciplinary Studio
+          </p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            Tailored Workflows for Every Role
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            From product story maps to QA triage pipelines and academic thesis structures, NodeFlow provides purpose-built visual tools with zero cloud data egress.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            {
+              role: "Product Managers",
+              icon: Target,
+              badge: "PM & Strategy",
+              desc: "User story maps, strategic OKRs, conversion funnels, and feature milestone tracking.",
+              templateId: "pm-story-mapping",
+            },
+            {
+              role: "QA & Testing",
+              icon: CheckSquare,
+              badge: "QA Quality Gate",
+              desc: "Defect triage lifecycles, automated CI/CD smoke gates, and test coverage pipelines.",
+              templateId: "qa-defect-lifecycle",
+            },
+            {
+              role: "Developers & DevOps",
+              icon: Terminal,
+              badge: "Architecture & GIS",
+              desc: "Cloud microservices, ER schemas, git trunk flows, and GIS vector tile data pipelines.",
+              templateId: "geospatial-vector-tile-pipeline",
+            },
+            {
+              role: "Operations & Business",
+              icon: Briefcase,
+              badge: "SOP & Governance",
+              desc: "Standard operating procedures, compliance approval chains, and org charts.",
+              templateId: "sop-approval-process",
+            },
+            {
+              role: "Students & Academia",
+              icon: GraduationCap,
+              badge: "Research & Study",
+              desc: "Doctoral literature maps, scientific method protocols, and exam schedules.",
+              templateId: "academic-research-thesis",
+            },
+          ].map((item) => (
+            <Card
+              key={item.role}
+              className="flex flex-col justify-between border-border/80 bg-card/60 transition hover:border-primary/50 hover:bg-card"
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <item.icon className="size-5 text-primary" />
+                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                    {item.badge}
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-semibold">{item.role}</h3>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {item.desc}
+                </p>
+              </CardContent>
+              <div className="border-t p-3 pt-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-between text-xs text-primary"
+                  asChild
+                >
+                  <Link to={`/studio?template=${item.templateId}`}>
+                    Open Template <ArrowUpRight className="size-3" />
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
       </section>
       <section className="border-y bg-card/50">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-8 px-5 py-10 sm:px-8">

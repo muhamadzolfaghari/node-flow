@@ -12,6 +12,113 @@
 
 import { embedSourceInSvg } from '../utils/importers/svg-metadata.js';
 
+export const ENTERPRISE_SVG_EMBED_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  text, .node text, .label text {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    letter-spacing: -0.01em !important;
+  }
+  .node text, .node .label {
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+  }
+  g.node rect, g.node polygon, g.node circle, g.node ellipse, .label-container {
+    rx: 10px !important;
+    ry: 10px !important;
+    stroke-width: 1.75px !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) .label-container {
+    fill: #0c1e33 !important;
+    stroke: #38bdf8 !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) .label-container {
+    fill: #1a1638 !important;
+    stroke: #818cf8 !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) .label-container {
+    fill: #08241b !important;
+    stroke: #34d399 !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) .label-container {
+    fill: #261908 !important;
+    stroke: #fbbf24 !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) .label-container {
+    fill: #280e1c !important;
+    stroke: #fb7185 !important;
+  }
+  g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) rect,
+  g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) polygon,
+  g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) circle,
+  g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) .label-container {
+    fill: #0a2530 !important;
+    stroke: #22d3ee !important;
+  }
+  g.node path:not(.flowchart-link) {
+    stroke-width: 1.75px !important;
+    stroke: #818cf8 !important;
+    fill: #1a1638 !important;
+  }
+  path.flowchart-link, .edgePath path, .messageLine0, .messageLine1 {
+    stroke: #38bdf8 !important;
+    stroke-width: 2px !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+  marker path, marker polygon {
+    fill: #38bdf8 !important;
+    stroke: #38bdf8 !important;
+  }
+  .edgeLabel {
+    background-color: #0f172a !important;
+    border-radius: 9999px !important;
+    padding: 3px 10px !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    color: #e0f2fe !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+  }
+  .mindmap-node rect, .mindmap-node circle, g.classGroup rect {
+    rx: 10px !important;
+    ry: 10px !important;
+    stroke-width: 1.75px !important;
+  }
+  .actor {
+    rx: 10px !important;
+    ry: 10px !important;
+    stroke: #818cf8 !important;
+    fill: #161c33 !important;
+  }
+  .note {
+    rx: 8px !important;
+    ry: 8px !important;
+    stroke: #fbbf24 !important;
+    fill: #261908 !important;
+  }
+  g.cluster rect {
+    rx: 14px !important;
+    ry: 14px !important;
+    stroke-width: 1.5px !important;
+    stroke: #38bdf866 !important;
+    fill-opacity: 0.14 !important;
+  }
+`;
+
 export class Exporter {
   static sanitizeFilename(name) {
     return (name || 'diagram')
@@ -53,6 +160,16 @@ export class Exporter {
     if (!clone.getAttribute('xmlns:xlink')) {
       clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
     }
+
+    // Embed Enterprise styling so exported images & SVGs retain rich colors and shapes
+    let defs = clone.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      clone.insertBefore(defs, clone.firstChild);
+    }
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    styleEl.textContent = ENTERPRISE_SVG_EMBED_CSS;
+    defs.appendChild(styleEl);
 
     // Handle dimensions and viewBox
     const box = svgEl.viewBox?.baseVal;
@@ -143,8 +260,19 @@ export class Exporter {
             return;
           }
 
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
           if (background && background !== 'transparent') {
-            ctx.fillStyle = background;
+            if (background === '#080c14' || background === 'studio-dark') {
+              const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+              bgGradient.addColorStop(0, '#0f172a');
+              bgGradient.addColorStop(0.5, '#0a0f1d');
+              bgGradient.addColorStop(1, '#050811');
+              ctx.fillStyle = bgGradient;
+            } else {
+              ctx.fillStyle = background;
+            }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           } else {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
