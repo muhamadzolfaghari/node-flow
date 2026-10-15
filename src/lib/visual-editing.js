@@ -66,6 +66,18 @@ export function flowchartNodes(source) {
       });
     }
   }
+  for (const edgeMatch of source.matchAll(
+    /^\s*([A-Za-z_][\w-]*)\s*[-.=~]+(?:>|\b)(?:\|[^|]*\|)?\s*([A-Za-z_][\w-]*)/gm,
+  )) {
+    const fromId = edgeMatch[1];
+    const toId = edgeMatch[2];
+    if (fromId && !["subgraph", "classDef", "style", "flowchart", "graph"].includes(fromId) && !nodes.has(fromId)) {
+      nodes.set(fromId, { id: fromId, label: fromId, shape: "rectangle" });
+    }
+    if (toId && !["subgraph", "classDef", "style", "flowchart", "graph", "end"].includes(toId) && !nodes.has(toId)) {
+      nodes.set(toId, { id: toId, label: toId, shape: "rectangle" });
+    }
+  }
   return [...nodes.values()];
 }
 

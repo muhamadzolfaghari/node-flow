@@ -431,13 +431,14 @@ export default function CanvasStage({
       }
     };
     updatePan(e);
-    const onMove = (evt) => updatePan(evt);
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   const startConnectDrag = (e, portSide) => {
@@ -500,6 +501,7 @@ export default function CanvasStage({
     const onPointerUp = (evt) => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       clearHighlight();
       if (!connectDragRef.current) return;
       const fromId = connectDragRef.current.fromId;
@@ -518,6 +520,7 @@ export default function CanvasStage({
 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
   };
 
   const getDiagramNodes = () => {
@@ -538,11 +541,18 @@ export default function CanvasStage({
 
   const jumpToNode = (node) => {
     const svg = containerRef.current?.querySelector("svg");
-    if (!svg || !stageRef.current) return;
-    let target = svg.querySelector(`[id="${CSS.escape(node.rawId || node.id)}"]`) || document.getElementById(node.id);
-    if (!target) {
-      target = svg.querySelector(`#${CSS.escape(node.id)}`);
-    }
+    if (!svg || !stageRef.current || !node) return;
+    let target = null;
+    try {
+      if (node.rawId) {
+        target = svg.querySelector(`[id="${CSS.escape(node.rawId)}"]`);
+      }
+      if (!target && node.id) {
+        target = svg.querySelector(`[id="${CSS.escape(node.id)}"]`) ||
+                 svg.querySelector(`[id^="flowchart-${CSS.escape(node.id)}-"]`) ||
+                 document.getElementById(node.id);
+      }
+    } catch {}
     if (target) {
       const b = target.getBoundingClientRect();
       const stageRect = stageRef.current.getBoundingClientRect();
@@ -556,6 +566,7 @@ export default function CanvasStage({
       callbacks.current.onSelect?.({ id: node.id, label: node.label });
       setSearchOpen(false);
       setSearchQuery("");
+      setSearchIndex(0);
     }
   };
 
@@ -568,7 +579,7 @@ export default function CanvasStage({
       moved = false;
     const down = (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest?.(".stage-floating-toolbar, .studio-canvas-controls, button, input, select, form")) {
+      if (e.target.closest?.(".stage-floating-toolbar, .stage-batch-toolbar, .studio-canvas-controls, button, input, select, form")) {
         return;
       }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });

@@ -192,7 +192,10 @@ export class Exporter {
         bgRect.setAttribute('y', `${paddedY}`);
         bgRect.setAttribute('width', `${paddedW}`);
         bgRect.setAttribute('height', `${paddedH}`);
-        bgRect.setAttribute('fill', background);
+        const fillVal = typeof background === 'string' && (background.startsWith('radial') || background.startsWith('linear'))
+          ? '#080c14'
+          : background;
+        bgRect.setAttribute('fill', fillVal);
         clone.insertBefore(bgRect, clone.firstChild);
       }
     } else if (background && background !== 'transparent') {
@@ -203,7 +206,10 @@ export class Exporter {
       bgRect.setAttribute('y', `${y}`);
       bgRect.setAttribute('width', `${width}`);
       bgRect.setAttribute('height', `${height}`);
-      bgRect.setAttribute('fill', background);
+      const fillVal = typeof background === 'string' && (background.startsWith('radial') || background.startsWith('linear'))
+        ? '#080c14'
+        : background;
+      bgRect.setAttribute('fill', fillVal);
       clone.insertBefore(bgRect, clone.firstChild);
     }
 
@@ -270,8 +276,20 @@ export class Exporter {
               bgGradient.addColorStop(0.5, '#0a0f1d');
               bgGradient.addColorStop(1, '#050811');
               ctx.fillStyle = bgGradient;
+            } else if (background === 'ambient' || (typeof background === 'string' && background.startsWith('radial'))) {
+              const cx = canvas.width / 2;
+              const cy = canvas.height / 2;
+              const r = Math.max(cx, cy);
+              const radGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+              radGradient.addColorStop(0, '#172554');
+              radGradient.addColorStop(1, '#030712');
+              ctx.fillStyle = radGradient;
             } else {
-              ctx.fillStyle = background;
+              try {
+                ctx.fillStyle = background;
+              } catch {
+                ctx.fillStyle = '#080c14';
+              }
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           } else {
