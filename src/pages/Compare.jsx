@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useDeferredValue } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -21,6 +21,7 @@ import { FORMATS } from "../lib/formats.js";
 export default function Compare() {
   const [q, setQ] = useState(""),
     [family, setFamily] = useState("All");
+  const deferredQ = useDeferredValue(q, "");
   const list = useMemo(
     () =>
       FORMATS.filter(
@@ -28,12 +29,14 @@ export default function Compare() {
           (family === "All" || f.family === family) &&
           `${f.name} ${f.description} ${f.extensions.join(" ")}`
             .toLowerCase()
-            .includes(q.toLowerCase()),
+            .includes(deferredQ.toLowerCase()),
       ),
-    [q, family],
+    [deferredQ, family],
   );
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+      <title>Universal Diagram Formats & Feature Matrix — NodeFlow</title>
+      <meta name="description" content="Compare 38+ visual diagramming formats including Mermaid, PlantUML, Graphviz, Draw.io, XMind, and D2." />
       <SectionHeader
         eyebrow="Format capabilities"
         title="One workspace. Many source languages."

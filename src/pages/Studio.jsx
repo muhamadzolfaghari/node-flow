@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useDeferredValue,
+  useOptimistic,
+  useTransition,
+} from "react";
 import {
   Link,
   useLocation,
@@ -294,6 +302,11 @@ export default function Studio() {
     [format, setFormat] = useState("mermaid"),
     [name, setName] = useState(""),
     [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query, "");
+  const [optimisticDocName, setOptimisticDocName] = useOptimistic(
+    document?.name || "No file selected",
+    (_, next) => next,
+  );
   const projectRef = useRef(project);
   projectRef.current = project;
   const [inspectorTab, setInspectorTab] = useState("properties"),
@@ -1021,9 +1034,12 @@ export default function Studio() {
         .slice(0, 60) || [],
     [document?.source],
   );
-  const fileList = project.documents.filter((d) =>
-    d.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const fileList = useMemo(() => {
+    const q = deferredQuery.trim().toLowerCase();
+    return q
+      ? project.documents.filter((d) => d.name.toLowerCase().includes(q))
+      : project.documents;
+  }, [project.documents, deferredQuery]);
 
   const explorerPanel = (
     <div className="flex h-full min-h-0 flex-col">
@@ -5419,6 +5435,8 @@ export default function Studio() {
         }
       }}
     >
+      <title>{document ? `${optimisticDocName} — NodeFlow Studio` : "NodeFlow — Visual Architecture Studio"}</title>
+      <meta name="description" content="Professional diagram and architecture editor supporting Mermaid, XMind, PlantUML, Draw.io, Graphviz, D2, and SQL DDL." />
       <input
         ref={fileRef}
         type="file"
@@ -5901,7 +5919,7 @@ export default function Studio() {
             <div className="flex min-w-0 items-center gap-2">
               <Code2 className="size-3.5 text-muted-foreground" />
               <span className="truncate text-[11px] text-muted-foreground">
-                {document?.name || "No file selected"}
+                {optimisticDocName}
               </span>
               {document && <Badge>{definition.name}</Badge>}
             </div>
@@ -6643,6 +6661,9 @@ export default function Studio() {
                   ) {
                     say("A file already has that name.");
                     return;
+                  }
+                  if (targetDocId === document?.id) {
+                    setOptimisticDocName(name.trim());
                   }
                   updateProject((p) => ({
                     ...p,

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, use, useEffect, useRef, useState } from "react";
 import { loadWorkspace, saveWorkspace } from "../lib/workspace.js";
 const WorkspaceContext = createContext(null);
 export function WorkspaceProvider({ children }) {
@@ -54,7 +54,7 @@ export function WorkspaceProvider({ children }) {
       projects: [newProject, ...w.projects],
     }));
   return (
-    <WorkspaceContext.Provider
+    <WorkspaceContext
       value={{
         workspace,
         project,
@@ -65,11 +65,11 @@ export function WorkspaceProvider({ children }) {
       }}
     >
       {children}
-    </WorkspaceContext.Provider>
+    </WorkspaceContext>
   );
 }
 export function useWorkspace(projectId) {
-  const context = useContext(WorkspaceContext);
+  const context = use(WorkspaceContext);
   if (!context) throw new Error("WorkspaceProvider is required.");
   useEffect(() => {
     if (projectId)

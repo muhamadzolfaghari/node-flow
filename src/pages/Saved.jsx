@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useDeferredValue, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -50,9 +50,14 @@ export default function Saved() {
     [selected, setSelected] = useState(null),
     [name, setName] = useState(""),
     [message, setMessage] = useState("");
-  const list = workspace.projects
-    .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
-    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const deferredQ = useDeferredValue(q, "");
+  const list = useMemo(
+    () =>
+      workspace.projects
+        .filter((p) => p.name.toLowerCase().includes(deferredQ.toLowerCase()))
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+    [workspace.projects, deferredQ],
+  );
   const legacy = StorageManager.getSavedDiagrams();
   const backup = (project) =>
     Exporter.downloadBlob(
@@ -66,6 +71,8 @@ export default function Saved() {
   };
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+      <title>Workspace Projects & Revision History — NodeFlow</title>
+      <meta name="description" content="Manage diagram workspaces, revision snapshots, and exported archives." />
       <SectionHeader
         eyebrow="Your local workspace"
         title="Projects"

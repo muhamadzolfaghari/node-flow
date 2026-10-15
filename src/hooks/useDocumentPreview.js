@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { compileDocument } from "../lib/formats.js";
 import { initMermaid, renderMermaid } from "../utils/mermaid-renderer.js";
 export function useDocumentPreview(document, theme, view) {
   const containerRef = useRef(null);
+  const [isPending, startTransition] = useTransition();
   const seq = useRef(0),
     cache = useRef(new Map());
   const [result, setResult] = useState({
@@ -56,18 +57,22 @@ export function useDocumentPreview(document, theme, view) {
         if (containerRef.current)
           containerRef.current.innerHTML = stage.innerHTML;
         const ms = Math.round(performance.now() - start);
-        setResult({
-          ...compiled,
-          error: "",
-          status: { state: "ok", message: `Preview ready · ${ms}ms`, ms },
+        startTransition(() => {
+          setResult({
+            ...compiled,
+            error: "",
+            status: { state: "ok", message: `Preview ready · ${ms}ms`, ms },
+          });
         });
       } catch (e) {
         if (my !== seq.current) return;
-        setResult({
-          code: previous?.code || "",
-          warnings: [],
-          error: e.message,
-          status: { state: "error", message: "Check source", ms: 0 },
+        startTransition(() => {
+          setResult({
+            code: previous?.code || "",
+            warnings: [],
+            error: e.message,
+            status: { state: "error", message: "Check source", ms: 0 },
+          });
         });
       }
     }, 300);
@@ -76,5 +81,5 @@ export function useDocumentPreview(document, theme, view) {
       seq.current++;
     };
   }, [document?.id, document?.source, document?.format, theme, view]);
-  return { ...result, containerRef };
+  return { ...result, isPending, containerRef };
 }

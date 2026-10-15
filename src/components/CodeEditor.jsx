@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle } from "react";
 import { basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -308,7 +308,7 @@ const keywordCompletions = keywords.map((label) => ({
   type: "keyword",
 }));
 
-const CodeEditor = forwardRef(function CodeEditor({ document, onChange, onContextMenu }, ref) {
+export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
   const host = useRef(null);
   const editor = useRef(null);
   const latest = useRef({ document, onChange });
@@ -695,6 +695,4 @@ const CodeEditor = forwardRef(function CodeEditor({ document, onChange, onContex
       />
     </div>
   );
-});
-
-export default CodeEditor;
+}

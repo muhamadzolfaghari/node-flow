@@ -81,6 +81,8 @@ export default function Landing() {
   const preview = useDocumentPreview(document, "dark", "split");
   return (
     <div>
+      <title>NodeFlow — Free Universal Visual Diagramming & Architecture Studio</title>
+      <meta name="description" content="Next-generation visual diagramming studio supporting Mermaid, PlantUML, XMind, Draw.io, Graphviz Wasm, D2, and C4." />
       <section className="border-b bg-card/30">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1fr_.8fr]">

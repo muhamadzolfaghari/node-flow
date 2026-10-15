@@ -2,7 +2,6 @@ import {
   useEffect,
   useRef,
   useState,
-  forwardRef,
   useImperativeHandle,
 } from "react";
 import {
@@ -20,23 +19,21 @@ import {
 } from "lucide-react";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 
-const CanvasStage = forwardRef(function CanvasStage(
-  {
-    containerRef,
-    grid = "dots",
-    theme = "dark",
-    status,
-    documentId,
-    selected,
-    onSelect,
-    onQuickAdd,
-    onDeleteSelected,
-    onDuplicateSelected,
-    onContextMenu,
-    presentation = false,
-  },
+export default function CanvasStage({
   ref,
-) {
+  containerRef,
+  grid = "dots",
+  theme = "dark",
+  status,
+  documentId,
+  selected,
+  onSelect,
+  onQuickAdd,
+  onDeleteSelected,
+  onDuplicateSelected,
+  onContextMenu,
+  presentation = false,
+}) {
   const stageRef = useRef(null),
     canvasRef = useRef(null),
     camera = useRef({ x: 30, y: 30, z: 1 }),
@@ -532,7 +529,7 @@ const CanvasStage = forwardRef(function CanvasStage(
       </div>
     </div>
   );
-});
+}
 function Tool({ title, children, ...props }) {
   return (
     <Tooltip>
@@ -560,4 +557,3 @@ export function GridToggle({ grid, onChange }) {
     </Button>
   );
 }
-export default CanvasStage;

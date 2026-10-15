@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useDeferredValue } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
@@ -44,6 +44,7 @@ export default function Templates() {
     q = params.get("q") || "",
     category = params.get("category") || "All",
     role = params.get("role") || "All";
+  const deferredQ = useDeferredValue(q, "");
 
   const categories = [
     "All",
@@ -82,17 +83,19 @@ export default function Templates() {
           (role === "Operations" && (t.role === "Operations & SOP" || t.category === "Business & Operations")) ||
           (role === "Academic" && (t.role === "Student & Academic" || t.category === "Education & Research"));
         const matchesQuery =
-          !q ||
+          !deferredQ ||
           `${t.title} ${t.kind} ${t.category} ${t.role || ""} ${t.description} ${t.code}`
             .toLowerCase()
-            .includes(q.toLowerCase());
+            .includes(deferredQ.toLowerCase());
         return matchesCategory && matchesRole && matchesQuery;
       }),
-    [q, category, role],
+    [deferredQ, category, role],
   );
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+      <title>Diagram Templates & Architecture Patterns — NodeFlow</title>
+      <meta name="description" content="Browse enterprise diagram templates for system architecture, sequence flows, database schemas, and workflows." />
       <SectionHeader
         eyebrow="Start with a model"
         title="Template library"
