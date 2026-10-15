@@ -12,6 +12,10 @@ import {
   ClipboardList,
   Binary,
   X,
+  Target,
+  Compass,
+  Clock,
+  Workflow,
 } from "lucide-react";
 import {
   SectionHeader,
@@ -30,6 +34,10 @@ const icons = {
   flowchart: Network,
   requirement: ClipboardList,
   packet: Binary,
+  quadrantChart: Target,
+  journey: Compass,
+  timeline: Clock,
+  sankey: Workflow,
 };
 export default function Templates() {
   const [params, setParams] = useSearchParams(),

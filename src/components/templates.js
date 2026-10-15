@@ -1070,6 +1070,236 @@ flowchart LR
     auth:R -- L:cache
 `,
   },
+  // ==========================================
+  // CATEGORY 5: BUSINESS, STRATEGY & OPERATIONS (NON-TECHNICAL)
+  // ==========================================
+  {
+    id: 'company-org-chart',
+    title: 'Company Organizational Hierarchy (Org Chart)',
+    category: 'Business & Operations',
+    kind: 'flowchart',
+    description: 'Executive leadership, department heads, cross-functional squads, and operational reporting lines for corporate management.',
+    code: `flowchart TD
+    Board["Board of Directors"]
+    CEO["Chief Executive Officer"]
+    Board --> CEO
+
+    CPO["Chief Product Officer"]
+    CTO["Chief Technology Officer"]
+    CMO["Chief Marketing Officer"]
+    CFO["Chief Financial Officer"]
+
+    CEO --> CPO
+    CEO --> CTO
+    CEO --> CMO
+    CEO --> CFO
+
+    subgraph ProductTeam["Product & Design"]
+        PM["Product Managers"]
+        UX["Product Designers"]
+        UXR["User Researchers"]
+        CPO --> PM
+        CPO --> UX
+        CPO --> UXR
+    end
+
+    subgraph EngineeringTeam["Engineering & Cloud"]
+        FE["Frontend Engineers"]
+        BE["Backend Engineers"]
+        QA["QA Engineers"]
+        CTO --> FE
+        CTO --> BE
+        CTO --> QA
+    end
+
+    subgraph GrowthTeam["Growth & Revenue"]
+        Mktg["Digital Marketing"]
+        Sales["Enterprise Sales"]
+        CustSucc["Customer Success"]
+        CMO --> Mktg
+        CMO --> Sales
+        CMO --> CustSucc
+    end
+`,
+  },
+  {
+    id: 'swot-strategic-analysis',
+    title: 'SWOT Strategic Business Analysis',
+    category: 'Business & Operations',
+    kind: 'quadrantChart',
+    description: 'Strategic planning framework evaluating internal strengths/weaknesses and external market opportunities/threats.',
+    code: `quadrantChart
+    title SWOT Business Analysis Matrix
+    x-axis "Internal Factors" --> "External Factors"
+    y-axis "Harmful (Negative)" --> "Helpful (Positive)"
+    quadrant-1 "Opportunities (External / Positive)"
+    quadrant-2 "Strengths (Internal / Positive)"
+    quadrant-3 "Weaknesses (Internal / Negative)"
+    quadrant-4 "Threats (External / Negative)"
+    "Proprietary IP": [0.25, 0.85]
+    "Experienced Leadership": [0.35, 0.75]
+    "Agile Culture": [0.20, 0.65]
+    "Legacy Tech Debt": [0.30, 0.25]
+    "Limited Marketing Budget": [0.40, 0.35]
+    "Emerging Asian Market": [0.80, 0.85]
+    "AI Automation Trends": [0.70, 0.75]
+    "Regulatory Compliance Changes": [0.85, 0.20]
+    "New Low-Cost Competitors": [0.75, 0.30]
+`,
+  },
+  {
+    id: 'recruitment-pipeline',
+    title: 'Talent Acquisition & Hiring Pipeline',
+    category: 'Business & Operations',
+    kind: 'flowchart',
+    description: 'End-to-end recruitment lifecycle from application screening, technical assessments, executive debriefs to formal offer.',
+    code: `flowchart LR
+    S1["1. Application Received"] --> S2["2. Resume & Portfolio Screen"]
+    S2 --> D1{"Qualified?"}
+    D1 -- "No" --> R1["Polite Rejection Notice"]
+    D1 -- "Yes" --> S3["3. Recruiter Screening Call"]
+    S3 --> S4["4. Skills & Practical Assessment"]
+    S4 --> S5["5. Team Panel & Culture Fit"]
+    S5 --> D2{"Hire Decision?"}
+    D2 -- "No" --> R2["Constructive Feedback"]
+    D2 -- "Yes" --> S6["6. Reference Check & Compensation Offer"]
+    S6 --> S7["7. Onboarding & Day-One Welcome"]
+`,
+  },
+  {
+    id: 'customer-retention-journey',
+    title: 'Customer Retention & Lifecycle Journey',
+    category: 'Business & Operations',
+    kind: 'journey',
+    description: 'Omnichannel customer journey tracking discovery, product activation, value realization, expansion, and advocacy.',
+    code: `journey
+    title Customer Lifecycle & Retention Journey
+    section Discovery & Trial
+      Visit Homepage & Pricing: 5: Prospect
+      Sign Up for Free Trial: 4: User
+      Complete Guided Onboarding: 3: User
+    section Value Realization
+      Create First Project: 5: Active User
+      Invite Team Collaborator: 4: Team Member
+      Experience Aha Moment: 5: Champion
+    section Expansion & Advocacy
+      Upgrade to Enterprise Plan: 5: Customer
+      Request Custom Integrations: 3: Admin
+      Submit 5-Star Review & Referral: 5: Advocate
+`,
+  },
+  {
+    id: 'risk-assessment-matrix',
+    title: 'Risk Assessment & Mitigation Matrix',
+    category: 'Business & Operations',
+    kind: 'quadrantChart',
+    description: 'Enterprise risk management matrix plotting likelihood against business impact with severity tiers and mitigation actions.',
+    code: `quadrantChart
+    title Enterprise Risk Assessment Matrix
+    x-axis "Low Likelihood" --> "High Likelihood"
+    y-axis "Low Impact" --> "High Impact"
+    quadrant-1 "Critical (Urgent Mitigation)"
+    quadrant-2 "High Severity (Contingency Plan)"
+    quadrant-3 "Low Severity (Routine Monitor)"
+    quadrant-4 "Moderate (Operational Action)"
+    "Server Infrastructure Outage": [0.25, 0.85]
+    "Data Center Fiber Cut": [0.15, 0.90]
+    "Key Staff Turnover": [0.65, 0.70]
+    "Vendor Cloud Price Increase": [0.80, 0.75]
+    "Minor UI Glitch": [0.75, 0.25]
+    "Typo in Release Notes": [0.85, 0.15]
+    "Office Wifi Fluctuation": [0.35, 0.20]
+`,
+  },
+  {
+    id: 'customer-refund-decision-tree',
+    title: 'Customer Refund & Resolution Policy',
+    category: 'Business & Operations',
+    kind: 'flowchart',
+    description: 'Standard operating procedure decision tree for customer support teams resolving refund requests, replacements, and store credits.',
+    code: `flowchart TD
+    Req["Customer Requests Refund"] --> CheckTime{"Purchase within 30 days?"}
+    CheckTime -- "No" --> Exceed["Policy Window Exceeded"]
+    Exceed --> StoreCredit["Offer 50% Store Credit Coupon"]
+    CheckTime -- "Yes" --> CheckUsage{"Product Used or Damaged?"}
+    CheckUsage -- "Unopened" --> AutoRefund["Approve Full Instant Refund"]
+    CheckUsage -- "Opened/Used" --> Inspect{"Condition Verified by Support?"}
+    Inspect -- "Minor wear" --> Partial["Issue 80% Partial Refund"]
+    Inspect -- "Damaged by customer" --> Deny["Decline with Photographic Proof"]
+    AutoRefund --> Notify["Send Confirmation Email"]
+    Partial --> Notify
+    StoreCredit --> Notify
+    Deny --> Notify
+`,
+  },
+  {
+    id: 'strategic-okr-roadmap',
+    title: 'Strategic Quarterly OKR Roadmap',
+    category: 'Business & Operations',
+    kind: 'timeline',
+    description: 'Multi-quarter corporate vision, strategic milestones, key results, and organizational goals across 4 quarters.',
+    code: `timeline
+    title 2026 Corporate Strategic OKR Roadmap
+    section Q1 Foundation & Discovery
+        Customer Discovery : 50 Enterprise Interviews : Target ICP Defined
+        Core Engine Overhaul : WebAssembly Pipeline : 60fps Canvas Render
+    section Q2 Market Launch
+        Public Beta Launch : Product Hunt #1 Milestone : First 10,000 Users
+        Monetization V1 : Stripe Subscription Billing : Team Workspaces
+    section Q3 Scale & Enterprise
+        Security & Trust : SOC2 Type II Audit : SSO SAML Authentication
+        Partner Ecosystem : VS Code Extension : Slack Bot Integration
+    section Q4 Global Expansion
+        Internationalization : 12 Languages Supported : Multi-Currency Billing
+        AI Native Copilot : Natural Language to Architecture : Self-Healing Diagrams
+`,
+  },
+  {
+    id: 'sales-marketing-funnel',
+    title: 'Marketing & Sales Conversion Funnel',
+    category: 'Business & Operations',
+    kind: 'sankey',
+    description: 'Conversion flow from initial website visitors through qualified leads, trial activations, paid tiers, and enterprise deals.',
+    code: `sankey-beta
+Website Visitors, Sign Ups, 3500
+Website Visitors, Direct Bounces, 16500
+Sign Ups, Active Trial Users, 1800
+Sign Ups, Inactive Free, 1700
+Active Trial Users, Paid Pro Subscriptions, 650
+Active Trial Users, Enterprise Contracts, 150
+`,
+  },
+  {
+    id: 'sprint-retrospective-mindmap',
+    title: 'Agile Team Sprint Retrospective',
+    category: 'Business & Operations',
+    kind: 'mindmap',
+    description: 'Structured retrospective mindmap categorizing what went well, growth areas, constructive action items, and team kudos.',
+    code: `mindmap
+  root((Sprint 24 Retrospective))
+    What Went Well
+      High Velocity
+        Zero production bugs
+        Completed all 14 user stories
+      Great Collaboration
+        Pair programming on tricky WASM logic
+        Fast PR code review turnaround
+    What Needs Improvement
+      Meeting Fatigue
+        Back-to-back grooming sessions
+      Flaky Integration Tests
+        CI pipeline took 18 minutes
+      Specification Gaps
+        Mobile drawer design unclear until mid-sprint
+    Action Items
+      Automate smoke tests in GitHub Actions
+      Enforce 25-minute meeting caps with 5-minute breathers
+      Require design sign-off 2 days before sprint kickoff
+    Team Kudos
+      Alex for rapid bug turnaround
+      Sarah for the new slide deck exporter
+`,
+  },
 ];
 
 export function getTemplateById(id) {
