@@ -1116,6 +1116,206 @@ export function deleteJourneyTask(source, taskName) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* KANBAN BOARD VISUAL MODELING                                               */
+/* -------------------------------------------------------------------------- */
+
+export const isKanban = (doc) =>
+  doc?.format === "mermaid" && /^\s*kanban\b/m.test(doc.source);
+
+export function kanbanColumns(source) {
+  const columns = [];
+  let currentColumn = null;
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line) || /^\s*kanban\b/i.test(line)) continue;
+    const cardMatch = line.match(/^\s*\[(.*?)\]\s*$/);
+    if (cardMatch) {
+      if (!currentColumn) {
+        currentColumn = { name: "Backlog", cards: [] };
+        columns.push(currentColumn);
+      }
+      currentColumn.cards.push(cardMatch[1].trim());
+      continue;
+    }
+    const colMatch = line.match(/^\s{1,4}([\w\s-]+?)\s*$/);
+    if (colMatch && !line.includes("[") && !line.includes("]")) {
+      const colName = colMatch[1].trim();
+      currentColumn = { name: colName, cards: [] };
+      columns.push(currentColumn);
+    }
+  }
+
+  return columns;
+}
+
+export function addKanbanColumn(source, columnName) {
+  if (!columnName.trim()) throw new Error("Column name required.");
+  return `${source.trimEnd()}\n  ${safeLabel(columnName.trim())}\n`;
+}
+
+export function addKanbanCard(source, columnName, cardText) {
+  if (!cardText.trim()) throw new Error("Card text required.");
+  const safeCard = `    [${safeLabel(cardText.trim())}]`;
+  const lines = source.split("\n");
+
+  if (!columnName) {
+    return `${source.trimEnd()}\n${safeCard}\n`;
+  }
+
+  let colIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (new RegExp(`^\\s{1,4}${escapeRegex(columnName.trim())}\\s*$`, "i").test(l)) {
+      colIdx = i;
+      break;
+    }
+  }
+
+  if (colIdx === -1) {
+    return `${source.trimEnd()}\n  ${safeLabel(columnName.trim())}\n${safeCard}\n`;
+  }
+
+  let insertAt = colIdx + 1;
+  while (insertAt < lines.length) {
+    const l = lines[insertAt];
+    if (/^\s{1,4}[\w\s-]+?\s*$/.test(l) && !l.includes("[") && !l.includes("]")) break;
+    insertAt++;
+  }
+  while (insertAt > colIdx + 1 && !lines[insertAt - 1].trim()) {
+    insertAt--;
+  }
+
+  lines.splice(insertAt, 0, safeCard);
+  return lines.join("\n");
+}
+
+export function deleteKanbanCard(source, cardText) {
+  if (!cardText.trim()) throw new Error("Card text required.");
+  const lines = source
+    .split("\n")
+    .filter((l) => !l.includes(`[${cardText.trim()}]`));
+  return lines.join("\n");
+}
+
+/* -------------------------------------------------------------------------- */
+/* GANTT CHART VISUAL MODELING                                                */
+/* -------------------------------------------------------------------------- */
+
+export const isGantt = (doc) =>
+  doc?.format === "mermaid" && /^\s*gantt\b/m.test(doc.source);
+
+export function ganttSections(source) {
+  const sections = [];
+  let currentSection = { name: "General", tasks: [] };
+  sections.push(currentSection);
+  let inFrontmatter = false;
+
+  for (const line of source.split("\n")) {
+    if (/^---\s*$/.test(line)) {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter || /^\s*%%/.test(line)) continue;
+    const secMatch = line.match(/^\s*section\s+(.+)$/i);
+    if (secMatch) {
+      currentSection = { name: secMatch[1].trim(), tasks: [] };
+      sections.push(currentSection);
+      continue;
+    }
+    const taskMatch = line.match(/^\s*([^:]+?)\s*:\s*(.+)$/);
+    if (
+      taskMatch &&
+      !/^(title|dateFormat|axisFormat|excludes|todayMarker)\b/i.test(
+        taskMatch[1].trim(),
+      )
+    ) {
+      const taskName = taskMatch[1].trim();
+      const details = taskMatch[2].trim();
+      const tags = details.split(",").map((s) => s.trim());
+      currentSection.tasks.push({
+        name: taskName,
+        details,
+        status:
+          tags.find((t) =>
+            ["done", "active", "crit", "milestone"].includes(t),
+          ) || "active",
+      });
+    }
+  }
+
+  return sections.filter((s) => s.name !== "General" || s.tasks.length > 0);
+}
+
+export function addGanttSection(source, sectionName) {
+  if (!sectionName.trim()) throw new Error("Section name required.");
+  return `${source.trimEnd()}\n\n    section ${safeLabel(sectionName.trim())}\n`;
+}
+
+export function addGanttTask(
+  source,
+  sectionName,
+  taskName,
+  status = "active",
+  duration = "5d",
+) {
+  if (!taskName.trim()) throw new Error("Task name required.");
+  const cleanStatus = ["done", "active", "crit", "milestone"].includes(status)
+    ? status
+    : "active";
+  const cleanDuration = safeLabel(duration.trim() || "5d");
+  const taskId = "t" + Math.random().toString(36).substring(2, 6);
+  const taskLine = `    ${safeLabel(taskName.trim())} :${cleanStatus}, ${taskId}, ${cleanDuration}`;
+
+  const lines = source.split("\n");
+  if (!sectionName) {
+    return `${source.trimEnd()}\n${taskLine}\n`;
+  }
+
+  let secIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (
+      new RegExp(
+        `^\\s*section\\s+${escapeRegex(sectionName.trim())}\\b`,
+        "i",
+      ).test(l)
+    ) {
+      secIdx = i;
+      break;
+    }
+  }
+
+  if (secIdx === -1) {
+    return `${source.trimEnd()}\n\n    section ${safeLabel(sectionName.trim())}\n${taskLine}\n`;
+  }
+
+  let insertAt = secIdx + 1;
+  while (insertAt < lines.length) {
+    const l = lines[insertAt];
+    if (/^\s*section\b/i.test(l)) break;
+    insertAt++;
+  }
+  while (insertAt > secIdx + 1 && !lines[insertAt - 1].trim()) {
+    insertAt--;
+  }
+
+  lines.splice(insertAt, 0, taskLine);
+  return lines.join("\n");
+}
+
+export function deleteGanttTask(source, taskName) {
+  if (!taskName.trim()) throw new Error("Task name required.");
+  const lines = source
+    .split("\n")
+    .filter(
+      (l) =>
+        !new RegExp(`^\\s*${escapeRegex(taskName.trim())}\\s*:`, "i").test(l),
+    );
+  return lines.join("\n");
+}
+
+
 
 
 

@@ -74,6 +74,8 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **Git Graphs**: Branch creation, branch switching / checkout, commits with messages, tags, and types (`NORMAL`, `REVERSE`, `HIGHLIGHT`), and branch merging with semantic release tags.
 - **Pie Charts**: Real-time chart title updates, slice additions with positive numerical weights, and slice deletion.
 - **User Journey Maps**: Journey stage / section organization, task addition with satisfaction scores (1–5) and multiple participating actors, and task deletion.
+- **Kanban Boards**: Dynamic column creation, card insertion under targeted workflow columns, and single-click card deletion.
+- **Gantt Charts**: Roadmap workstream section management, task scheduling with status tags (`active`, `done`, `crit`, `milestone`), duration specifications, and task deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
 ## Exports

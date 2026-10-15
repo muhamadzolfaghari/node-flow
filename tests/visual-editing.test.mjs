@@ -60,6 +60,16 @@ import {
   addJourneySection,
   addJourneyTask,
   deleteJourneyTask,
+  isKanban,
+  kanbanColumns,
+  addKanbanColumn,
+  addKanbanCard,
+  deleteKanbanCard,
+  isGantt,
+  ganttSections,
+  addGanttSection,
+  addGanttTask,
+  deleteGanttTask,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -420,6 +430,71 @@ test("journey map visual modeling: sections, add/delete tasks, scores", () => {
   assert.equal(checkoutSec.tasks.length, 1);
   assert.equal(checkoutSec.tasks[0].name, "Enter credit card");
 });
+
+test("kanban board visual modeling: columns, cards, deletion", () => {
+  let kb = `kanban
+  Backlog
+    [User Persona Journey]
+    [Export to Lucidchart]
+  In Progress
+    [BPMN 2.0 Business Flow]`;
+
+  assert.equal(isKanban({ format: "mermaid", source: kb }), true);
+  let cols = kanbanColumns(kb);
+  assert.equal(cols.length, 2);
+  assert.equal(cols[0].name, "Backlog");
+  assert.equal(cols[0].cards.length, 2);
+  assert.equal(cols[1].name, "In Progress");
+
+  kb = addKanbanColumn(kb, "Done");
+  assert.match(kb, /Done/);
+
+  kb = addKanbanCard(kb, "Done", "Rebrand Studio");
+  assert.match(kb, /\[Rebrand Studio\]/);
+
+  kb = deleteKanbanCard(kb, "User Persona Journey");
+  assert.doesNotMatch(kb, /User Persona Journey/);
+
+  cols = kanbanColumns(kb);
+  assert.equal(cols.length, 3);
+  const doneCol = cols.find((c) => c.name === "Done");
+  assert.ok(doneCol);
+  assert.equal(doneCol.cards.includes("Rebrand Studio"), true);
+});
+
+test("gantt chart visual modeling: sections, tasks, status, deletion", () => {
+  let gt = `gantt
+    title Release Roadmap
+    dateFormat YYYY-MM-DD
+    section Core Wasm
+    Turbo Kernel :done, a1, 7d
+    Graphviz Engine :active, a2, 10d`;
+
+  assert.equal(isGantt({ format: "mermaid", source: gt }), true);
+  let secs = ganttSections(gt);
+  assert.equal(secs.length, 1);
+  assert.equal(secs[0].name, "Core Wasm");
+  assert.equal(secs[0].tasks.length, 2);
+  assert.equal(secs[0].tasks[0].name, "Turbo Kernel");
+  assert.equal(secs[0].tasks[0].status, "done");
+
+  gt = addGanttSection(gt, "Verification");
+  assert.match(gt, /section Verification/);
+
+  gt = addGanttTask(gt, "Verification", "Browser E2E Suite", "crit", "4d");
+  assert.match(gt, /Browser E2E Suite :crit,/);
+
+  gt = deleteGanttTask(gt, "Graphviz Engine");
+  assert.doesNotMatch(gt, /Graphviz Engine/);
+
+  secs = ganttSections(gt);
+  assert.equal(secs.length, 2);
+  const verSec = secs.find((s) => s.name === "Verification");
+  assert.ok(verSec);
+  assert.equal(verSec.tasks.length, 1);
+  assert.equal(verSec.tasks[0].name, "Browser E2E Suite");
+});
+
 
 
 

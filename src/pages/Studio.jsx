@@ -40,6 +40,8 @@ import {
   Palette,
   PieChart,
   Compass,
+  Kanban,
+  Calendar,
 } from "lucide-react";
 import {
   Button,
@@ -159,6 +161,16 @@ import {
   addJourneySection,
   addJourneyTask,
   deleteJourneyTask,
+  isKanban,
+  kanbanColumns,
+  addKanbanColumn,
+  addKanbanCard,
+  deleteKanbanCard,
+  isGantt,
+  ganttSections,
+  addGanttSection,
+  addGanttTask,
+  deleteGanttTask,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -272,6 +284,16 @@ export default function Studio() {
     [journeyScore, setJourneyScore] = useState("5"),
     [journeyActors, setJourneyActors] = useState("User"),
     [journeyTargetSec, setJourneyTargetSec] = useState(""),
+    // Kanban modeling state
+    [kanbanColName, setKanbanColName] = useState(""),
+    [kanbanTargetCol, setKanbanTargetCol] = useState(""),
+    [kanbanCardText, setKanbanCardText] = useState(""),
+    // Gantt modeling state
+    [ganttSecName, setGanttSecName] = useState(""),
+    [ganttTargetSec, setGanttTargetSec] = useState(""),
+    [ganttTaskName, setGanttTaskName] = useState(""),
+    [ganttTaskStatus, setGanttTaskStatus] = useState("active"),
+    [ganttTaskDur, setGanttTaskDur] = useState("5d"),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -303,6 +325,12 @@ export default function Studio() {
   }, [document?.source]);
   const journeySecs = useMemo(() => {
     return isJourney(document) ? journeySections(document.source) : [];
+  }, [document?.source]);
+  const kanbanCols = useMemo(() => {
+    return isKanban(document) ? kanbanColumns(document.source) : [];
+  }, [document?.source]);
+  const ganttSecs = useMemo(() => {
+    return isGantt(document) ? ganttSections(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -2744,6 +2772,342 @@ export default function Studio() {
                           );
                           setJourneyTaskName("");
                           say("Task added to journey");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add task
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isKanban(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Kanban className="size-3.5 text-primary" />
+                  <span>Kanban board tools</span>
+                </div>
+
+                {kanbanCols.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Columns & Cards ({kanbanCols.length} columns)
+                    </span>
+                    <div className="space-y-2.5 max-h-48 overflow-auto">
+                      {kanbanCols.map((col, cIdx) => (
+                        <div key={cIdx} className="rounded border bg-muted/20 p-2">
+                          <span className="font-semibold text-xs text-foreground block mb-1">
+                            {col.name} ({col.cards.length})
+                          </span>
+                          {col.cards.length === 0 ? (
+                            <span className="text-[11px] text-muted-foreground italic">
+                              No cards in this column
+                            </span>
+                          ) : (
+                            <div className="space-y-1">
+                              {col.cards.map((card, cardIdx) => (
+                                <div
+                                  key={cardIdx}
+                                  className="flex items-center justify-between gap-1 text-[11px] rounded bg-background/80 px-2 py-1 border"
+                                >
+                                  <span className="truncate">{card}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      updateSource(
+                                        document.id,
+                                        deleteKanbanCard(document.source, card),
+                                      );
+                                      say(`Removed card "${card}"`);
+                                    }}
+                                  >
+                                    <Trash2 className="size-2.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add column
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New kanban column name"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Column name (e.g. In Review)"
+                      value={kanbanColName}
+                      onChange={(e) => setKanbanColName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addKanbanColumn(document.source, kanbanColName),
+                          );
+                          setKanbanColName("");
+                          say("Column added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Column
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add card
+                  </span>
+                  <div className="grid gap-2">
+                    <select
+                      aria-label="Target column for card"
+                      className="h-8 rounded-md border bg-background px-2 text-xs"
+                      value={kanbanTargetCol}
+                      onChange={(e) => setKanbanTargetCol(e.target.value)}
+                    >
+                      <option value="">Select column…</option>
+                      {kanbanCols.map((c, idx) => (
+                        <option key={idx} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Kanban card text"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Card description (e.g. Implement OAuth)"
+                        value={kanbanCardText}
+                        onChange={(e) => setKanbanCardText(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            const target =
+                              kanbanTargetCol ||
+                              (kanbanCols[0] ? kanbanCols[0].name : "");
+                            updateSource(
+                              document.id,
+                              addKanbanCard(
+                                document.source,
+                                target,
+                                kanbanCardText,
+                              ),
+                            );
+                            setKanbanCardText("");
+                            say("Card added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Card
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isGantt(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Calendar className="size-3.5 text-primary" />
+                  <span>Gantt roadmap tools</span>
+                </div>
+
+                {ganttSecs.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Sections & Schedule ({ganttSecs.length} workstreams)
+                    </span>
+                    <div className="space-y-2.5 max-h-48 overflow-auto">
+                      {ganttSecs.map((sec, sIdx) => (
+                        <div key={sIdx} className="rounded border bg-muted/20 p-2">
+                          <span className="font-semibold text-xs text-foreground block mb-1">
+                            {sec.name} ({sec.tasks.length})
+                          </span>
+                          {sec.tasks.length === 0 ? (
+                            <span className="text-[11px] text-muted-foreground italic">
+                              No tasks in this section
+                            </span>
+                          ) : (
+                            <div className="space-y-1">
+                              {sec.tasks.map((t, tIdx) => (
+                                <div
+                                  key={tIdx}
+                                  className="flex items-center justify-between gap-1 text-[11px] rounded bg-background/80 px-2 py-0.5 border"
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="truncate">{t.name}</span>
+                                    <Badge
+                                      variant={
+                                        t.status === "done"
+                                          ? "secondary"
+                                          : t.status === "crit"
+                                          ? "destructive"
+                                          : "outline"
+                                      }
+                                      className="text-[9px] h-4 px-1 shrink-0 font-mono"
+                                    >
+                                      {t.status}
+                                    </Badge>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      updateSource(
+                                        document.id,
+                                        deleteGanttTask(
+                                          document.source,
+                                          t.name,
+                                        ),
+                                      );
+                                      say(`Removed task "${t.name}"`);
+                                    }}
+                                  >
+                                    <Trash2 className="size-2.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add workstream section
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New gantt section name"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Workstream (e.g. Infrastructure)"
+                      value={ganttSecName}
+                      onChange={(e) => setGanttSecName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addGanttSection(
+                              document.source,
+                              ganttSecName,
+                            ),
+                          );
+                          setGanttSecName("");
+                          say("Section added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Section
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add roadmap task
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Target section for gantt task"
+                        className="h-8 rounded-md border bg-background px-2 text-xs flex-1"
+                        value={ganttTargetSec}
+                        onChange={(e) => setGanttTargetSec(e.target.value)}
+                      >
+                        <option value="">Select section…</option>
+                        {ganttSecs.map((s, idx) => (
+                          <option key={idx} value={s.name}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Gantt task status"
+                        className="h-8 rounded-md border bg-background px-2 text-xs w-28 shrink-0 font-mono"
+                        value={ganttTaskStatus}
+                        onChange={(e) => setGanttTaskStatus(e.target.value)}
+                      >
+                        <option value="active">Active</option>
+                        <option value="done">Done</option>
+                        <option value="crit">Critical</option>
+                        <option value="milestone">Milestone</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Gantt task name"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Task name (e.g. Database Migration)"
+                        value={ganttTaskName}
+                        onChange={(e) => setGanttTaskName(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Gantt duration"
+                        className="h-8 text-xs w-20 shrink-0 font-mono"
+                        placeholder="7d"
+                        value={ganttTaskDur}
+                        onChange={(e) => setGanttTaskDur(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        try {
+                          const target =
+                            ganttTargetSec ||
+                            (ganttSecs[0] ? ganttSecs[0].name : "");
+                          updateSource(
+                            document.id,
+                            addGanttTask(
+                              document.source,
+                              target,
+                              ganttTaskName,
+                              ganttTaskStatus,
+                              ganttTaskDur,
+                            ),
+                          );
+                          setGanttTaskName("");
+                          say("Task added to roadmap");
                         } catch (err) {
                           say(err.message);
                         }
