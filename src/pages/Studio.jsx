@@ -36,6 +36,7 @@ import {
   Pencil,
   Trash2,
   Plus,
+  Palette,
 } from "lucide-react";
 import {
   Button,
@@ -104,6 +105,23 @@ import {
   duplicateFlowchartNode,
   flowchartEdges,
   deleteFlowchartEdge,
+  DIAGRAM_LOOKS,
+  DIAGRAM_THEMES,
+  getDiagramConfig,
+  updateDiagramConfig,
+  isSequence,
+  sequenceParticipants,
+  addSequenceParticipant,
+  addSequenceMessage,
+  deleteSequenceParticipant,
+  SEQUENCE_ARROWS,
+  isClassDiagram,
+  classDiagramClasses,
+  addClassDiagramClass,
+  addClassDiagramMember,
+  connectClassDiagramClasses,
+  deleteClassDiagramClass,
+  CLASS_RELATIONS,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -163,6 +181,22 @@ export default function Studio() {
     [edgeTo, setEdgeTo] = useState(""),
     [edgeLabel, setEdgeLabel] = useState(""),
     [edgeArrow, setEdgeArrow] = useState("solid"),
+    // Sequence diagram modeling state
+    [seqId, setSeqId] = useState(""),
+    [seqLabel, setSeqLabel] = useState(""),
+    [seqType, setSeqType] = useState("participant"),
+    [seqFrom, setSeqFrom] = useState(""),
+    [seqTo, setSeqTo] = useState(""),
+    [seqMsg, setSeqMsg] = useState(""),
+    [seqArrow, setSeqArrow] = useState("solid"),
+    // Class diagram modeling state
+    [clsName, setClsName] = useState(""),
+    [clsTarget, setClsTarget] = useState(""),
+    [clsMember, setClsMember] = useState(""),
+    [clsFrom, setClsFrom] = useState(""),
+    [clsTo, setClsTo] = useState(""),
+    [clsRel, setClsRel] = useState("inheritance"),
+    [clsRelLabel, setClsRelLabel] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -171,6 +205,17 @@ export default function Studio() {
   const preview = useDocumentPreview(document, theme, view);
   const definition = getFormat(document?.format),
     nodes = isFlowchart(document) ? flowchartNodes(document.source) : [];
+  const seqParticipants = useMemo(() => {
+    return isSequence(document) ? sequenceParticipants(document.source) : [];
+  }, [document?.source]);
+  const clsList = useMemo(() => {
+    return isClassDiagram(document) ? classDiagramClasses(document.source) : [];
+  }, [document?.source]);
+  const diagramConfig = useMemo(() => {
+    return document?.format === "mermaid"
+      ? getDiagramConfig(document.source)
+      : { look: "classic", theme: "default" };
+  }, [document?.source]);
   const say = (message) => setToast(message);
   const updateSource = (id, source) =>
     updateProject((p) => ({
@@ -435,6 +480,11 @@ export default function Studio() {
         });
       else if (kind === "html")
         Exporter.downloadStandaloneHtml(el, preview.code, title);
+      else if (kind === "pptx")
+        await Exporter.downloadPptx(el, title, {
+          background: "#ffffff",
+          padding: 32,
+        });
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
       else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md") {
         const mod = await import("../utils/exporters/mermaid-export.js");
@@ -738,6 +788,76 @@ export default function Studio() {
               <Copy />
               Duplicate file
             </Button>
+            {document?.format === "mermaid" && (
+              <div className="mt-4 border-t pt-3">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="font-medium flex items-center gap-1.5 text-foreground">
+                    <Palette className="size-3.5 text-primary" />
+                    Diagram style & look
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground block mb-1">
+                      Render look
+                    </label>
+                    <select
+                      aria-label="Diagram render look"
+                      className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
+                      value={diagramConfig.look}
+                      onChange={(e) => {
+                        try {
+                          updateSource(
+                            document.id,
+                            updateDiagramConfig(document.source, {
+                              look: e.target.value,
+                            }),
+                          );
+                          say(`Look changed to ${e.target.value}`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      {Object.entries(DIAGRAM_LOOKS).map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground block mb-1">
+                      Mermaid theme
+                    </label>
+                    <select
+                      aria-label="Mermaid theme preset"
+                      className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
+                      value={diagramConfig.theme}
+                      onChange={(e) => {
+                        try {
+                          updateSource(
+                            document.id,
+                            updateDiagramConfig(document.source, {
+                              theme: e.target.value,
+                            }),
+                          );
+                          say(`Theme changed to ${e.target.value}`);
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      {Object.entries(DIAGRAM_THEMES).map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
             {selected && (
               <div className="mt-5 border-t pt-4">
                 <p className="font-medium">Selected element</p>
@@ -1098,6 +1218,405 @@ export default function Studio() {
                 </div>
               </div>
             )}
+            {isSequence(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">Sequence diagram tools</p>
+                {seqParticipants.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Participants ({seqParticipants.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-auto">
+                      {seqParticipants.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                        >
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {p.type === "actor" ? "👤" : "📦"}
+                          </span>
+                          <span className="truncate max-w-[100px]">{p.label}</span>
+                          <button
+                            type="button"
+                            title={`Remove ${p.label}`}
+                            aria-label={`Remove participant ${p.label}`}
+                            className="text-muted-foreground hover:text-destructive shrink-0 ml-0.5"
+                            onClick={() => {
+                              try {
+                                updateSource(
+                                  document.id,
+                                  deleteSequenceParticipant(
+                                    document.source,
+                                    p.id,
+                                  ),
+                                );
+                                say(`Removed participant ${p.label}`);
+                              } catch (err) {
+                                say(err.message);
+                              }
+                            }}
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add participant / actor
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      aria-label="Participant identifier"
+                      className="h-8 text-xs"
+                      placeholder="ID (e.g. Auth)"
+                      value={seqId}
+                      onChange={(e) => setSeqId(e.target.value)}
+                    />
+                    <Input
+                      aria-label="Participant label"
+                      className="h-8 text-xs"
+                      placeholder="Label (optional)"
+                      value={seqLabel}
+                      onChange={(e) => setSeqLabel(e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <select
+                      aria-label="Participant type"
+                      className="h-8 rounded-md border bg-background px-2 text-xs"
+                      value={seqType}
+                      onChange={(e) => setSeqType(e.target.value)}
+                    >
+                      <option value="participant">Participant</option>
+                      <option value="actor">Actor</option>
+                    </select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addSequenceParticipant(
+                              document.source,
+                              seqId,
+                              seqLabel,
+                              seqType,
+                            ),
+                          );
+                          setSeqId("");
+                          setSeqLabel("");
+                          say("Participant added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add participant
+                    </Button>
+                  </div>
+                </div>
+                {seqParticipants.length >= 2 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Send message
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        aria-label="Message sender"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={seqFrom}
+                        onChange={(e) => setSeqFrom(e.target.value)}
+                      >
+                        <option value="">From…</option>
+                        {seqParticipants.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Message recipient"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={seqTo}
+                        onChange={(e) => setSeqTo(e.target.value)}
+                      >
+                        <option value="">To…</option>
+                        {seqParticipants.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <select
+                      aria-label="Message arrow style"
+                      className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                      value={seqArrow}
+                      onChange={(e) => setSeqArrow(e.target.value)}
+                    >
+                      {Object.entries(SEQUENCE_ARROWS).map(([k, v]) => (
+                        <option key={k} value={v.symbol}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      aria-label="Message text"
+                      className="mt-2 h-8 text-xs"
+                      placeholder="Message (e.g. login(creds))"
+                      value={seqMsg}
+                      onChange={(e) => setSeqMsg(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addSequenceMessage(
+                              document.source,
+                              seqFrom,
+                              seqTo,
+                              seqMsg,
+                              seqArrow,
+                            ),
+                          );
+                          setSeqMsg("");
+                          say("Message added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      Send message
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {isClassDiagram(document) && (
+              <div className="mt-5 border-t pt-4">
+                <p className="font-medium text-xs">Class diagram tools</p>
+                {clsList.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Classes ({clsList.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-auto">
+                      {clsList.map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px]"
+                        >
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            🏛️
+                          </span>
+                          <span className="truncate max-w-[100px]">{c.label}</span>
+                          <button
+                            type="button"
+                            title={`Remove ${c.label}`}
+                            aria-label={`Remove class ${c.label}`}
+                            className="text-muted-foreground hover:text-destructive shrink-0 ml-0.5"
+                            onClick={() => {
+                              try {
+                                updateSource(
+                                  document.id,
+                                  deleteClassDiagramClass(
+                                    document.source,
+                                    c.id,
+                                  ),
+                                );
+                                say(`Removed class ${c.label}`);
+                              } catch (err) {
+                                say(err.message);
+                              }
+                            }}
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add new class
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New class name"
+                      className="h-8 text-xs"
+                      placeholder="Class name (e.g. Account)"
+                      value={clsName}
+                      onChange={(e) => setClsName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addClassDiagramClass(document.source, clsName),
+                          );
+                          setClsName("");
+                          say("Class added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add class
+                    </Button>
+                  </div>
+                </div>
+                {clsList.length > 0 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Add field or method
+                    </span>
+                    <div className="grid gap-2">
+                      <select
+                        aria-label="Target class for member"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={clsTarget}
+                        onChange={(e) => setClsTarget(e.target.value)}
+                      >
+                        <option value="">Select class…</option>
+                        {clsList.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <Input
+                          aria-label="Member declaration"
+                          className="h-8 text-xs flex-1 font-mono text-[11px]"
+                          placeholder="+String name or +save(): bool"
+                          value={clsMember}
+                          onChange={(e) => setClsMember(e.target.value)}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs shrink-0"
+                          onClick={() => {
+                            try {
+                              updateSource(
+                                document.id,
+                                addClassDiagramMember(
+                                  document.source,
+                                  clsTarget,
+                                  clsMember,
+                                ),
+                              );
+                              setClsMember("");
+                              say("Member added");
+                            } catch (err) {
+                              say(err.message);
+                            }
+                          }}
+                        >
+                          Add member
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {clsList.length >= 2 && (
+                  <div className="mt-4 border-t border-dashed pt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Connect classes (Relationship)
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        aria-label="Relationship source class"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={clsFrom}
+                        onChange={(e) => setClsFrom(e.target.value)}
+                      >
+                        <option value="">From…</option>
+                        {clsList.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Relationship target class"
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                        value={clsTo}
+                        onChange={(e) => setClsTo(e.target.value)}
+                      >
+                        <option value="">To…</option>
+                        {clsList.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <select
+                      aria-label="Relationship type"
+                      className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                      value={clsRel}
+                      onChange={(e) => setClsRel(e.target.value)}
+                    >
+                      {Object.entries(CLASS_RELATIONS).map(([k, v]) => (
+                        <option key={k} value={v.symbol}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      aria-label="Relationship label"
+                      className="mt-2 h-8 text-xs"
+                      placeholder="Label (optional)"
+                      value={clsRelLabel}
+                      onChange={(e) => setClsRelLabel(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full text-xs"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            connectClassDiagramClasses(
+                              document.source,
+                              clsFrom,
+                              clsTo,
+                              clsRel,
+                              clsRelLabel,
+                            ),
+                          );
+                          setClsRelLabel("");
+                          say("Classes connected");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <GitBranch className="size-3.5" />
+                      Connect classes
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -1410,6 +1929,7 @@ export default function Studio() {
                 ["png", "PNG image · 2×"],
                 ["png4", "PNG image · 4×"],
                 ["pdf", "PDF document"],
+                ["pptx", "PowerPoint slide (.pptx)"],
                 ["html", "Interactive HTML"],
                 ["xmind", "XMind mindmap"],
                 ["copy", "Copy Markdown"],

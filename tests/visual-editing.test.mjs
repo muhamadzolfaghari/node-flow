@@ -16,6 +16,19 @@ import {
   duplicateFlowchartNode,
   flowchartEdges,
   deleteFlowchartEdge,
+  getDiagramConfig,
+  updateDiagramConfig,
+  isSequence,
+  sequenceParticipants,
+  addSequenceParticipant,
+  addSequenceMessage,
+  deleteSequenceParticipant,
+  isClassDiagram,
+  classDiagramClasses,
+  addClassDiagramClass,
+  addClassDiagramMember,
+  connectClassDiagramClasses,
+  deleteClassDiagramClass,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -138,4 +151,78 @@ test("supports inline labeled edges (-- text -->) and disconnecting them", () =>
   assert.match(severed, /B\[Auth\]/);
   assert.equal(flowchartEdges(severed).length, 1);
 });
+
+test("reading and updating diagram look and theme frontmatter", () => {
+  let source = "flowchart TD\n  A --> B";
+  assert.deepEqual(getDiagramConfig(source), { look: "classic", theme: "default" });
+
+  source = updateDiagramConfig(source, { look: "handDrawn", theme: "forest" });
+  assert.deepEqual(getDiagramConfig(source), { look: "handDrawn", theme: "forest" });
+  assert.match(source, /look: handDrawn/);
+  assert.match(source, /theme: forest/);
+
+  source = updateDiagramConfig(source, { look: "classic" });
+  assert.deepEqual(getDiagramConfig(source), { look: "classic", theme: "forest" });
+  assert.doesNotMatch(source, /look:/);
+
+  source = updateDiagramConfig(source, { theme: "default" });
+  assert.deepEqual(getDiagramConfig(source), { look: "classic", theme: "default" });
+  assert.doesNotMatch(source, /^---/m);
+});
+
+test("sequence diagram visual modeling: participants, messages, deletion", () => {
+  let seq = `sequenceDiagram
+  autonumber
+  actor User as "Mobile User"
+  participant API
+  User->>API: POST /login
+  API-->>User: 200 OK`;
+
+  assert.equal(isSequence({ format: "mermaid", source: seq }), true);
+  const parts = sequenceParticipants(seq);
+  assert.equal(parts.length, 2);
+  assert.equal(parts[0].id, "User");
+  assert.equal(parts[0].label, "Mobile User");
+  assert.equal(parts[0].type, "actor");
+  assert.equal(parts[1].id, "API");
+
+  seq = addSequenceParticipant(seq, "DB", "PostgreSQL Database", "participant");
+  assert.match(seq, /participant DB as "PostgreSQL Database"/);
+
+  seq = addSequenceMessage(seq, "API", "DB", "SELECT users", "->>");
+  assert.match(seq, /API->>DB: SELECT users/);
+
+  seq = deleteSequenceParticipant(seq, "DB");
+  assert.doesNotMatch(seq, /PostgreSQL Database/);
+  assert.doesNotMatch(seq, /API->>DB/);
+});
+
+test("class diagram visual modeling: classes, members, connections, deletion", () => {
+  let cls = `classDiagram
+  class User {
+    +String email
+  }
+  class Admin
+  User <|-- Admin : inherits`;
+
+  assert.equal(isClassDiagram({ format: "mermaid", source: cls }), true);
+  const classes = classDiagramClasses(cls);
+  assert.equal(classes.length, 2);
+  assert.equal(classes.some((c) => c.id === "User"), true);
+  assert.equal(classes.some((c) => c.id === "Admin"), true);
+
+  cls = addClassDiagramClass(cls, "Profile");
+  assert.match(cls, /class Profile \{/);
+
+  cls = addClassDiagramMember(cls, "User", "+checkPassword(): bool");
+  assert.match(cls, /\+checkPassword\(\): bool/);
+
+  cls = connectClassDiagramClasses(cls, "User", "Profile", "*--", "has");
+  assert.match(cls, /User \*-- Profile : has/);
+
+  cls = deleteClassDiagramClass(cls, "Admin");
+  assert.doesNotMatch(cls, /class Admin\b/);
+  assert.doesNotMatch(cls, /User <\|-- Admin/);
+});
+
 

@@ -329,4 +329,262 @@ export function duplicateFlowchartNode(source, id) {
   return { source: updated, duplicateId, duplicateLabel };
 }
 
+/* =========================================================================
+   DIAGRAM LOOK & THEME FRONTMATTER CONFIGURATION
+   ========================================================================= */
+
+export const DIAGRAM_LOOKS = {
+  classic: { id: "classic", label: "Classic (Vector)" },
+  handDrawn: { id: "handDrawn", label: "Hand-drawn (Sketchy)" },
+};
+
+export const DIAGRAM_THEMES = {
+  default: { id: "default", label: "Default" },
+  neutral: { id: "neutral", label: "Neutral Slate" },
+  dark: { id: "dark", label: "Midnight Dark" },
+  forest: { id: "forest", label: "Forest Emerald" },
+  base: { id: "base", label: "Minimal Base" },
+};
+
+export function getDiagramConfig(source) {
+  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return { look: "classic", theme: "default" };
+  const yaml = match[1];
+  const lookM = yaml.match(/^\s*look:\s*([^\s\r\n]+)/m);
+  const themeM = yaml.match(/^\s*theme:\s*([^\s\r\n]+)/m);
+  return {
+    look: lookM ? lookM[1] : "classic",
+    theme: themeM ? themeM[1] : "default",
+  };
+}
+
+export function updateDiagramConfig(source, { look, theme }) {
+  const fmMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const current = getDiagramConfig(source);
+  const newLook = look !== undefined ? look : current.look;
+  const newTheme = theme !== undefined ? theme : current.theme;
+
+  const isDefaultLook = !newLook || newLook === "classic";
+  const isDefaultTheme = !newTheme || newTheme === "default";
+
+  if (!fmMatch) {
+    if (isDefaultLook && isDefaultTheme) return source;
+    const lines = ["---", "config:"];
+    if (!isDefaultLook) lines.push(`  look: ${newLook}`);
+    if (!isDefaultTheme) lines.push(`  theme: ${newTheme}`);
+    lines.push("---", source.trimStart());
+    return lines.join("\n");
+  }
+
+  let yaml = fmMatch[1];
+  yaml = yaml.replace(/^\s*look:\s*.*$\n?/gm, "");
+  yaml = yaml.replace(/^\s*theme:\s*.*$\n?/gm, "");
+
+  const configEntries = [];
+  if (!isDefaultLook) configEntries.push(`  look: ${newLook}`);
+  if (!isDefaultTheme) configEntries.push(`  theme: ${newTheme}`);
+
+  if (configEntries.length > 0) {
+    if (/^\s*config:\s*$/m.test(yaml)) {
+      yaml = yaml.replace(/^\s*config:\s*$/m, `config:\n${configEntries.join("\n")}`);
+    } else {
+      yaml = `${yaml.trimEnd()}\nconfig:\n${configEntries.join("\n")}`;
+    }
+  } else {
+    yaml = yaml.replace(/^\s*config:\s*$\n?/gm, "");
+  }
+
+  const cleanYaml = yaml.trim();
+  if (!cleanYaml) {
+    return source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "");
+  }
+  return source.replace(/^---\r?\n[\s\S]*?\r?\n---/, `---\n${cleanYaml}\n---`);
+}
+
+/* =========================================================================
+   SEQUENCE DIAGRAM VISUAL EDITING
+   ========================================================================= */
+
+export const isSequence = (doc) =>
+  doc?.format === "mermaid" && /^\s*sequenceDiagram\b/m.test(doc.source);
+
+export const SEQUENCE_ARROWS = {
+  solid: { symbol: "->>", label: "Synchronous (->>)" },
+  dotted: { symbol: "-->>", label: "Dotted reply (-->>)" },
+  line: { symbol: "->", label: "Solid line (->)" },
+  dottedLine: { symbol: "-->", label: "Dotted line (-->)" },
+  cross: { symbol: "-x", label: "Failure (-x)" },
+  async: { symbol: "-)", label: "Asynchronous (-))" },
+};
+
+export function sequenceParticipants(source) {
+  const map = new Map();
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const declMatch = line.match(
+      /^\s*(participant|actor)\s+([A-Za-z0-9_]+)(?:\s+as\s+("?[^"\n]+"?))?/i,
+    );
+    if (declMatch) {
+      const type = declMatch[1].toLowerCase();
+      const id = declMatch[2];
+      const label = declMatch[3] ? declMatch[3].replace(/^"|"$/g, "") : id;
+      map.set(id, { id, label, type });
+      continue;
+    }
+    const msgMatch = line.match(
+      /^\s*([A-Za-z0-9_]+)\s*(?:->>|-->>|->|-->|-x|--x|-\)|--\))\s*([A-Za-z0-9_]+)\s*:/,
+    );
+    if (msgMatch) {
+      const from = msgMatch[1];
+      const to = msgMatch[2];
+      if (!map.has(from)) map.set(from, { id: from, label: from, type: "participant" });
+      if (!map.has(to)) map.set(to, { id: to, label: to, type: "participant" });
+    }
+  }
+  return [...map.values()];
+}
+
+export function addSequenceParticipant(source, id, label = "", type = "participant") {
+  if (!id.trim()) throw new Error("Participant ID is required.");
+  const cleanId = id.trim().replace(/\s+/g, "_");
+  const cleanLabel = label.trim() || cleanId;
+  const decl =
+    cleanLabel !== cleanId
+      ? `  ${type} ${cleanId} as "${safeLabel(cleanLabel)}"`
+      : `  ${type} ${cleanId}`;
+
+  const lines = source.split("\n");
+  const headerIdx = lines.findIndex((l) => /^\s*sequenceDiagram\b/i.test(l));
+  if (headerIdx === -1) {
+    return `${source.trimEnd()}\n${decl}\n`;
+  }
+  lines.splice(headerIdx + 1, 0, decl);
+  return lines.join("\n");
+}
+
+export function addSequenceMessage(source, from, to, message = "call", arrow = "->>") {
+  if (!from || !to) throw new Error("Select from and to participants.");
+  return `${source.trimEnd()}\n  ${from}${arrow}${to}: ${safeLabel(message || "message")}\n`;
+}
+
+export function deleteSequenceParticipant(source, id) {
+  if (!id) throw new Error("Select a participant to remove.");
+  const lines = source.split("\n");
+  const filtered = lines.filter((line) => {
+    if (new RegExp(`^\\s*(?:participant|actor)\\s+${escapeRegex(id)}\\b`, "i").test(line))
+      return false;
+    if (
+      new RegExp(
+        `^\\s*${escapeRegex(id)}\\s*(?:->>|-->>|->|-->|-x|--x|-\\)|--\\))`,
+        "i",
+      ).test(line)
+    )
+      return false;
+    if (
+      new RegExp(
+        `(?:->>|-->>|->|-->|-x|--x|-\\)|--\\))\\s*${escapeRegex(id)}\\s*:`,
+        "i",
+      ).test(line)
+    )
+      return false;
+    return true;
+  });
+  return filtered.join("\n");
+}
+
+/* =========================================================================
+   CLASS DIAGRAM VISUAL EDITING
+   ========================================================================= */
+
+export const isClassDiagram = (doc) =>
+  doc?.format === "mermaid" && /^\s*classDiagram\b/m.test(doc.source);
+
+export const CLASS_RELATIONS = {
+  inheritance: { symbol: "<|--", label: "Inheritance (<|--)" },
+  composition: { symbol: "*--", label: "Composition (*--)" },
+  aggregation: { symbol: "o--", label: "Aggregation (o--)" },
+  association: { symbol: "-->", label: "Association (-->)" },
+  dependency: { symbol: "..>", label: "Dependency (..>)" },
+  realization: { symbol: "..|>", label: "Realization (..|>)" },
+};
+
+export function classDiagramClasses(source) {
+  const map = new Map();
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const declMatch = line.match(/^\s*class\s+([A-Za-z0-9_]+)/i);
+    if (declMatch) {
+      const id = declMatch[1];
+      map.set(id, { id, label: id });
+    }
+    const relMatch = line.match(
+      /^\s*([A-Za-z0-9_]+)\s*(?:<\|--|\*--|o--|-->|\.\.>|\.\.\|>|--)\s*([A-Za-z0-9_]+)/,
+    );
+    if (relMatch) {
+      if (!map.has(relMatch[1]))
+        map.set(relMatch[1], { id: relMatch[1], label: relMatch[1] });
+      if (!map.has(relMatch[2]))
+        map.set(relMatch[2], { id: relMatch[2], label: relMatch[2] });
+    }
+  }
+  return [...map.values()];
+}
+
+export function addClassDiagramClass(source, name) {
+  if (!name.trim()) throw new Error("Class name is required.");
+  const cleanName = name.trim().replace(/\s+/g, "_");
+  return `${source.trimEnd()}\n  class ${cleanName} {\n  }\n`;
+}
+
+export function addClassDiagramMember(source, className, member) {
+  if (!className || !member.trim())
+    throw new Error("Select class and enter member declaration.");
+  const cleanMember = member.trim();
+  const blockRegex = new RegExp(
+    `(^|\\n)([ \\t]*class\\s+${escapeRegex(className)}\\s*\\{[\\s\\S]*?\\})`,
+    "m",
+  );
+  if (blockRegex.test(source)) {
+    return source.replace(blockRegex, (_, prefix, block) => {
+      const updatedBlock = block.replace(/\}[ \\t]*$/, `  ${cleanMember}\n  }`);
+      return `${prefix}${updatedBlock}`;
+    });
+  }
+  return `${source.trimEnd()}\n  ${className} : ${cleanMember}\n`;
+}
+
+export function connectClassDiagramClasses(
+  source,
+  from,
+  to,
+  relType = "<|--",
+  label = "",
+) {
+  if (!from || !to) throw new Error("Select two classes to connect.");
+  const lbl = label.trim() ? ` : ${safeLabel(label.trim())}` : "";
+  return `${source.trimEnd()}\n  ${from} ${relType} ${to}${lbl}\n`;
+}
+
+export function deleteClassDiagramClass(source, className) {
+  if (!className) throw new Error("Select a class to remove.");
+  const escaped = escapeRegex(className);
+  let updated = source.replace(
+    new RegExp(`(^|\\n)[ \\t]*class\\s+${escaped}\\s*\\{[\\s\\S]*?\\}`, "g"),
+    "",
+  );
+  const lines = updated.split("\n").filter((line) => {
+    if (new RegExp(`^\\s*class\\s+${escaped}\\b`, "i").test(line)) return false;
+    if (new RegExp(`^\\s*${escaped}\\s*[:<*o-]`, "i").test(line)) return false;
+    if (
+      new RegExp(
+        `(?:<\\|--|\\*--|o--|-->|\\.\\.>|\\.\\.\\|>|--)\\s*${escaped}\\b`,
+        "i",
+      ).test(line)
+    )
+      return false;
+    return true;
+  });
+  return lines.join("\n");
+}
+
 
