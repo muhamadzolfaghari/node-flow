@@ -30,6 +30,12 @@ export const SUPPORTED_DIAGRAM_TYPES = [
   { id: 'gitGraph', label: '🌿 Git Graph (Branches & Release)' },
   { id: 'pie', label: '🥧 Pie Chart (Breakdown & Stats)' },
   { id: 'quadrant', label: '📊 Quadrant Matrix (Priorities)' },
+  { id: 'c4', label: '🏛️ C4 Architecture (Context & Containers)' },
+  { id: 'sankey', label: '🌊 Sankey (Flows & Conversions)' },
+  { id: 'kanban', label: '📋 Kanban (Sprint & Task Board)' },
+  { id: 'requirement', label: '📑 Requirements (SysML & Engineering)' },
+  { id: 'packet', label: '📦 Packet (Bytefield & Protocols)' },
+  { id: 'architecture', label: '☁️ Cloud Architecture (Services & VPC)' },
 ];
 
 /**
@@ -159,6 +165,67 @@ export function detectDiagramType(text) {
     return 'quadrant';
   }
 
+  // C4 cues
+  if (
+    /\bc4\b/i.test(lower) ||
+    lower.includes('software system') ||
+    lower.includes('system context') ||
+    lower.includes('container diagram')
+  ) {
+    return 'c4';
+  }
+
+  // Sankey cues
+  if (
+    lower.includes('sankey') ||
+    lower.includes('conversion funnel') ||
+    lower.includes('dropoff') ||
+    lower.includes('flow volume')
+  ) {
+    return 'sankey';
+  }
+
+  // Kanban cues
+  if (
+    lower.includes('kanban') ||
+    lower.includes('sprint board') ||
+    lower.includes('task board') ||
+    (lower.includes('todo') && lower.includes('in progress'))
+  ) {
+    return 'kanban';
+  }
+
+  // Requirement cues
+  if (
+    lower.includes('requirement diagram') ||
+    lower.includes('functional requirement') ||
+    lower.includes('sysml') ||
+    lower.includes('verifymethod')
+  ) {
+    return 'requirement';
+  }
+
+  // Packet cues
+  if (
+    lower.includes('packet-beta') ||
+    lower.includes('bytefield') ||
+    lower.includes('bitfield') ||
+    lower.includes('protocol header') ||
+    lower.includes('header checksum')
+  ) {
+    return 'packet';
+  }
+
+  // Architecture cues
+  if (
+    lower.includes('architecture-beta') ||
+    lower.includes('cloud architecture') ||
+    lower.includes('vpc') ||
+    (lower.includes('microservice') && lower.includes('gateway'))
+  ) {
+    return 'architecture';
+  }
+
   return 'flowchart';
 }
 
@@ -201,6 +268,18 @@ export function describeToDiagram(text, targetType = 'auto', opts = {}) {
       return { code: convertToPie(cleanText, opts), type: 'pie', typeLabel: '🥧 Pie Chart' };
     case 'quadrant':
       return { code: convertToQuadrant(cleanText, opts), type: 'quadrant', typeLabel: '📊 Quadrant Matrix' };
+    case 'c4':
+      return { code: convertToC4(cleanText, opts), type: 'c4', typeLabel: '🏛️ C4 Architecture' };
+    case 'sankey':
+      return { code: convertToSankey(cleanText, opts), type: 'sankey', typeLabel: '🌊 Sankey Flow' };
+    case 'kanban':
+      return { code: convertToKanban(cleanText, opts), type: 'kanban', typeLabel: '📋 Kanban Board' };
+    case 'requirement':
+      return { code: convertToRequirement(cleanText, opts), type: 'requirement', typeLabel: '📑 Requirements' };
+    case 'packet':
+      return { code: convertToPacket(cleanText, opts), type: 'packet', typeLabel: '📦 Packet Bytefield' };
+    case 'architecture':
+      return { code: convertToArchitecture(cleanText, opts), type: 'architecture', typeLabel: '☁️ Cloud Architecture' };
     default:
       return { code: convertToFlowchart(cleanText, opts), type: 'flowchart', typeLabel: '🔀 Flowchart' };
   }
@@ -628,4 +707,152 @@ function cleanLabel(s) {
 function capitalize(s) {
   if (!s) return '';
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. C4 ARCHITECTURE GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToC4(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['C4Context'];
+  mmd.push('    Person(user, "User / Customer", "Interacts with digital touchpoints")');
+
+  if (steps.length >= 2) {
+    const sysA = cleanLabel(steps[0]);
+    const sysB = cleanLabel(steps[1]);
+    mmd.push(`    System(sysA, "${sysA || 'Core Application'}", "Delivers business logic and processing")`);
+    mmd.push(`    System_Ext(sysB, "${sysB || 'External System'}", "Third-party platform or service")`);
+    mmd.push('    Rel(user, sysA, "Uses", "HTTPS")');
+    mmd.push('    Rel(sysA, sysB, "Integrates with", "JSON/REST")');
+  } else {
+    mmd.push('    System(app, "Core Platform", "Provides backend services and customer API")');
+    mmd.push('    System_Ext(ext, "Payment Gateway", "Processes credit cards and settlements")');
+    mmd.push('    Rel(user, app, "Uses", "HTTPS")');
+    mmd.push('    Rel(app, ext, "Authorizes charges", "REST")');
+  }
+  return mmd.join('\n') + '\n';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. SANKEY FLOW GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToSankey(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['sankey-beta'];
+  if (steps.length >= 3) {
+    for (let i = 0; i < steps.length - 1; i++) {
+      const from = cleanLabel(steps[i]).slice(0, 30);
+      const to = cleanLabel(steps[i + 1]).slice(0, 30);
+      const val = Math.max(10, (steps.length - i) * 100);
+      mmd.push(`    ${from},${to},${val}`);
+    }
+  } else {
+    mmd.push('    Organic Visitors,Product Landing,1000');
+    mmd.push('    Ad Traffic,Product Landing,800');
+    mmd.push('    Product Landing,Sign Up Flow,600');
+    mmd.push('    Product Landing,Bounce,1200');
+    mmd.push('    Sign Up Flow,Activated Users,450');
+    mmd.push('    Sign Up Flow,Abandoned,150');
+    mmd.push('    Activated Users,Paid Subscribers,150');
+  }
+  return mmd.join('\n') + '\n';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. KANBAN BOARD GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToKanban(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['kanban'];
+  mmd.push('    todo[To Do]');
+  if (steps.length > 0) {
+    steps.slice(0, 3).forEach((s, idx) => {
+      mmd.push(`        t${idx + 1}[${cleanLabel(s).slice(0, 40)}]`);
+    });
+  } else {
+    mmd.push('        t1[Architect authentication system]');
+    mmd.push('        t2[Setup telemetry pipeline]');
+  }
+  mmd.push('    in_progress[In Progress]');
+  if (steps.length >= 4) {
+    steps.slice(3, 5).forEach((s, idx) => {
+      mmd.push(`        t${idx + 4}[${cleanLabel(s).slice(0, 40)}]`);
+    });
+  } else {
+    mmd.push('        t3[Implement core API endpoints]');
+  }
+  mmd.push('    done[Completed]');
+  mmd.push('        t_done[Initial product roadmap & scope]');
+  return mmd.join('\n') + '\n';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 16. REQUIREMENT DIAGRAM GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToRequirement(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['requirementDiagram'];
+  const reqTitle = steps[0] ? cleanLabel(steps[0]).replace(/[^a-zA-Z0-9_]/g, '_') : 'core_spec';
+  const reqText = steps[0] ? cleanLabel(steps[0]).slice(0, 80) : 'System must satisfy functional and SLA constraints.';
+  mmd.push(`    requirement ${reqTitle} {`);
+  mmd.push('        id: 1');
+  mmd.push(`        text: ${reqText}`);
+  mmd.push('        risk: medium');
+  mmd.push('        verifymethod: test');
+  mmd.push('    }');
+  mmd.push('    element target_system {');
+  mmd.push('        type: service');
+  mmd.push('    }');
+  mmd.push(`    target_system - satisfies -> ${reqTitle}`);
+  return mmd.join('\n') + '\n';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 17. PACKET / BYTEFIELD GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToPacket(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['packet-beta'];
+  if (steps.length >= 3) {
+    let curBit = 0;
+    steps.slice(0, 6).forEach((s) => {
+      const width = 16;
+      const end = curBit + width - 1;
+      mmd.push(`    ${curBit}-${end}: "${cleanLabel(s).slice(0, 30)}"`);
+      curBit += width;
+    });
+  } else {
+    mmd.push('    0-15: "Source Port"');
+    mmd.push('    16-31: "Destination Port"');
+    mmd.push('    32-63: "Sequence Number"');
+    mmd.push('    64-79: "Payload Length"');
+    mmd.push('    80-95: "Header Checksum"');
+  }
+  return mmd.join('\n') + '\n';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 18. CLOUD & ARCHITECTURE GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function convertToArchitecture(text, opts = {}) {
+  const steps = parseTextToSteps(text);
+  const mmd = ['architecture-beta'];
+  mmd.push('    group vpc(cloud)[Virtual Private Cloud]');
+  mmd.push('    service client(internet)[Web Client]');
+  if (steps.length >= 2) {
+    const s1 = cleanLabel(steps[0]).replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || 'api';
+    const s2 = cleanLabel(steps[1]).replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || 'db';
+    mmd.push(`    service ${s1}(server)[${cleanLabel(steps[0]).slice(0, 30)}] in vpc`);
+    mmd.push(`    service ${s2}(database)[${cleanLabel(steps[1]).slice(0, 30)}] in vpc`);
+    mmd.push(`    client:R -- L:${s1}`);
+    mmd.push(`    ${s1}:B -- T:${s2}`);
+  } else {
+    mmd.push('    service gateway(server)[API Gateway] in vpc');
+    mmd.push('    service auth(key)[Auth Service] in vpc');
+    mmd.push('    service db(database)[Aurora Database] in vpc');
+    mmd.push('    client:R -- L:gateway');
+    mmd.push('    gateway:B -- T:auth');
+    mmd.push('    gateway:R -- L:db');
+  }
+  return mmd.join('\n') + '\n';
 }

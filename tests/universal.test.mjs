@@ -218,4 +218,44 @@ test("Lucidchart JSON and CSV import and compilation to Mermaid flowchart", asyn
   assert.match(compiled.code, /flowchart TD/);
 });
 
+test("AI describeToDiagram: comprehensive multi-format synthesis (C4, Sankey, Kanban, Requirement, Packet, Architecture)", async () => {
+  const { describeToDiagram, detectDiagramType, SUPPORTED_DIAGRAM_TYPES } = await import(
+    "../src/utils/importers/describe-to-diagram.js"
+  );
+
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "c4"));
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "sankey"));
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "kanban"));
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "requirement"));
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "packet"));
+  assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "architecture"));
+
+  assert.equal(detectDiagramType("C4 software system context with banking customer"), "c4");
+  assert.equal(detectDiagramType("Conversion funnel with dropoff rates and visitors"), "sankey");
+  assert.equal(detectDiagramType("Sprint kanban board with todo and in progress tasks"), "kanban");
+  assert.equal(detectDiagramType("System functional requirement with verification method"), "requirement");
+  assert.equal(detectDiagramType("TCP packet bytefield protocol header"), "packet");
+  assert.equal(detectDiagramType("Cloud architecture with VPC and microservice gateway"), "architecture");
+
+  const c4Res = describeToDiagram("Customer using web app", "c4");
+  assert.match(c4Res.code, /C4Context/);
+
+  const sankeyRes = describeToDiagram("Visitors to Signups to Paid users", "sankey");
+  assert.match(sankeyRes.code, /sankey-beta/);
+
+  const kanbanRes = describeToDiagram("Design UI\nImplement backend\nDeploy service", "kanban");
+  assert.match(kanbanRes.code, /kanban/);
+
+  const reqRes = describeToDiagram("Security requirement for encrypted storage", "requirement");
+  assert.match(reqRes.code, /requirementDiagram/);
+
+  const pktRes = describeToDiagram("Network packet with header and checksum", "packet");
+  assert.match(pktRes.code, /packet-beta/);
+
+  const archRes = describeToDiagram("Microservices API and Database in Cloud VPC", "architecture");
+  assert.match(archRes.code, /architecture-beta/);
+
+  assert.throws(() => describeToDiagram(""), /Please enter a description/);
+});
+
 
