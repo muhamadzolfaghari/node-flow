@@ -137,21 +137,40 @@ export function connectFlowchartNodes(source, from, to, label = "", arrowType = 
   return `${source.trimEnd()}\n  ${from} ${arrow}${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
 }
 
+const NODE_DECL_PATTERN =
+  "[A-Za-z_][\\w-]*(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?";
+
 export function flowchartEdges(source) {
   const edges = [];
   const lines = source.split("\n");
+  const inlineRegex = new RegExp(
+    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?\\s*(?:--|==|-\\.)\\s+(?:"([^"\\n]+)"|([^\\n-]+?))\\s+(-->|==>|\\.->|---|===)\\s*([A-Za-z_][\\w-]*)`,
+  );
+  const pipeRegex = new RegExp(
+    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?\\s*([-.~=]+>|[-.~=]+)(?:\\|"?([^"|\\n]*?)"?\\|)?\\s*([A-Za-z_][\\w-]*)`,
+  );
+
   for (const line of lines) {
     if (/^\s*(?:flowchart|graph|subgraph|classDef|style|click)\b/i.test(line)) continue;
-    const match = line.match(
-      /\b([A-Za-z_][\w-]*)\s*(?:\[\[|\(\(|\(\[|\[\(|\{\{|\{|\(|\[)?[^\n]*?(?:\]\]|\)\)|\]\)|\)\]|\}\}|\}|\)|\])?\s*([-.~=]+>|[-.~=]+)(?:\|"?([^"|\n]*?)"?\|)?\s*([A-Za-z_][\w-]*)/,
-    );
+    const inlineMatch = line.match(inlineRegex);
+    if (inlineMatch) {
+      const from = inlineMatch[1];
+      const label = (inlineMatch[2] || inlineMatch[3] || "").trim();
+      const symbol = inlineMatch[4];
+      const to = inlineMatch[5];
+      if (from && to && !["subgraph", "classDef", "style"].includes(from)) {
+        edges.push({ from, to, label, symbol });
+        continue;
+      }
+    }
+    const match = line.match(pipeRegex);
     if (match) {
       const from = match[1];
       const symbol = match[2];
-      const label = match[3] || "";
+      const label = (match[3] || "").trim();
       const to = match[4];
       if (from && to && !["subgraph", "classDef", "style"].includes(from)) {
-        edges.push({ from, to, label: label.trim(), symbol });
+        edges.push({ from, to, label, symbol });
       }
     }
   }
@@ -164,15 +183,20 @@ export function deleteFlowchartEdge(source, from, to) {
   const result = [];
   let deleted = false;
 
-  const edgePattern = new RegExp(
-    `^(\\s*)([A-Za-z_][\\w-]*\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()?[^\\n]*?(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))?)\\s*([-.~=]+>|[-.~=]+)(?:\\|[^|\\n]*\\|)?\\s*([A-Za-z_][\\w-]*\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()?[^\\n]*?(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))?)\\s*$`,
+  const pipePattern = new RegExp(
+    `^(\\s*)(${NODE_DECL_PATTERN})\\s*([-.~=]+>|[-.~=]+)(?:\\|[^|\\n]*\\|)?\\s*(${NODE_DECL_PATTERN})\\s*$`,
+  );
+  const inlinePattern = new RegExp(
+    `^(\\s*)(${NODE_DECL_PATTERN})\\s*(?:--|==|-\\.)\\s+(?:"[^"\\n]+"|[^\\n-]+?)\\s+(?:-->|==>|\\.->|---|===)\\s*(${NODE_DECL_PATTERN})\\s*$`,
   );
 
   for (const line of lines) {
-    const match = line.match(edgePattern);
+    const pipeMatch = line.match(pipePattern);
+    const inlineMatch = line.match(inlinePattern);
+    const match = pipeMatch || inlineMatch;
     if (!deleted && match) {
       const fromPart = match[2].trim();
-      const toPart = match[4].trim();
+      const toPart = (pipeMatch ? match[4] : match[3]).trim();
       const fromId = fromPart.match(/^([A-Za-z_][\w-]*)/)?.[1];
       const toId = toPart.match(/^([A-Za-z_][\w-]*)/)?.[1];
       if (fromId === from && toId === to) {

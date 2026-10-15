@@ -121,3 +121,21 @@ test("listing and deleting flowchart edges", () => {
   assert.equal(flowchartEdges(severed).length, 1);
   assert.equal(flowchartNodes(severed).length, 3);
 });
+
+test("supports inline labeled edges (-- text -->) and disconnecting them", () => {
+  const source = `flowchart TD
+  A[Client] -- "Yes, proceed" --> B[Auth]
+  B == sync ==> C[(DB)]`;
+  const edges = flowchartEdges(source);
+  assert.equal(edges.length, 2);
+  assert.equal(edges[0].from, "A");
+  assert.equal(edges[0].to, "B");
+  assert.equal(edges[0].label, "Yes, proceed");
+  assert.equal(edges[0].symbol, "-->");
+
+  const severed = deleteFlowchartEdge(source, "A", "B");
+  assert.match(severed, /A\[Client\]/);
+  assert.match(severed, /B\[Auth\]/);
+  assert.equal(flowchartEdges(severed).length, 1);
+});
+
