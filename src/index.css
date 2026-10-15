@@ -274,6 +274,18 @@
   }
 }
 
+/* Interactive Connect Candidate Target Glow */
+.mermaid-stage g.node.is-connect-target rect,
+.mermaid-stage g.node.is-connect-target polygon,
+.mermaid-stage g.node.is-connect-target circle,
+.mermaid-stage g.node.is-connect-target ellipse,
+.mermaid-stage g.node.is-connect-target path:not(.flowchart-link) {
+  stroke: #22d3ee !important;
+  stroke-width: 3.5px !important;
+  stroke-dasharray: 6 3 !important;
+  filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.95)) drop-shadow(0 0 8px #06b6d4) !important;
+}
+
 /* Canvas Tool Mode Cursors */
 .studio-canvas.tool-pointer {
   cursor: default;

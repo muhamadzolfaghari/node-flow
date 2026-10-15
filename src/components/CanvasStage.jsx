@@ -24,6 +24,10 @@ import {
   ChevronDown,
   Link2,
   Globe,
+  Search,
+  FolderPlus,
+  Sparkles,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 
@@ -43,6 +47,12 @@ export default function CanvasStage({
   onChangeShape,
   onStyleNode,
   onConnectNodes,
+  onBatchSelect,
+  onBatchStyleNodes,
+  onWrapInSubgraph,
+  onBatchDeleteNodes,
+  onBatchDuplicateNodes,
+  onOpenExportStudio,
   onCanvasDoubleClick,
   onContextMenu,
   presentation = false,
@@ -54,7 +64,9 @@ export default function CanvasStage({
     shouldFit = useRef(true),
     editInputRef = useRef(null),
     spaceHeld = useRef(false),
-    marqueeRef = useRef(null);
+    marqueeRef = useRef(null),
+    connectDragRef = useRef(null),
+    minimapRef = useRef(null);
   const [position, setPosition] = useState(camera.current),
     [size, setSize] = useState({ w: 1000, h: 700 }),
     [thumbnail, setThumbnail] = useState(""),
@@ -71,7 +83,14 @@ export default function CanvasStage({
     [showColors, setShowColors] = useState(false),
     [showConnect, setShowConnect] = useState(false),
     [showZoomMenu, setShowZoomMenu] = useState(false),
-    [marquee, setMarquee] = useState(null);
+    [marquee, setMarquee] = useState(null),
+    [batchSelected, setBatchSelected] = useState(null),
+    [showBatchColors, setShowBatchColors] = useState(false),
+    [connectDrag, setConnectDrag] = useState(null),
+    [searchOpen, setSearchOpen] = useState(false),
+    [searchQuery, setSearchQuery] = useState(""),
+    [searchIndex, setSearchIndex] = useState(0),
+    [minimapViewport, setMinimapViewport] = useState(null);
 
   const callbacks = useRef({
     onSelect,
@@ -82,6 +101,12 @@ export default function CanvasStage({
     onChangeShape,
     onStyleNode,
     onConnectNodes,
+    onBatchSelect,
+    onBatchStyleNodes,
+    onWrapInSubgraph,
+    onBatchDeleteNodes,
+    onBatchDuplicateNodes,
+    onOpenExportStudio,
     onCanvasDoubleClick,
     onContextMenu,
     presentation,
@@ -98,6 +123,12 @@ export default function CanvasStage({
     onChangeShape,
     onStyleNode,
     onConnectNodes,
+    onBatchSelect,
+    onBatchStyleNodes,
+    onWrapInSubgraph,
+    onBatchDeleteNodes,
+    onBatchDuplicateNodes,
+    onOpenExportStudio,
     onCanvasDoubleClick,
     onContextMenu,
     presentation,
@@ -256,6 +287,8 @@ export default function CanvasStage({
     reset,
     zoomIn: () => zoomBy(1.25),
     zoomOut: () => zoomBy(0.8),
+    jumpToNode: (id) => jumpToNode({ id, rawId: id, label: id }),
+    openSearch: () => setSearchOpen(true),
   }));
   useEffect(() => {
     shouldFit.current = true;
@@ -339,7 +372,14 @@ export default function CanvasStage({
         ) {
           const x = Math.max(180, Math.min(stageRect.width - 180, elRect.left - stageRect.left + elRect.width / 2));
           const y = Math.max(16, elRect.top - stageRect.top - 50);
-          setNodeAnchor({ x, y });
+          setNodeAnchor({
+            x,
+            y,
+            elLeft: elRect.left - stageRect.left,
+            elTop: elRect.top - stageRect.top,
+            elWidth: elRect.width,
+            elHeight: elRect.height,
+          });
           return;
         }
       } catch {}
@@ -350,6 +390,174 @@ export default function CanvasStage({
   useEffect(() => {
     updateNodeAnchor();
   }, [selected, position]);
+
+  // Calculate viewport boundary for interactive radar minimap
+  useEffect(() => {
+    if (!stageRef.current) return;
+    const b = getContentBounds();
+    const totalW = Math.max(b.w, 100);
+    const totalH = Math.max(b.h, 100);
+    const stageW = stageRef.current.clientWidth || 1000;
+    const stageH = stageRef.current.clientHeight || 700;
+
+    const viewX = (0 - camera.current.x) / camera.current.z;
+    const viewY = (0 - camera.current.y) / camera.current.z;
+    const viewW = stageW / camera.current.z;
+    const viewH = stageH / camera.current.z;
+
+    const left = Math.max(0, Math.min(95, ((viewX - b.x) / totalW) * 100));
+    const top = Math.max(0, Math.min(95, ((viewY - b.y) / totalH) * 100));
+    const width = Math.max(5, Math.min(100 - left, (viewW / totalW) * 100));
+    const height = Math.max(5, Math.min(100 - top, (viewH / totalH) * 100));
+
+    setMinimapViewport({ left, top, width, height });
+  }, [position, status, documentId]);
+
+  const handleMinimapPointerDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const minimapEl = minimapRef.current || e.currentTarget;
+    const updatePan = (evt) => {
+      const rect = minimapEl.getBoundingClientRect();
+      const clickX = Math.max(0, Math.min(rect.width, evt.clientX - rect.left));
+      const clickY = Math.max(0, Math.min(rect.height, evt.clientY - rect.top));
+      const b = getContentBounds();
+      const targetDiagramX = b.x + (clickX / rect.width) * b.w;
+      const targetDiagramY = b.y + (clickY / rect.height) * b.h;
+      if (stageRef.current) {
+        camera.current.x = stageRef.current.clientWidth / 2 - targetDiagramX * camera.current.z;
+        camera.current.y = stageRef.current.clientHeight / 2 - targetDiagramY * camera.current.z;
+        apply();
+      }
+    };
+    updatePan(e);
+    const onMove = (evt) => updatePan(evt);
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  const startConnectDrag = (e, portSide) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!selected?.id || !stageRef.current) return;
+    const stageRect = stageRef.current.getBoundingClientRect();
+    const startX = e.clientX - stageRect.left;
+    const startY = e.clientY - stageRect.top;
+    const dragData = {
+      fromId: selected.id,
+      startX,
+      startY,
+      currentX: startX,
+      currentY: startY,
+    };
+    connectDragRef.current = dragData;
+    setConnectDrag(dragData);
+
+    let lastTargetEl = null;
+    const clearHighlight = () => {
+      if (lastTargetEl) {
+        lastTargetEl.classList.remove("is-connect-target");
+        lastTargetEl = null;
+      }
+      containerRef.current?.querySelectorAll(".is-connect-target")?.forEach((el) => {
+        el.classList.remove("is-connect-target");
+      });
+    };
+
+    const onPointerMove = (evt) => {
+      if (!connectDragRef.current || !stageRef.current) return;
+      const curRect = stageRef.current.getBoundingClientRect();
+      const updated = {
+        ...connectDragRef.current,
+        currentX: evt.clientX - curRect.left,
+        currentY: evt.clientY - curRect.top,
+      };
+      connectDragRef.current = updated;
+      setConnectDrag(updated);
+
+      const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
+      if (targetEl && targetEl.id) {
+        let cleanTargetId = targetEl.id.replace(/^flowchart-([^-]+)-.*/, "$1");
+        let cleanFromId = connectDragRef.current.fromId.replace(/^flowchart-([^-]+)-.*/, "$1");
+        if (cleanTargetId !== cleanFromId) {
+          if (lastTargetEl !== targetEl) {
+            clearHighlight();
+            targetEl.classList.add("is-connect-target");
+            lastTargetEl = targetEl;
+          }
+        } else {
+          clearHighlight();
+        }
+      } else {
+        clearHighlight();
+      }
+    };
+
+    const onPointerUp = (evt) => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      clearHighlight();
+      if (!connectDragRef.current) return;
+      const fromId = connectDragRef.current.fromId;
+      setConnectDrag(null);
+      connectDragRef.current = null;
+
+      const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
+      if (targetEl && targetEl.id) {
+        let cleanTargetId = targetEl.id.replace(/^flowchart-([^-]+)-.*/, "$1");
+        let cleanFromId = fromId.replace(/^flowchart-([^-]+)-.*/, "$1");
+        if (cleanTargetId !== cleanFromId) {
+          callbacks.current.onConnectNodes?.(cleanFromId, cleanTargetId);
+        }
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  };
+
+  const getDiagramNodes = () => {
+    const svg = containerRef.current?.querySelector("svg");
+    if (!svg) return [];
+    const nodes = [];
+    const seen = new Set();
+    svg.querySelectorAll("g.node, g.actor, g.entity").forEach((el) => {
+      const rawId = el.id || "";
+      let cleanId = rawId.replace(/^flowchart-([^-]+)-.*/, "$1");
+      if (!cleanId || seen.has(cleanId)) return;
+      seen.add(cleanId);
+      const label = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim() || cleanId;
+      nodes.push({ id: cleanId, rawId, label });
+    });
+    return nodes;
+  };
+
+  const jumpToNode = (node) => {
+    const svg = containerRef.current?.querySelector("svg");
+    if (!svg || !stageRef.current) return;
+    let target = svg.querySelector(`[id="${CSS.escape(node.rawId || node.id)}"]`) || document.getElementById(node.id);
+    if (!target) {
+      target = svg.querySelector(`#${CSS.escape(node.id)}`);
+    }
+    if (target) {
+      const b = target.getBoundingClientRect();
+      const stageRect = stageRef.current.getBoundingClientRect();
+      const nodeCenterX = (b.left + b.width / 2 - stageRect.left - camera.current.x) / camera.current.z;
+      const nodeCenterY = (b.top + b.height / 2 - stageRect.top - camera.current.y) / camera.current.z;
+
+      camera.current.x = stageRef.current.clientWidth / 2 - nodeCenterX * camera.current.z;
+      camera.current.y = stageRef.current.clientHeight / 2 - nodeCenterY * camera.current.z;
+      apply();
+
+      callbacks.current.onSelect?.({ id: node.id, label: node.label });
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -454,7 +662,7 @@ export default function CanvasStage({
           const svg = containerRef.current?.querySelector("svg");
           if (svg) {
             const nodes = svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor");
-            let foundNode = null;
+            const foundNodes = [];
             for (const n of nodes) {
               const b = n.getBoundingClientRect();
               if (
@@ -463,20 +671,29 @@ export default function CanvasStage({
                 b.top < maxY &&
                 b.bottom > minY
               ) {
-                foundNode = n;
-                break;
+                const label = n
+                  .querySelector(".nodeLabel, .label, text, title")
+                  ?.textContent?.trim();
+                let cleanId = n.id.replace(/^flowchart-([^-]+)-.*/, "$1");
+                foundNodes.push({ id: cleanId, rawId: n.id, label: label || cleanId });
               }
             }
-            if (foundNode) {
-              const label = foundNode
-                .querySelector(".nodeLabel, .label, text, title")
-                ?.textContent?.trim();
-              callbacks.current.onSelect?.({
-                id: foundNode.id,
-                label: label || foundNode.id,
+            if (foundNodes.length === 1) {
+              callbacks.current.onSelect?.(foundNodes[0]);
+              setBatchSelected(null);
+            } else if (foundNodes.length > 1) {
+              setBatchSelected(foundNodes);
+              callbacks.current.onSelect?.(null);
+              // highlight all found nodes with .is-selected
+              svg.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
+              foundNodes.forEach((fn) => {
+                const target = svg.querySelector(`[id="${CSS.escape(fn.rawId)}"]`) || svg.querySelector(`[id="${CSS.escape(fn.id)}"]`);
+                target?.classList?.add("is-selected");
               });
+              callbacks.current.onBatchSelect?.(foundNodes);
             } else {
               callbacks.current.onSelect?.(null);
+              setBatchSelected(null);
             }
           }
         }
@@ -490,7 +707,7 @@ export default function CanvasStage({
 
       if (!moved && !callbacks.current.presentation && !spaceHeld.current) {
         if (callbacks.current.tool === "pointer") {
-          if (e.target.closest?.(".stage-floating-toolbar, .studio-canvas-controls, button, input, select, form")) {
+          if (e.target.closest?.(".stage-floating-toolbar, .stage-batch-toolbar, .studio-canvas-controls, button, input, select, form")) {
             pointers.delete(e.pointerId);
             drag = null;
             pinch = null;
@@ -507,9 +724,11 @@ export default function CanvasStage({
               id: node.id,
               label: label || node.id,
             });
+            setBatchSelected(null);
           } else {
-            // Clicking empty canvas deselects active node
+            // Clicking empty canvas deselects active node & batch
             callbacks.current.onSelect?.(null);
+            setBatchSelected(null);
           }
         }
       }
@@ -574,6 +793,11 @@ export default function CanvasStage({
       )
         return;
       const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && (key === "p" || (e.shiftKey && key === "o"))) {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && key === "d") {
         if (callbacks.current.onDuplicateSelected) {
           e.preventDefault();
@@ -609,6 +833,8 @@ export default function CanvasStage({
         setShowShapes(false);
         setShowColors(false);
         setShowZoomMenu(false);
+        setSearchOpen(false);
+        setBatchSelected(null);
         callbacks.current.onSelect?.(null);
         return;
       }
@@ -764,6 +990,182 @@ export default function CanvasStage({
           <span className="font-semibold text-slate-100">Geospatial Engine</span>
           <span className="h-3 w-px bg-slate-700" />
           <span className="text-[11px] text-sky-300 font-mono">MVT • GeoJSON • Shapefile • TopoJSON</span>
+        </div>
+      )}
+
+      {/* Direct Drag-to-Connect Handles around selected node */}
+      {selected && nodeAnchor?.elWidth && !isEditing && (
+        <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+          {/* Top Port */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-cyan-400 bg-slate-950 shadow-[0_0_8px_#06b6d4] hover:scale-125 hover:bg-cyan-400 transition cursor-crosshair flex items-center justify-center text-[10px] text-white"
+            style={{ left: nodeAnchor.elLeft + nodeAnchor.elWidth / 2, top: nodeAnchor.elTop }}
+            onPointerDown={(e) => startConnectDrag(e, "top")}
+            title="Drag to connect"
+          >
+            <Plus className="size-2.5 text-cyan-300" />
+          </button>
+          {/* Right Port */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-cyan-400 bg-slate-950 shadow-[0_0_8px_#06b6d4] hover:scale-125 hover:bg-cyan-400 transition cursor-crosshair flex items-center justify-center text-[10px] text-white"
+            style={{ left: nodeAnchor.elLeft + nodeAnchor.elWidth, top: nodeAnchor.elTop + nodeAnchor.elHeight / 2 }}
+            onPointerDown={(e) => startConnectDrag(e, "right")}
+            title="Drag to connect"
+          >
+            <Plus className="size-2.5 text-cyan-300" />
+          </button>
+          {/* Bottom Port */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-cyan-400 bg-slate-950 shadow-[0_0_8px_#06b6d4] hover:scale-125 hover:bg-cyan-400 transition cursor-crosshair flex items-center justify-center text-[10px] text-white"
+            style={{ left: nodeAnchor.elLeft + nodeAnchor.elWidth / 2, top: nodeAnchor.elTop + nodeAnchor.elHeight }}
+            onPointerDown={(e) => startConnectDrag(e, "bottom")}
+            title="Drag to connect"
+          >
+            <Plus className="size-2.5 text-cyan-300" />
+          </button>
+          {/* Left Port */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-cyan-400 bg-slate-950 shadow-[0_0_8px_#06b6d4] hover:scale-125 hover:bg-cyan-400 transition cursor-crosshair flex items-center justify-center text-[10px] text-white"
+            style={{ left: nodeAnchor.elLeft, top: nodeAnchor.elTop + nodeAnchor.elHeight / 2 }}
+            onPointerDown={(e) => startConnectDrag(e, "left")}
+            title="Drag to connect"
+          >
+            <Plus className="size-2.5 text-cyan-300" />
+          </button>
+        </div>
+      )}
+
+      {/* Active Connecting Wire Overlay */}
+      {connectDrag && (
+        <svg className="pointer-events-none absolute inset-0 size-full z-30 overflow-visible">
+          <defs>
+            <marker
+              id="drag-arrowhead"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#38bdf8" />
+            </marker>
+          </defs>
+          <path
+            d={`M ${connectDrag.startX} ${connectDrag.startY} C ${connectDrag.startX + (connectDrag.currentX - connectDrag.startX) / 2} ${connectDrag.startY}, ${connectDrag.startX + (connectDrag.currentX - connectDrag.startX) / 2} ${connectDrag.currentY}, ${connectDrag.currentX} ${connectDrag.currentY}`}
+            stroke="#38bdf8"
+            strokeWidth="2.5"
+            strokeDasharray="6 4"
+            fill="none"
+            markerEnd="url(#drag-arrowhead)"
+            className="animate-pulse"
+          />
+        </svg>
+      )}
+
+      {/* Floating Multi-Select Batch Action Bar */}
+      {batchSelected && batchSelected.length > 1 && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="stage-batch-toolbar absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full border border-primary/40 bg-card/95 px-4 py-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 text-xs select-none animate-in fade-in slide-in-from-top-3"
+        >
+          <div className="flex items-center gap-1.5 font-semibold text-foreground pr-2 border-r border-border">
+            <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
+              {batchSelected.length}
+            </span>
+            <span>Nodes Selected</span>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowBatchColors(!showBatchColors)}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 font-medium hover:bg-accent transition"
+            >
+              <Palette className="size-3.5 text-primary" />
+              <span>Color</span>
+              <ChevronDown className="size-3 text-muted-foreground" />
+            </button>
+            {showBatchColors && (
+              <div className="absolute left-0 top-full mt-2 grid grid-cols-4 gap-1.5 rounded-xl border border-border bg-card p-2 shadow-xl z-40 min-w-[140px]">
+                {[
+                  { id: "default", bg: "#64748b", title: "Default" },
+                  { id: "blue", bg: "#3b82f6", title: "Blue" },
+                  { id: "emerald", bg: "#10b981", title: "Emerald" },
+                  { id: "amber", bg: "#f59e0b", title: "Amber" },
+                  { id: "rose", bg: "#f43f5e", title: "Rose" },
+                  { id: "violet", bg: "#8b5cf6", title: "Violet" },
+                  { id: "cyan", bg: "#06b6d4", title: "Cyan" },
+                  { id: "slate", bg: "#334155", title: "Slate" },
+                ].map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      callbacks.current.onBatchStyleNodes?.(batchSelected.map((n) => n.id), c.id);
+                      setShowBatchColors(false);
+                    }}
+                    style={{ backgroundColor: c.bg }}
+                    className="size-5 rounded-full border border-white/20 hover:scale-125 transition-transform shadow-sm"
+                    title={c.title}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => {
+              const title = prompt("Enter Group / Subgraph Title:", "Module");
+              if (title !== null) {
+                callbacks.current.onWrapInSubgraph?.(batchSelected.map((n) => n.id), title || "Group");
+                setBatchSelected(null);
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 font-medium text-foreground hover:bg-accent transition"
+            title="Wrap selected nodes in a Subgraph container"
+          >
+            <FolderPlus className="size-3.5 text-cyan-400" />
+            <span>Group</span>
+          </button>
+
+          <button
+            onClick={() => {
+              callbacks.current.onBatchDuplicateNodes?.(batchSelected.map((n) => n.id));
+              setBatchSelected(null);
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 font-medium text-foreground hover:bg-accent transition"
+            title="Duplicate selected nodes"
+          >
+            <Copy className="size-3.5 text-emerald-400" />
+            <span>Duplicate</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (confirm(`Delete ${batchSelected.length} selected nodes?`)) {
+                callbacks.current.onBatchDeleteNodes?.(batchSelected.map((n) => n.id));
+                setBatchSelected(null);
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 font-medium text-rose-400 hover:bg-rose-500/20 transition"
+            title="Delete all selected nodes"
+          >
+            <Trash2 className="size-3.5" />
+            <span>Delete</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setBatchSelected(null);
+              callbacks.current.onSelect?.(null);
+            }}
+            className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition ml-1"
+            title="Deselect all (Esc)"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
       )}
 
@@ -1040,30 +1442,136 @@ export default function CanvasStage({
         />
       )}
       {minimap && thumbnail && (
-        <button
+        <div
+          ref={minimapRef}
           aria-label="Minimap navigation"
-          className="absolute bottom-16 right-3 hidden h-24 w-36 overflow-hidden rounded-md border bg-card/90 p-2 md:block shadow-2xl backdrop-blur-md"
-          onClick={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            const b = getContentBounds();
-            const x = b.x + ((e.clientX - r.left) / r.width) * b.w,
-              y = b.y + ((e.clientY - r.top) / r.height) * b.h;
-            camera.current.x =
-              stageRef.current.clientWidth / 2 - x * camera.current.z;
-            camera.current.y =
-              stageRef.current.clientHeight / 2 - y * camera.current.z;
-            apply();
-          }}
+          onPointerDown={handleMinimapPointerDown}
+          className="absolute bottom-16 right-3 hidden h-28 w-44 overflow-hidden rounded-xl border border-slate-700/60 bg-card/95 p-2 md:block shadow-2xl backdrop-blur-xl ring-1 ring-white/10 select-none cursor-pointer"
         >
-          <img
-            src={thumbnail}
-            alt="Diagram minimap"
-            className="size-full object-contain opacity-85"
-          />
-          <span className="absolute bottom-1 right-1 rounded bg-background/80 px-1 text-[9px] font-medium text-muted-foreground">
-            MINIMAP
-          </span>
-        </button>
+          <div className="relative size-full overflow-hidden rounded-lg bg-black/40">
+            <img
+              src={thumbnail}
+              alt="Diagram minimap"
+              className="size-full object-contain opacity-75 pointer-events-none"
+            />
+            {minimapViewport && (
+              <div
+                className="absolute border-2 border-cyan-400 bg-cyan-500/25 rounded shadow-[0_0_10px_rgba(6,182,212,0.5)] cursor-grab active:cursor-grabbing pointer-events-none transition-transform"
+                style={{
+                  left: `${minimapViewport.left}%`,
+                  top: `${minimapViewport.top}%`,
+                  width: `${minimapViewport.width}%`,
+                  height: `${minimapViewport.height}%`,
+                }}
+              />
+            )}
+          </div>
+          <div className="absolute bottom-2.5 right-3 flex items-center gap-1 rounded bg-background/90 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest pointer-events-none">
+            <MapIcon className="size-2.5 text-primary" /> RADAR
+          </div>
+        </div>
+      )}
+
+      {/* Node Quick Search Modal */}
+      {searchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/50 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setSearchOpen(false)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-border/80 bg-card text-card-foreground shadow-2xl ring-1 ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+              <Search className="size-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchIndex(0);
+                }}
+                placeholder="Search diagram nodes by ID or label..."
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                autoFocus
+                onKeyDown={(e) => {
+                  const filtered = getDiagramNodes().filter(
+                    (n) =>
+                      !searchQuery ||
+                      n.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      n.label.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+                  if (e.key === "Escape") {
+                    setSearchOpen(false);
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    if (filtered.length > 0) {
+                      setSearchIndex((prev) => (prev + 1) % filtered.length);
+                    }
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    if (filtered.length > 0) {
+                      setSearchIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                    }
+                  } else if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (filtered.length > 0) {
+                      const target = filtered[searchIndex] || filtered[0];
+                      jumpToNode(target);
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-accent"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="max-h-64 overflow-y-auto p-2 space-y-1">
+              {getDiagramNodes()
+                .filter(
+                  (n) =>
+                    !searchQuery ||
+                    n.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    n.label.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((node, idx) => {
+                  const isSelected = idx === searchIndex;
+                  return (
+                    <button
+                      key={node.id}
+                      onClick={() => jumpToNode(node)}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${
+                        isSelected
+                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                          : "hover:bg-accent text-foreground"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{node.label}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{node.id}</span>
+                      </div>
+                      <span className="text-[10px] text-primary font-medium flex items-center gap-1">
+                        Jump <ArrowUpRight className="size-3" />
+                      </span>
+                    </button>
+                  );
+                })}
+              {getDiagramNodes().filter(
+                (n) =>
+                  !searchQuery ||
+                  n.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  n.label.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 && (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  No matching nodes found
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <div className={`absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border px-2.5 py-1 shadow-2xl backdrop-blur-xl ${
@@ -1184,6 +1692,15 @@ export default function CanvasStage({
         >
           <MousePointer2 />
         </Tool>
+        <span className="mx-1 h-4 border-l border-border/80" />
+        <Tool title="Search nodes (Cmd/Ctrl+P)" onClick={() => setSearchOpen(true)}>
+          <Search />
+        </Tool>
+        {callbacks.current.onOpenExportStudio && (
+          <Tool title="Export Studio" onClick={callbacks.current.onOpenExportStudio}>
+            <Sparkles className="text-cyan-400" />
+          </Tool>
+        )}
       </div>
     </div>
   );

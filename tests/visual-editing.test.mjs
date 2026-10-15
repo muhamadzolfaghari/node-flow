@@ -10,6 +10,9 @@ import {
   changeFlowchartNodeShape,
   getFlowchartNodeShape,
   styleFlowchartNode,
+  batchStyleFlowchartNodes,
+  wrapInSubgraph,
+  batchDeleteFlowchartNodes,
   removeFlowchartNodeStyle,
   getFlowchartDirection,
   changeFlowchartDirection,
@@ -262,6 +265,33 @@ test("reading and updating diagram look and theme frontmatter", () => {
   source = updateDiagramConfig(source, { theme: "default" });
   assert.deepEqual(getDiagramConfig(source), { look: "classic", theme: "default" });
   assert.doesNotMatch(source, /^---/m);
+});
+
+test("multi-node batch operations: batch styling, wrap in subgraph, and batch deletion", () => {
+  const base = `flowchart TD
+  A["Node A"] --> B["Node B"]
+  B --> C["Node C"]
+  C --> D["Node D"]`;
+
+  // 1. Batch Styling
+  const styled = batchStyleFlowchartNodes(base, ["A", "B"], "emerald");
+  assert.match(styled, /style A fill:#064e3b/);
+  assert.match(styled, /style B fill:#064e3b/);
+  assert.doesNotMatch(styled, /style C/);
+
+  // 2. Wrap in Subgraph
+  const grouped = wrapInSubgraph(base, ["B", "C"], "Services Subsystem");
+  assert.match(grouped, /subgraph sub_\w+ \["Services Subsystem"\]/);
+  assert.match(grouped, /B/);
+  assert.match(grouped, /C/);
+  assert.match(grouped, /end/);
+
+  // 3. Batch Deletion
+  const deleted = batchDeleteFlowchartNodes(base, ["B", "C"]);
+  assert.match(deleted, /A/);
+  assert.match(deleted, /D/);
+  assert.doesNotMatch(deleted, /B\["Node B"\]/);
+  assert.doesNotMatch(deleted, /C\["Node C"\]/);
 });
 
 test("sequence diagram visual modeling: participants, messages, deletion", () => {

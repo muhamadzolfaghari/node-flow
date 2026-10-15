@@ -108,6 +108,7 @@ import { useWorkspace } from "../hooks/useWorkspace.jsx";
 import { useDocumentPreview } from "../hooks/useDocumentPreview.js";
 import { useDiagramAssistant } from "../hooks/useDiagramAssistant.js";
 import { Exporter } from "../components/exporter.js";
+import ExportStudioModal from "../components/ExportStudioModal.jsx";
 import { StorageManager } from "../components/storage.js";
 import { formatMermaidCode } from "../utils/mermaid-formatter.js";
 import { SUPPORTED_DIAGRAM_TYPES } from "../utils/importers/describe-to-diagram.js";
@@ -123,6 +124,10 @@ import {
   SHAPES,
   COLOR_PRESETS,
   styleFlowchartNode,
+  batchStyleFlowchartNodes,
+  wrapInSubgraph,
+  batchDeleteFlowchartNodes,
+  batchDuplicateFlowchartNodes,
   ARROW_STYLES,
   addFlowchartChild,
   FLOWCHART_DIRECTIONS,
@@ -444,7 +449,8 @@ export default function Studio() {
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
-    [presentation, setPresentation] = useState(false);
+    [presentation, setPresentation] = useState(false),
+    [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
   const assistant = useDiagramAssistant();
   const preview = useDocumentPreview(document, theme, view);
   const definition = getFormat(document?.format),
@@ -5650,6 +5656,10 @@ export default function Studio() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Current file</DropdownMenuLabel>
+              <Item onSelect={() => setIsExportStudioOpen(true)} icon={Sparkles} className="font-semibold text-primary">
+                Export Studio...
+              </Item>
+              <DropdownMenuSeparator />
               <Item onSelect={() => doExport("source")}>
                 Original format source
               </Item>
@@ -6550,25 +6560,83 @@ export default function Studio() {
                         say(e.message);
                       }
                     }}
-                    onConnectNodes={(targetRawId) => {
-                      if (!isFlowchart(document) || !nodeId) return;
-                      const cleanToId = targetRawId.match(/^flowchart-(.+)-\d+$/)?.[1] || targetRawId;
+                    onConnectNodes={(fromOrTo, maybeTo) => {
+                      if (!isFlowchart(document)) return;
+                      const from = maybeTo ? fromOrTo : nodeId;
+                      const to = maybeTo ? maybeTo : fromOrTo;
+                      if (!from || !to) return;
+                      const cleanFromId = from.match(/^flowchart-(.+)-\d+$/)?.[1] || from;
+                      const cleanToId = to.match(/^flowchart-(.+)-\d+$/)?.[1] || to;
                       try {
                         updateSource(
                           document.id,
                           connectFlowchartNodes(
                             document.source,
-                            nodeId,
+                            cleanFromId,
                             cleanToId,
                             "",
                             edgeArrow || "solid",
                           ),
                         );
-                        say(`Connected ${nodeId} to ${cleanToId}`);
+                        say(`Connected ${cleanFromId} → ${cleanToId}`);
                       } catch (e) {
                         say(e.message);
                       }
                     }}
+                    onBatchStyleNodes={(ids, colorKey) => {
+                      if (!isFlowchart(document) || !ids?.length) return;
+                      try {
+                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        updateSource(
+                          document.id,
+                          batchStyleFlowchartNodes(document.source, cleanIds, colorKey)
+                        );
+                        say(`Styled ${cleanIds.length} nodes with ${colorKey}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onWrapInSubgraph={(ids, title) => {
+                      if (!isFlowchart(document) || !ids?.length) return;
+                      try {
+                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        updateSource(
+                          document.id,
+                          wrapInSubgraph(document.source, cleanIds, title)
+                        );
+                        say(`Grouped ${cleanIds.length} nodes in "${title}"`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onBatchDeleteNodes={(ids) => {
+                      if (!isFlowchart(document) || !ids?.length) return;
+                      try {
+                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        updateSource(
+                          document.id,
+                          batchDeleteFlowchartNodes(document.source, cleanIds)
+                        );
+                        setSelected(null);
+                        say(`Deleted ${cleanIds.length} nodes`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onBatchDuplicateNodes={(ids) => {
+                      if (!isFlowchart(document) || !ids?.length) return;
+                      try {
+                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        updateSource(
+                          document.id,
+                          batchDuplicateFlowchartNodes(document.source, cleanIds)
+                        );
+                        say(`Duplicated ${cleanIds.length} nodes`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onOpenExportStudio={() => setIsExportStudioOpen(true)}
                     isGeospatial={
                       document?.format === "geojson" ||
                       /vector_tile|FeatureCollection|Topology|Shapefile|map_layer/i.test(document?.source || "")
@@ -7123,6 +7191,15 @@ export default function Studio() {
         title={contextMenu.title}
         items={contextMenu.items}
         onClose={() => setContextMenu((c) => ({ ...c, isOpen: false }))}
+      />
+      <ExportStudioModal
+        isOpen={isExportStudioOpen}
+        onClose={() => setIsExportStudioOpen(false)}
+        containerRef={preview.containerRef}
+        title={document?.name?.replace(/\.[^.]+$/, "") || "diagram"}
+        source={document?.source || ""}
+        format={document?.format || "mermaid"}
+        currentTheme={theme}
       />
     </div>
   );

@@ -306,6 +306,50 @@ export function removeFlowchartNodeStyle(source, id) {
   return lines.join("\n");
 }
 
+export function batchStyleFlowchartNodes(source, ids, colorKey) {
+  if (!Array.isArray(ids) || ids.length === 0) return source;
+  let updated = source;
+  for (const id of ids) {
+    if (id) {
+      updated = styleFlowchartNode(updated, id, colorKey);
+    }
+  }
+  return updated;
+}
+
+export function wrapInSubgraph(source, ids, title = "Group") {
+  if (!Array.isArray(ids) || ids.length === 0) return source;
+  const safeId = "sub_" + Math.random().toString(36).slice(2, 6);
+  const cleanTitle = safeLabel(title || "Group");
+  const nodesBlock = ids.map((id) => `    ${id}`).join("\n");
+  const subgraphStr = `\n  subgraph ${safeId} ["${cleanTitle}"]\n${nodesBlock}\n  end\n`;
+  return `${source.trimEnd()}\n${subgraphStr}`;
+}
+
+export function batchDeleteFlowchartNodes(source, ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return source;
+  let updated = source;
+  for (const id of ids) {
+    if (id) {
+      updated = deleteFlowchartNode(updated, id);
+    }
+  }
+  return updated;
+}
+
+export function batchDuplicateFlowchartNodes(source, ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return source;
+  let updated = source;
+  for (const id of ids) {
+    if (id) {
+      try {
+        updated = duplicateFlowchartNode(updated, id);
+      } catch {}
+    }
+  }
+  return updated;
+}
+
 export function duplicateFlowchartNode(source, id) {
   const nodes = flowchartNodes(source);
   const existing = nodes.find((n) => n.id === id);
