@@ -43,6 +43,7 @@ import {
   Kanban,
   Calendar,
   Crosshair,
+  Clock,
 } from "lucide-react";
 import {
   Button,
@@ -176,6 +177,11 @@ import {
   quadrantPoints,
   addQuadrantPoint,
   deleteQuadrantPoint,
+  isTimeline,
+  timelineSections,
+  addTimelineSection,
+  addTimelineEvent,
+  deleteTimelineEvent,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -303,6 +309,11 @@ export default function Studio() {
     [quadLabel, setQuadLabel] = useState(""),
     [quadX, setQuadX] = useState("0.5"),
     [quadY, setQuadY] = useState("0.5"),
+    // Timeline modeling state
+    [timelineSecName, setTimelineSecName] = useState(""),
+    [timelineTargetSec, setTimelineTargetSec] = useState(""),
+    [timelineEvtName, setTimelineEvtName] = useState(""),
+    [timelineEvtDesc, setTimelineEvtDesc] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -343,6 +354,9 @@ export default function Studio() {
   }, [document?.source]);
   const quadPoints = useMemo(() => {
     return isQuadrantChart(document) ? quadrantPoints(document.source) : [];
+  }, [document?.source]);
+  const timelineSecs = useMemo(() => {
+    return isTimeline(document) ? timelineSections(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3255,6 +3269,177 @@ export default function Studio() {
                         Point
                       </Button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isTimeline(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Clock className="size-3.5 text-primary" />
+                  <span>Timeline & timing tools</span>
+                </div>
+
+                {timelineSecs.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Timeline periods ({timelineSecs.length} sections)
+                    </span>
+                    <div className="space-y-2.5 max-h-48 overflow-auto">
+                      {timelineSecs.map((sec, sIdx) => (
+                        <div key={sIdx} className="rounded border bg-muted/20 p-2">
+                          <span className="font-semibold text-xs text-foreground block mb-1">
+                            {sec.name} ({sec.events.length})
+                          </span>
+                          {sec.events.length === 0 ? (
+                            <span className="text-[11px] text-muted-foreground italic">
+                              No events in this period
+                            </span>
+                          ) : (
+                            <div className="space-y-1">
+                              {sec.events.map((evt, eIdx) => (
+                                <div
+                                  key={eIdx}
+                                  className="flex items-center justify-between gap-1 text-[11px] rounded bg-background/80 px-2 py-1 border"
+                                >
+                                  <div className="truncate">
+                                    <span className="font-medium">
+                                      {evt.title}
+                                    </span>
+                                    {evt.description && (
+                                      <span className="text-muted-foreground text-[10px] ml-1.5">
+                                        — {evt.description}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      updateSource(
+                                        document.id,
+                                        deleteTimelineEvent(
+                                          document.source,
+                                          evt.title,
+                                        ),
+                                      );
+                                      say(`Removed event "${evt.title}"`);
+                                    }}
+                                  >
+                                    <Trash2 className="size-2.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add period section
+                  </span>
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="New timeline section name"
+                      className="h-8 text-xs flex-1"
+                      placeholder="Period (e.g. Q3 2026 : Launch)"
+                      value={timelineSecName}
+                      onChange={(e) => setTimelineSecName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            addTimelineSection(
+                              document.source,
+                              timelineSecName,
+                            ),
+                          );
+                          setTimelineSecName("");
+                          say("Period added");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Section
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add timeline event
+                  </span>
+                  <div className="grid gap-2">
+                    <select
+                      aria-label="Target section for timeline event"
+                      className="h-8 rounded-md border bg-background px-2 text-xs"
+                      value={timelineTargetSec}
+                      onChange={(e) => setTimelineTargetSec(e.target.value)}
+                    >
+                      <option value="">Select period…</option>
+                      {timelineSecs.map((s, idx) => (
+                        <option key={idx} value={s.name}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Timeline event title"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Event title (e.g. Beta release)"
+                        value={timelineEvtName}
+                        onChange={(e) => setTimelineEvtName(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Timeline event description"
+                        className="h-8 text-xs w-36 shrink-0"
+                        placeholder="Details (optional)"
+                        value={timelineEvtDesc}
+                        onChange={(e) => setTimelineEvtDesc(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        try {
+                          const target =
+                            timelineTargetSec ||
+                            (timelineSecs[0] ? timelineSecs[0].name : "");
+                          updateSource(
+                            document.id,
+                            addTimelineEvent(
+                              document.source,
+                              target,
+                              timelineEvtName,
+                              timelineEvtDesc,
+                            ),
+                          );
+                          setTimelineEvtName("");
+                          setTimelineEvtDesc("");
+                          say("Event added to timeline");
+                        } catch (err) {
+                          say(err.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3.5" />
+                      Add event
+                    </Button>
                   </div>
                 </div>
               </div>

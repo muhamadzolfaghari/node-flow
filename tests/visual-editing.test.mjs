@@ -74,6 +74,11 @@ import {
   quadrantPoints,
   addQuadrantPoint,
   deleteQuadrantPoint,
+  isTimeline,
+  timelineSections,
+  addTimelineSection,
+  addTimelineEvent,
+  deleteTimelineEvent,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -525,6 +530,46 @@ test("quadrant chart visual modeling: points, coordinates, deletion", () => {
   assert.equal(pts.some((p) => p.label === "Real-Time Sync"), true);
   assert.equal(pts.some((p) => p.label === "UML Templates"), false);
 });
+
+test("timeline visual modeling: sections, events, descriptions, deletion", () => {
+  let tl = `timeline
+    title Multi-Quarter Roadmap
+    section Q1 2026 : Foundation
+        Core architecture : MVP specs
+        Security review : Threat modeling
+    section Q2 2026 : Scale
+        Backend API : Database migration`;
+
+  assert.equal(isTimeline({ format: "mermaid", source: tl }), true);
+  let secs = timelineSections(tl);
+  assert.equal(secs.length, 2);
+  assert.equal(secs[0].name, "Q1 2026 : Foundation");
+  assert.equal(secs[0].events.length, 2);
+  assert.equal(secs[0].events[0].title, "Core architecture");
+  assert.equal(secs[0].events[0].description, "MVP specs");
+
+  tl = addTimelineSection(tl, "Q3 2026 : Launch");
+  assert.match(tl, /section Q3 2026 : Launch/);
+
+  tl = addTimelineEvent(
+    tl,
+    "Q3 2026 : Launch",
+    "Public Beta",
+    "Worldwide rollout",
+  );
+  assert.match(tl, /Public Beta : Worldwide rollout/);
+
+  tl = deleteTimelineEvent(tl, "Security review");
+  assert.doesNotMatch(tl, /Security review/);
+
+  secs = timelineSections(tl);
+  assert.equal(secs.length, 3);
+  const launchSec = secs.find((s) => s.name.includes("Q3 2026"));
+  assert.ok(launchSec);
+  assert.equal(launchSec.events.length, 1);
+  assert.equal(launchSec.events[0].title, "Public Beta");
+});
+
 
 
 

@@ -1358,6 +1358,102 @@ export function deleteQuadrantPoint(source, label) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* TIMELINE & TIMING DIAGRAM VISUAL MODELING                                  */
+/* -------------------------------------------------------------------------- */
+
+export const isTimeline = (doc) =>
+  doc?.format === "mermaid" && /^\s*timeline\b/m.test(doc.source);
+
+export function timelineSections(source) {
+  const sections = [];
+  let currentSection = { name: "General", events: [] };
+  sections.push(currentSection);
+
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line)) continue;
+    const secMatch = line.match(/^\s*section\s+(.+)$/i);
+    if (secMatch) {
+      currentSection = { name: secMatch[1].trim(), events: [] };
+      sections.push(currentSection);
+      continue;
+    }
+    const evtMatch = line.match(/^\s{4,8}([^:\n]+?)(?:\s*:\s*(.+))?$/);
+    if (
+      evtMatch &&
+      !/^(title|accTitle|accDescr)\b/i.test(evtMatch[1].trim())
+    ) {
+      currentSection.events.push({
+        title: evtMatch[1].trim(),
+        description: (evtMatch[2] || "").trim(),
+      });
+    }
+  }
+  return sections.filter((s) => s.name !== "General" || s.events.length > 0);
+}
+
+export function addTimelineSection(source, sectionName) {
+  if (!sectionName.trim()) throw new Error("Section name required.");
+  return `${source.trimEnd()}\n\n    section ${safeLabel(sectionName.trim())}\n`;
+}
+
+export function addTimelineEvent(source, sectionName, eventName, desc = "") {
+  if (!eventName.trim()) throw new Error("Event title required.");
+  const descPart = desc.trim() ? ` : ${safeLabel(desc.trim())}` : "";
+  const eventLine = `        ${safeLabel(eventName.trim())}${descPart}`;
+
+  const lines = source.split("\n");
+  if (!sectionName) {
+    return `${source.trimEnd()}\n${eventLine}\n`;
+  }
+
+  let secIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (
+      new RegExp(
+        `^\\s*section\\s+${escapeRegex(sectionName.trim())}\\b`,
+        "i",
+      ).test(l)
+    ) {
+      secIdx = i;
+      break;
+    }
+  }
+
+  if (secIdx === -1) {
+    return `${source.trimEnd()}\n\n    section ${safeLabel(sectionName.trim())}\n${eventLine}\n`;
+  }
+
+  let insertAt = secIdx + 1;
+  while (insertAt < lines.length) {
+    const l = lines[insertAt];
+    if (/^\s*section\b/i.test(l)) break;
+    insertAt++;
+  }
+  while (insertAt > secIdx + 1 && !lines[insertAt - 1].trim()) {
+    insertAt--;
+  }
+
+  lines.splice(insertAt, 0, eventLine);
+  return lines.join("\n");
+}
+
+export function deleteTimelineEvent(source, eventName) {
+  if (!eventName.trim()) throw new Error("Event title required.");
+  const lines = source
+    .split("\n")
+    .filter(
+      (l) =>
+        !new RegExp(
+          `^\\s{4,8}${escapeRegex(eventName.trim())}\\b`,
+          "i",
+        ).test(l),
+    );
+  return lines.join("\n");
+}
+
+
 
 
 
