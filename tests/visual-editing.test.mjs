@@ -11,6 +11,9 @@ import {
   getFlowchartNodeShape,
   styleFlowchartNode,
   removeFlowchartNodeStyle,
+  getFlowchartDirection,
+  changeFlowchartDirection,
+  duplicateFlowchartNode,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -76,6 +79,29 @@ test("styling a node applies or replaces style directives", () => {
   const unstyled = removeFlowchartNodeStyle(updated, "B");
   assert.equal(unstyled.includes("style B"), false);
 });
+
+test("detecting and changing flowchart layout direction", () => {
+  const source = "flowchart TD\n  A --> B";
+  assert.equal(getFlowchartDirection(source), "TD");
+  const changedLR = changeFlowchartDirection(source, "LR");
+  assert.match(changedLR, /^flowchart LR/);
+  assert.equal(getFlowchartDirection(changedLR), "LR");
+
+  const changedBT = changeFlowchartDirection(changedLR, "BT");
+  assert.match(changedBT, /^flowchart BT/);
+
+  assert.throws(() => changeFlowchartDirection(source, "INVALID"), /Invalid flowchart direction/);
+});
+
+test("duplicating a node preserves shape and clones styles", () => {
+  const source = "flowchart LR\n  A([Start]) --> B[(Database)]\n  style B fill:#064e3b";
+  const { source: updated, duplicateId, duplicateLabel } = duplicateFlowchartNode(source, "B");
+  assert.equal(duplicateId, "node3");
+  assert.equal(duplicateLabel, "Copy of Database");
+  assert.match(updated, /node3\[\("Copy of Database"\)\]/);
+  assert.match(updated, /style node3 fill:#064e3b/);
+});
+
 
 
 

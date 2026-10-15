@@ -9,7 +9,7 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
 - **Projects and files:** create and rename projects, import source files or folders, switch document tabs, duplicate and rename files, and search the explorer.
 - **Code editor:** CodeMirror with language highlighting, Mermaid completions, bracket matching, folding, search, undo/redo, and independent document histories.
 - **Live previews:** Mermaid and Graphviz render natively. Other supported languages retain their original editable source and derive a Mermaid preview. Diagnostics explain parser failures and conversion limits. Invalid edits retain the last valid preview for that file.
-- **Visual flowchart editing:** select labeled nodes, rename labels, switch node shapes (8 shapes: rectangle, rounded, stadium, subroutine, cylinder, circle, diamond, hexagon), apply color accent palettes, connect existing nodes with customizable arrow styles (solid, dotted, thick, open, etc.), quick-add connected child steps, and delete nodes with clean edge cascade. Changes update the Mermaid source in real time. Other diagram types remain editable through source.
+- **Visual flowchart editing:** select labeled nodes, rename labels, switch node shapes (8 shapes: rectangle, rounded, stadium, subroutine, cylinder, circle, diamond, hexagon), apply color accent palettes, switch layout direction (TD, LR, BT, RL), duplicate nodes with style cloning, connect existing nodes with customizable arrow styles (solid, dotted, thick, open, etc.), quick-add connected child steps, and delete nodes with clean edge cascade. Changes update the Mermaid source in real time. Other diagram types remain editable through source.
 - **Canvas:** pan, zoom, fit, center, minimap navigation, grid styles, wheel pan/zoom modes, arrow-key navigation, pinch zoom, and presentation mode with a laser pointer.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
 - **Project portability:** download a `.atlas` project backup or a ZIP of source files. Restore backups in the workspace or Projects page.
@@ -109,6 +109,7 @@ See [verification results and limits](docs/VERIFICATION.md) and the [desktop and
 | Zoom | `+` / `−` |
 | Pan | Drag or arrow keys; Shift + arrows for larger steps |
 | Quick-add child step | `Tab` / `Enter` (canvas with node selected) |
+| Duplicate selected node | `Ctrl/Cmd + D` (canvas with node selected) |
 | Delete selected node | `Delete` / `Backspace` (canvas with node selected) |
 | Keyboard help | `?` outside an editor |
 

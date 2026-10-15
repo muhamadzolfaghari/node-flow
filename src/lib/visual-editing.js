@@ -16,9 +16,34 @@ export const SHAPES = {
   hexagon: { open: "{{", close: "}}", label: "Hexagon" },
 };
 
+export const FLOWCHART_DIRECTIONS = {
+  TD: { id: "TD", label: "Top to bottom (TD)" },
+  LR: { id: "LR", label: "Left to right (LR)" },
+  BT: { id: "BT", label: "Bottom to top (BT)" },
+  RL: { id: "RL", label: "Right to left (RL)" },
+};
+
 export const isFlowchart = (doc) =>
   doc?.format === "mermaid" &&
   /^\s*(flowchart|graph)\s+(TD|TB|BT|LR|RL)\b/m.test(doc.source);
+
+export function getFlowchartDirection(source) {
+  const match = source.match(/^\s*(?:flowchart|graph)\s+(TD|TB|BT|LR|RL)\b/m);
+  if (!match) return "TD";
+  const dir = match[1].toUpperCase();
+  return dir === "TB" ? "TD" : dir;
+}
+
+export function changeFlowchartDirection(source, newDir) {
+  const targetDir = newDir?.toUpperCase();
+  const valid = ["TD", "TB", "BT", "LR", "RL"].includes(targetDir);
+  if (!valid) throw new Error("Invalid flowchart direction.");
+  const pattern = /^(\s*(?:flowchart|graph)\s+)(TD|TB|BT|LR|RL)\b/m;
+  if (!pattern.test(source)) {
+    throw new Error("No flowchart direction directive found.");
+  }
+  return source.replace(pattern, `$1${targetDir}`);
+}
 
 export function flowchartNodes(source) {
   const nodes = new Map();
@@ -199,6 +224,29 @@ export function removeFlowchartNodeStyle(source, id) {
   const escaped = escapeRegex(id);
   const lines = source.split("\n").filter((line) => !new RegExp(`^\\s*style\\s+${escaped}\\b`).test(line));
   return lines.join("\n");
+}
+
+export function duplicateFlowchartNode(source, id) {
+  const nodes = flowchartNodes(source);
+  const existing = nodes.find((n) => n.id === id);
+  if (!existing) throw new Error("Node does not exist.");
+
+  let number = nodes.length + 1;
+  while (new RegExp(`\\bnode${number}\\b`).test(source)) number++;
+  const duplicateId = `node${number}`;
+  const shape = SHAPES[existing.shape] || SHAPES.rectangle;
+  const duplicateLabel = `Copy of ${existing.label}`;
+  const decl = `  ${duplicateId}${shape.open}"${safeLabel(duplicateLabel)}"${shape.close}`;
+
+  let updated = `${source.trimEnd()}\n${decl}\n`;
+
+  const escaped = escapeRegex(id);
+  const styleMatch = source.match(new RegExp(`^\\s*style\\s+${escaped}\\s+(.*)$`, "m"));
+  if (styleMatch) {
+    updated += `  style ${duplicateId} ${styleMatch[1]}\n`;
+  }
+
+  return { source: updated, duplicateId, duplicateLabel };
 }
 
 

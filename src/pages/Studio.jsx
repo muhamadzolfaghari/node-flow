@@ -98,6 +98,10 @@ import {
   styleFlowchartNode,
   ARROW_STYLES,
   addFlowchartChild,
+  FLOWCHART_DIRECTIONS,
+  getFlowchartDirection,
+  changeFlowchartDirection,
+  duplicateFlowchartNode,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -835,6 +839,32 @@ export default function Studio() {
                   Add connected step
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-1.5 w-full text-xs"
+                  disabled={!isFlowchart(document) || !nodeId}
+                  onClick={() => {
+                    try {
+                      const res = duplicateFlowchartNode(
+                        document.source,
+                        nodeId,
+                      );
+                      updateSource(document.id, res.source);
+                      setSelected({
+                        id: `flowchart-${res.duplicateId}-0`,
+                        label: res.duplicateLabel,
+                      });
+                      setLabel(res.duplicateLabel);
+                      say(`Duplicated node as ${res.duplicateId}`);
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  <Copy className="size-3.5" />
+                  Duplicate node
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   className="mt-1.5 w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -859,7 +889,34 @@ export default function Studio() {
             )}
             {isFlowchart(document) && (
               <div className="mt-5 border-t pt-4">
-                <p className="font-medium">Visual model tools</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">Visual model tools</p>
+                  <select
+                    aria-label="Flowchart layout direction"
+                    className="h-7 rounded-md border bg-background px-2 text-[11px]"
+                    value={getFlowchartDirection(document.source)}
+                    onChange={(e) => {
+                      try {
+                        updateSource(
+                          document.id,
+                          changeFlowchartDirection(
+                            document.source,
+                            e.target.value,
+                          ),
+                        );
+                        say(`Layout direction changed to ${e.target.value}`);
+                      } catch (err) {
+                        say(err.message);
+                      }
+                    }}
+                  >
+                    {Object.entries(FLOWCHART_DIRECTIONS).map(([key, val]) => (
+                      <option key={key} value={key}>
+                        {val.id} ({val.label.split(" ")[0]})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Input
                   aria-label="New node label"
                   className="mt-3 h-8 text-xs"
@@ -1543,6 +1600,24 @@ export default function Studio() {
                         );
                         setSelected(null);
                         say("Node removed");
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onDuplicateSelected={() => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      try {
+                        const res = duplicateFlowchartNode(
+                          document.source,
+                          nodeId,
+                        );
+                        updateSource(document.id, res.source);
+                        setSelected({
+                          id: `flowchart-${res.duplicateId}-0`,
+                          label: res.duplicateLabel,
+                        });
+                        setLabel(res.duplicateLabel);
+                        say(`Duplicated node as ${res.duplicateId}`);
                       } catch (e) {
                         say(e.message);
                       }

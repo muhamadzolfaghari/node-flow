@@ -26,6 +26,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     onSelect,
     onQuickAdd,
     onDeleteSelected,
+    onDuplicateSelected,
     presentation = false,
   },
   ref,
@@ -44,6 +45,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     onSelect,
     onQuickAdd,
     onDeleteSelected,
+    onDuplicateSelected,
     presentation,
     wheelMode,
   });
@@ -51,6 +53,7 @@ const CanvasStage = forwardRef(function CanvasStage(
     onSelect,
     onQuickAdd,
     onDeleteSelected,
+    onDuplicateSelected,
     presentation,
     wheelMode,
   };
@@ -225,14 +228,21 @@ const CanvasStage = forwardRef(function CanvasStage(
     stage.addEventListener("wheel", wheel, { passive: false });
     const keys = (e) => {
       if (
-        e.ctrlKey ||
-        e.metaKey ||
         e.altKey ||
         e.target.closest(
           'input,textarea,select,button,[contenteditable], [role="dialog"]',
         )
       )
         return;
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && key === "d") {
+        if (callbacks.current.onDuplicateSelected) {
+          e.preventDefault();
+          callbacks.current.onDuplicateSelected();
+          return;
+        }
+      }
+      if (e.ctrlKey || e.metaKey) return;
       if (key === "tab" || key === "enter") {
         if (callbacks.current.onQuickAdd) {
           e.preventDefault();
