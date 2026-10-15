@@ -9,7 +9,7 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
 - **Projects and files:** create and rename projects, import source files or folders, switch document tabs, duplicate and rename files, and search the explorer.
 - **Code editor:** CodeMirror with language highlighting, Mermaid completions, bracket matching, folding, search, undo/redo, and independent document histories.
 - **Live previews:** Mermaid and Graphviz render natively. Other supported languages retain their original editable source and derive a Mermaid preview. Diagnostics explain parser failures and conversion limits. Invalid edits retain the last valid preview for that file.
-- **Visual flowchart editing:** select labeled nodes, edit labels, add nodes, and connect existing nodes. Changes update the Mermaid source. Other diagram types remain editable through source.
+- **Visual flowchart editing:** select labeled nodes, rename labels, switch node shapes (8 shapes: rectangle, rounded, stadium, subroutine, cylinder, circle, diamond, hexagon), apply color accent palettes, connect existing nodes with customizable arrow styles (solid, dotted, thick, open, etc.), quick-add connected child steps, and delete nodes with clean edge cascade. Changes update the Mermaid source in real time. Other diagram types remain editable through source.
 - **Canvas:** pan, zoom, fit, center, minimap navigation, grid styles, wheel pan/zoom modes, arrow-key navigation, pinch zoom, and presentation mode with a laser pointer.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
 - **Project portability:** download a `.atlas` project backup or a ZIP of source files. Restore backups in the workspace or Projects page.
@@ -56,7 +56,7 @@ Additional templates cover ER schemas, C4 context, cloud topology, product journ
 
 - Original editable source in its file format.
 - Derived Mermaid source, except native Graphviz previews.
-- SVG vector diagrams.
+- SVG vector diagrams with embedded diagram source metadata (`<metadata>` and XML comments) so exported `.svg` files can be dropped back into the studio to resume editing with 100% fidelity.
 - PNG at 2× or 4× scale; dimensions depend on the diagram.
 - PDF with a high-resolution raster image (not vector PDF).
 - Standalone HTML containing the rendered diagram and navigation controls.
@@ -108,6 +108,8 @@ See [verification results and limits](docs/VERIFICATION.md) and the [desktop and
 | Fit / center / reset canvas | `F` / `C` / `0` |
 | Zoom | `+` / `−` |
 | Pan | Drag or arrow keys; Shift + arrows for larger steps |
+| Quick-add child step | `Tab` / `Enter` (canvas with node selected) |
+| Delete selected node | `Delete` / `Backspace` (canvas with node selected) |
 | Keyboard help | `?` outside an editor |
 
 ## Development
