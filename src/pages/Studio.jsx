@@ -1299,8 +1299,28 @@ export default function Studio() {
             },
             {
               id: "theme-default",
-              label: "Theme: Light (Default)",
+              label: "Theme: Light (Paper)",
               onClick: () => setTheme("default"),
+            },
+            {
+              id: "theme-nord",
+              label: "Theme: Nord (Arctic Frost)",
+              onClick: () => setTheme("nord"),
+            },
+            {
+              id: "theme-tokyo-night",
+              label: "Theme: Tokyo Night (Cyber Indigo)",
+              onClick: () => setTheme("tokyo-night"),
+            },
+            {
+              id: "theme-cyberpunk",
+              label: "Theme: Cyberpunk (Neon Gold)",
+              onClick: () => setTheme("cyberpunk"),
+            },
+            {
+              id: "theme-catppuccin",
+              label: "Theme: Catppuccin (Mocha Pastel)",
+              onClick: () => setTheme("catppuccin"),
             },
             {
               id: "theme-forest",
@@ -5965,13 +5985,20 @@ export default function Studio() {
                 aria-label="Diagram theme"
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                className="hidden h-7 rounded border bg-background px-1 text-[10px] sm:block"
+                className="hidden h-7 rounded border bg-background px-1.5 text-[10px] sm:block font-medium"
               >
-                {["dark", "default", "forest", "neutral"].map((t) => (
-                  <option key={t} value={t}>
-                    {t === "default"
-                      ? "Light"
-                      : t[0].toUpperCase() + t.slice(1)}
+                {[
+                  { id: "dark", label: "Dark (Studio)" },
+                  { id: "default", label: "Light (Paper)" },
+                  { id: "nord", label: "Nord (Arctic)" },
+                  { id: "tokyo-night", label: "Tokyo Night" },
+                  { id: "cyberpunk", label: "Cyberpunk" },
+                  { id: "catppuccin", label: "Catppuccin" },
+                  { id: "forest", label: "Forest" },
+                  { id: "neutral", label: "Neutral" },
+                ].map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
                   </option>
                 ))}
               </select>

@@ -53,6 +53,21 @@
 .studio-stage-wrap.theme-light {
   background: radial-gradient(circle at 50% 45%, rgba(14, 165, 233, 0.07) 0%, rgba(99, 102, 241, 0.03) 35%, transparent 70%), #f8fafc;
 }
+.studio-stage-wrap.theme-nord {
+  background: radial-gradient(circle at 50% 45%, rgba(136, 192, 208, 0.14) 0%, rgba(129, 161, 193, 0.06) 40%, transparent 75%), #242933;
+}
+.studio-stage-wrap.theme-tokyo-night {
+  background: radial-gradient(circle at 50% 45%, rgba(122, 162, 247, 0.15) 0%, rgba(187, 154, 247, 0.08) 35%, transparent 75%), #13141f;
+}
+.studio-stage-wrap.theme-cyberpunk {
+  background: radial-gradient(circle at 50% 45%, rgba(0, 240, 255, 0.15) 0%, rgba(252, 238, 10, 0.06) 35%, transparent 75%), #07080d;
+}
+.studio-stage-wrap.theme-catppuccin {
+  background: radial-gradient(circle at 50% 45%, rgba(203, 166, 247, 0.13) 0%, rgba(137, 180, 250, 0.07) 40%, transparent 75%), #181825;
+}
+.studio-stage-wrap.theme-forest {
+  background: radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.13) 0%, rgba(5, 150, 105, 0.06) 40%, transparent 75%), #031c15;
+}
 .dot-grid {
   background-image: radial-gradient(rgba(148, 163, 184, 0.35) 1.25px, transparent 1.25px);
   background-size: 24px 24px;

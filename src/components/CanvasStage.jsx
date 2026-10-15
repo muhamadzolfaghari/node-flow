@@ -681,12 +681,11 @@ export default function CanvasStage({
     };
   }, []);
   const isLight = theme === "default" || theme === "neutral";
+  const themeClass = isLight ? "theme-light" : `theme-${theme}`;
 
   return (
     <div
-      className={`studio-stage-wrap relative h-full min-h-[260px] w-full overflow-hidden transition-colors duration-300 ${
-        isLight ? "theme-light" : ""
-      }`}
+      className={`studio-stage-wrap relative h-full min-h-[260px] w-full overflow-hidden transition-colors duration-300 ${themeClass}`}
       onContextMenu={(e) => {
         if (callbacks.current.onContextMenu) {
           e.preventDefault();
