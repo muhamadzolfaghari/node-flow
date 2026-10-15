@@ -982,11 +982,15 @@ export default function Studio() {
   };
   const chooseNode = (node) => {
     setSelected(node);
-    setLabel(node.label);
-    setInspector(true);
-    setInspectorTab("properties");
+    if (node) {
+      setLabel(node.label || "");
+      setInspector(true);
+      setInspectorTab("properties");
+    } else {
+      setLabel("");
+    }
   };
-  const nodeId = selected?.id?.match(/^flowchart-(.+)-\d+$/)?.[1];
+  const nodeId = selected?.id?.match(/^flowchart-(.+)-\d+$/)?.[1] || selected?.id;
   const relatedEdges = useMemo(() => {
     if (!isFlowchart(document) || !nodeId) return [];
     return flowchartEdges(document.source).filter(
@@ -6452,6 +6456,29 @@ export default function Studio() {
                         say(e.message);
                       }
                     }}
+                    onConnectNodes={(targetRawId) => {
+                      if (!isFlowchart(document) || !nodeId) return;
+                      const cleanToId = targetRawId.match(/^flowchart-(.+)-\d+$/)?.[1] || targetRawId;
+                      try {
+                        updateSource(
+                          document.id,
+                          connectFlowchartNodes(
+                            document.source,
+                            nodeId,
+                            cleanToId,
+                            "",
+                            edgeArrow || "solid",
+                          ),
+                        );
+                        say(`Connected ${nodeId} to ${cleanToId}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    isGeospatial={
+                      document?.format === "geojson" ||
+                      /vector_tile|FeatureCollection|Topology|Shapefile|map_layer/i.test(document?.source || "")
+                    }
                     presentation={presentation}
                   />
                   {preview.error && (

@@ -22,6 +22,8 @@ import {
   Palette,
   Check,
   ChevronDown,
+  Link2,
+  Globe,
 } from "lucide-react";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 
@@ -40,16 +42,19 @@ export default function CanvasStage({
   onRenameNode,
   onChangeShape,
   onStyleNode,
+  onConnectNodes,
   onCanvasDoubleClick,
   onContextMenu,
   presentation = false,
+  isGeospatial = false,
 }) {
   const stageRef = useRef(null),
     canvasRef = useRef(null),
     camera = useRef({ x: 30, y: 30, z: 1 }),
     shouldFit = useRef(true),
     editInputRef = useRef(null),
-    spaceHeld = useRef(false);
+    spaceHeld = useRef(false),
+    marqueeRef = useRef(null);
   const [position, setPosition] = useState(camera.current),
     [size, setSize] = useState({ w: 1000, h: 700 }),
     [thumbnail, setThumbnail] = useState(""),
@@ -64,7 +69,9 @@ export default function CanvasStage({
     [editLabel, setEditLabel] = useState(""),
     [showShapes, setShowShapes] = useState(false),
     [showColors, setShowColors] = useState(false),
-    [showZoomMenu, setShowZoomMenu] = useState(false);
+    [showConnect, setShowConnect] = useState(false),
+    [showZoomMenu, setShowZoomMenu] = useState(false),
+    [marquee, setMarquee] = useState(null);
 
   const callbacks = useRef({
     onSelect,
@@ -74,6 +81,7 @@ export default function CanvasStage({
     onRenameNode,
     onChangeShape,
     onStyleNode,
+    onConnectNodes,
     onCanvasDoubleClick,
     onContextMenu,
     presentation,
@@ -89,6 +97,7 @@ export default function CanvasStage({
     onRenameNode,
     onChangeShape,
     onStyleNode,
+    onConnectNodes,
     onCanvasDoubleClick,
     onContextMenu,
     presentation,
@@ -351,10 +360,33 @@ export default function CanvasStage({
       moved = false;
     const down = (e) => {
       if (e.button !== 0) return;
+      if (e.target.closest?.(".stage-floating-toolbar, .studio-canvas-controls, button, input, select, form")) {
+        return;
+      }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       stage.setPointerCapture(e.pointerId);
       moved = false;
       setIsDragging(true);
+
+      // Shift + Drag in Pointer mode triggers Marquee box selection
+      if (e.shiftKey && callbacks.current.tool === "pointer" && !spaceHeld.current) {
+        marqueeRef.current = {
+          startX: e.clientX,
+          startY: e.clientY,
+          currentX: e.clientX,
+          currentY: e.clientY,
+        };
+        const sRect = stage.getBoundingClientRect();
+        setMarquee({
+          left: e.clientX - sRect.left,
+          top: e.clientY - sRect.top,
+          width: 0,
+          height: 0,
+        });
+        drag = null;
+        return;
+      }
+
       if (pointers.size === 2) {
         const [a, b] = [...pointers.values()];
         pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y) };
@@ -373,6 +405,20 @@ export default function CanvasStage({
         setLaser({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Handle active Marquee box drag
+      if (marqueeRef.current) {
+        marqueeRef.current.currentX = e.clientX;
+        marqueeRef.current.currentY = e.clientY;
+        const left = Math.min(marqueeRef.current.startX, e.clientX) - rect.left;
+        const top = Math.min(marqueeRef.current.startY, e.clientY) - rect.top;
+        const width = Math.abs(e.clientX - marqueeRef.current.startX);
+        const height = Math.abs(e.clientY - marqueeRef.current.startY);
+        setMarquee({ left, top, width, height });
+        if (width > 4 || height > 4) moved = true;
+        return;
+      }
+
       if (pointers.size === 2 && pinch) {
         const [a, b] = [...pointers.values()];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
@@ -393,8 +439,63 @@ export default function CanvasStage({
     };
     const up = (e) => {
       setIsDragging(false);
+
+      // Finish Marquee selection if active
+      if (marqueeRef.current) {
+        const m = marqueeRef.current;
+        const minX = Math.min(m.startX, m.currentX);
+        const maxX = Math.max(m.startX, m.currentX);
+        const minY = Math.min(m.startY, m.currentY);
+        const maxY = Math.max(m.startY, m.currentY);
+        const boxWidth = maxX - minX;
+        const boxHeight = maxY - minY;
+
+        if (boxWidth > 8 || boxHeight > 8) {
+          const svg = containerRef.current?.querySelector("svg");
+          if (svg) {
+            const nodes = svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor");
+            let foundNode = null;
+            for (const n of nodes) {
+              const b = n.getBoundingClientRect();
+              if (
+                b.left < maxX &&
+                b.right > minX &&
+                b.top < maxY &&
+                b.bottom > minY
+              ) {
+                foundNode = n;
+                break;
+              }
+            }
+            if (foundNode) {
+              const label = foundNode
+                .querySelector(".nodeLabel, .label, text, title")
+                ?.textContent?.trim();
+              callbacks.current.onSelect?.({
+                id: foundNode.id,
+                label: label || foundNode.id,
+              });
+            } else {
+              callbacks.current.onSelect?.(null);
+            }
+          }
+        }
+        marqueeRef.current = null;
+        setMarquee(null);
+        pointers.delete(e.pointerId);
+        drag = null;
+        pinch = null;
+        return;
+      }
+
       if (!moved && !callbacks.current.presentation && !spaceHeld.current) {
         if (callbacks.current.tool === "pointer") {
+          if (e.target.closest?.(".stage-floating-toolbar, .studio-canvas-controls, button, input, select, form")) {
+            pointers.delete(e.pointerId);
+            drag = null;
+            pinch = null;
+            return;
+          }
           const node = globalThis.document
             .elementFromPoint(e.clientX, e.clientY)
             ?.closest("g.node, g.entity, g.cluster, g.actor");
@@ -406,6 +507,9 @@ export default function CanvasStage({
               id: node.id,
               label: label || node.id,
             });
+          } else {
+            // Clicking empty canvas deselects active node
+            callbacks.current.onSelect?.(null);
           }
         }
       }
@@ -629,10 +733,31 @@ export default function CanvasStage({
         >
           <div ref={containerRef} className="mermaid-stage" />
         </div>
+        {marquee && (
+          <div
+            className="pointer-events-none absolute border-2 border-sky-400 bg-sky-500/15 shadow-[0_0_15px_rgba(56,189,248,0.35)] rounded-sm z-30"
+            style={{
+              left: `${marquee.left}px`,
+              top: `${marquee.top}px`,
+              width: `${marquee.width}px`,
+              height: `${marquee.height}px`,
+            }}
+          />
+        )}
       </div>
+
+      {isGeospatial && (
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 rounded-full border border-sky-500/30 bg-slate-950/85 px-3 py-1.5 text-xs text-sky-200 shadow-xl backdrop-blur-md select-none animate-in fade-in slide-in-from-top-1">
+          <Globe className="size-3.5 text-sky-400 animate-spin" style={{ animationDuration: "14s" }} />
+          <span className="font-semibold text-slate-100">Geospatial Engine</span>
+          <span className="h-3 w-px bg-slate-700" />
+          <span className="text-[11px] text-sky-300 font-mono">MVT • GeoJSON • Shapefile • TopoJSON</span>
+        </div>
+      )}
 
       {selected && (
         <div
+          onPointerDown={(e) => e.stopPropagation()}
           className="stage-floating-toolbar absolute flex items-center gap-1 rounded-full border border-primary/30 bg-card/95 px-3 py-1 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-2 z-20 text-xs select-none transition-[left,top] duration-150"
           style={
             nodeAnchor
@@ -794,6 +919,68 @@ export default function CanvasStage({
               <Plus className="size-3" />
               <span>Add Step</span>
             </button>
+          )}
+
+          {callbacks.current.onConnectNodes && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowConnect(!showConnect);
+                  setShowShapes(false);
+                  setShowColors(false);
+                }}
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition ${
+                  showConnect
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-accent"
+                }`}
+                title="Connect to another node"
+              >
+                <Link2 className="size-3 text-cyan-400" />
+                <span>Connect</span>
+                <ChevronDown className="size-2.5 opacity-70" />
+              </button>
+              {showConnect && (
+                <div className="absolute left-0 top-full mt-2 z-30 min-w-[170px] max-h-52 overflow-y-auto rounded-lg border border-border/80 bg-popover/95 p-1 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
+                  <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Connect To Node
+                  </div>
+                  {(() => {
+                    const svg = containerRef.current?.querySelector("svg");
+                    const otherNodes = [];
+                    if (svg && selected?.id) {
+                      svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor").forEach((el) => {
+                        if (el.id && el.id !== selected.id) {
+                          const l = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim();
+                          otherNodes.push({ id: el.id, label: l || el.id });
+                        }
+                      });
+                    }
+                    if (otherNodes.length === 0) {
+                      return (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground italic">
+                          No other target nodes found
+                        </div>
+                      );
+                    }
+                    return otherNodes.map((target) => (
+                      <button
+                        key={target.id}
+                        onClick={() => {
+                          callbacks.current.onConnectNodes?.(target.id);
+                          setShowConnect(false);
+                        }}
+                        className="w-full text-left rounded px-2 py-1 text-xs hover:bg-accent hover:text-accent-foreground transition flex items-center justify-between truncate"
+                        title={`Connect to ${target.label}`}
+                      >
+                        <span className="truncate">{target.label}</span>
+                        <Plus className="size-3 text-muted-foreground ml-1 shrink-0" />
+                      </button>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
           )}
           {callbacks.current.onDuplicateSelected && (
             <button

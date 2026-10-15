@@ -46,8 +46,16 @@ test("ambiguous spec extensions are detected by content", () => {
     "mermaid",
   );
   assert.equal(
-    detectFormat("arch.txt", "architecture-beta\n service a(server)[API]"),
-    "mermaid",
+    detectFormat("tiles.mvt", 'syntax = "proto2"; package vector_tile; message Tile {}'),
+    "geojson",
+  );
+  assert.equal(
+    detectFormat("parcels.shp", '[{"FID":1,"SHAPE":"Polygon","NAME":"Parcel A"}]'),
+    "geojson",
+  );
+  assert.equal(
+    detectFormat("admin.topojson", '{"type":"Topology","objects":{"regions":{}},"arcs":[]}'),
+    "geojson",
   );
   assert.throws(
     () => detectFormat("unrelated.json", '{"hello":true}'),
@@ -123,3 +131,77 @@ test("XMind binary import retains original workbook and editable first sheet", a
   );
   assert.notEqual(await mermaid.parse(imported.source), false);
 });
+
+test("Mapbox Vector Tile Protobuf specification compiles to Mermaid class diagram", async () => {
+  const mvtProto = `syntax = "proto2";
+package vector_tile;
+
+message Tile {
+  enum GeomType {
+    UNKNOWN = 0;
+    POINT = 1;
+    LINESTRING = 2;
+    POLYGON = 3;
+  }
+  message Value {
+    optional string string_value = 1;
+    optional float float_value = 2;
+    optional int64 int_value = 5;
+    optional bool bool_value = 7;
+  }
+  message Feature {
+    optional uint64 id = 1;
+    repeated uint32 tags = 2;
+    optional GeomType type = 3 [default = UNKNOWN];
+    repeated uint32 geometry = 4;
+  }
+  message Layer {
+    required uint32 version = 15 [default = 1];
+    required string name = 1;
+    repeated Feature features = 2;
+    repeated string keys = 3;
+    repeated Value values = 4;
+    optional uint32 extent = 5 [default = 4096];
+  }
+  repeated Layer layers = 3;
+}`;
+
+  const res = await compileDocument({ format: "geojson", source: mvtProto });
+  assert.ok(res.code);
+  assert.match(res.code, /class Tile/);
+  assert.match(res.code, /class Layer/);
+  assert.match(res.code, /class Feature/);
+  assert.notEqual(await mermaid.parse(res.code), false);
+});
+
+test("ESRI Shapefile attribute table dump compiles to Mermaid flowchart", async () => {
+  const shpDump = JSON.stringify([
+    { FID: 1, SHAPE: "Polygon", NAME: "Central Park Zone", ACRES: 843 },
+    { FID: 2, SHAPE: "Point", NAME: "Metro Transit Station", RIDERS: 45000 },
+  ]);
+
+  const res = await compileDocument({ format: "geojson", source: shpDump });
+  assert.ok(res.code);
+  assert.match(res.code, /Central Park Zone/);
+  assert.match(res.code, /Metro Transit Station/);
+  assert.notEqual(await mermaid.parse(res.code), false);
+});
+
+test("TopoJSON shared arcs topology compiles to Mermaid flowchart", async () => {
+  const topoData = JSON.stringify({
+    type: "Topology",
+    objects: {
+      counties: { type: "GeometryCollection", geometries: [] },
+      rivers: { type: "MultiLineString", arcs: [[0, 1]] },
+    },
+    arcs: [[[0, 0], [1, 1]]],
+  });
+
+  const res = await compileDocument({ format: "geojson", source: topoData });
+  assert.ok(res.code);
+  assert.match(res.code, /counties/);
+  assert.match(res.code, /rivers/);
+  assert.match(res.code, /Shared Arcs Matrix/);
+  assert.notEqual(await mermaid.parse(res.code), false);
+});
+
