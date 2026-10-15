@@ -226,6 +226,7 @@ try {
     ["SVG vector", "svg"],
     ["PNG image · 2×", "png"],
     ["PDF document", "pdf"],
+    ["PowerPoint slide (.pptx)", "pptx"],
     ["Interactive HTML", "html"],
   ]) {
     await click("Export");
@@ -247,6 +248,11 @@ try {
         [137, 80, 78, 71, 13, 10, 26, 10],
       );
     if (extension === "pdf") assert.match(bytes.toString(), /^%PDF-/);
+    if (extension === "pptx")
+      assert.deepEqual(
+        [...bytes.subarray(0, 4)],
+        [0x50, 0x4b, 0x03, 0x04],
+      );
     if (extension === "html") assert.match(bytes.toString(), /<svg/);
   }
   // ZIP backups restore the full project, rather than importing duplicate sources.
@@ -344,7 +350,7 @@ try {
   await page.keyboard.press("Escape");
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: native source and SVG/PNG/PDF/HTML downloads, project and ZIP backups, tabs and reload, visual nodes and connections, snapshots, error retention, search, routes, keyboard commands, all mobile pages and panels.",
+    "PASS: native source and SVG/PNG/PDF/PPTX/HTML downloads, project and ZIP backups, tabs and reload, visual nodes and connections, snapshots, error retention, search, routes, keyboard commands, all mobile pages and panels.",
   );
 } finally {
   await browser?.close();
