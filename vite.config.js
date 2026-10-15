@@ -52,6 +52,30 @@ export default defineConfig(({ command }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: true,
+      chunkSizeWarningLimit: 15000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('mermaid')) {
+                return 'vendor-mermaid';
+              }
+              if (id.includes('@codemirror') || id.includes('codemirror') || id.includes('@lezer')) {
+                return 'vendor-codemirror';
+              }
+              if (id.includes('@viz-js')) {
+                return 'vendor-viz';
+              }
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('lucide-react') || id.includes('radix-ui')) {
+                return 'vendor-ui';
+              }
+            }
+          },
+        },
+      },
     },
   };
 });

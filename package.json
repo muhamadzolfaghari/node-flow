@@ -57,5 +57,8 @@
     "tailwindcss": "^4.3.3",
     "vite": "^6.0.0",
     "wabt": "^1.0.39"
+  },
+  "overrides": {
+    "katex": "^0.19.0"
   }
 }
