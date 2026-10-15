@@ -1,0 +1,33 @@
+# NodeFlow — Universal Visual Diagram & Architecture Studio
+
+> Open source, browser-based, local-first visual diagramming and system architecture studio.
+> https://muhamadzolfaghari.github.io/node-flow/
+
+## Overview
+NodeFlow is an enterprise-grade diagramming workbench running entirely client-side inside the browser. It unifies 30+ modeling languages, design formats, and specifications into a live reactive canvas with zero cloud lock-in or telemetry.
+
+## Key Capabilities
+- **Local-First Privacy**: All diagram compilation, WebAssembly execution, and IndexedDB project persistence occur locally. No code or architecture is sent to third-party cloud servers.
+- **Cross-Disciplinary Workflows**:
+  - *Product Managers (PM)*: User story mapping, quarterly OKRs, and customer journey maps.
+  - *QA & Testing*: Defect triage lifecycles, automated CI/CD smoke test gates, and test coverage matrices.
+  - *Developers & Cloud Architects*: Microservice architectures, ER schemas, git trunk flows, and GIS vector tile pipelines.
+  - *Operations & Governance*: Standard Operating Procedures (SOP) and approval chains.
+  - *Students & Researchers*: Thesis structures, scientific method protocols, and semester course plans.
+- **30+ Supported Formats**:
+  - Native Mermaid & Graphviz WebAssembly (C compiler in Wasm)
+  - PlantUML, Draw.io XML, D2, BPMN 2.0, C4 / Structurizr DSL, Terraform HCL
+  - SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL SDL, OpenAPI 3, AsyncAPI
+  - Adobe Illustrator, Figma / FigJam, Lucidchart, OmniGraffle, Miro, StarUML, Visio VDX, Gliffy, Excalidraw, XMind ZEN
+  - GeoJSON, Shapefile attributes, and Mapbox Vector Tile (MVT) protobuf specs
+- **Interactive Multi-Tab Canvas**:
+  - VSCode-style multi-tab management with context menus (Close, Close Others, Close to the Right, Close All, Duplicate)
+  - Auto-centering and content framing without dead whitespace
+  - Dynamic theme-adaptive canvas (Light, Dark, Forest, Neutral) with custom grid rendering
+  - Presentation mode with laser pointer
+
+## Quick Links
+- Web App Studio: https://muhamadzolfaghari.github.io/node-flow/#/studio
+- Template Library: https://muhamadzolfaghari.github.io/node-flow/#/templates
+- Format Specifications: https://muhamadzolfaghari.github.io/node-flow/#/formats
+- Source Code Repository: https://github.com/muhamadzolfaghari/diagram-atlas
