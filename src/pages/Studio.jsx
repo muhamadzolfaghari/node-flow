@@ -44,6 +44,7 @@ import {
   Calendar,
   Crosshair,
   Clock,
+  Split,
 } from "lucide-react";
 import {
   Button,
@@ -182,6 +183,10 @@ import {
   addTimelineSection,
   addTimelineEvent,
   deleteTimelineEvent,
+  isSankey,
+  sankeyLinks,
+  addSankeyLink,
+  deleteSankeyLink,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -314,6 +319,10 @@ export default function Studio() {
     [timelineTargetSec, setTimelineTargetSec] = useState(""),
     [timelineEvtName, setTimelineEvtName] = useState(""),
     [timelineEvtDesc, setTimelineEvtDesc] = useState(""),
+    // Sankey modeling state
+    [sankeySrc, setSankeySrc] = useState(""),
+    [sankeyDst, setSankeyDst] = useState(""),
+    [sankeyVal, setSankeyVal] = useState(""),
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
@@ -357,6 +366,9 @@ export default function Studio() {
   }, [document?.source]);
   const timelineSecs = useMemo(() => {
     return isTimeline(document) ? timelineSections(document.source) : [];
+  }, [document?.source]);
+  const sankeyFlows = useMemo(() => {
+    return isSankey(document) ? sankeyLinks(document.source) : [];
   }, [document?.source]);
   const diagramConfig = useMemo(() => {
     return document?.format === "mermaid"
@@ -3440,6 +3452,133 @@ export default function Studio() {
                       <Plus className="size-3.5" />
                       Add event
                     </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isSankey(document) && (
+              <div className="mt-5 border-t pt-4">
+                <div className="flex items-center gap-1.5 font-medium text-xs">
+                  <Split className="size-3.5 text-primary" />
+                  <span>Sankey flow tools</span>
+                </div>
+
+                {sankeyFlows.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                      Flows ({sankeyFlows.length})
+                    </span>
+                    <div className="space-y-1.5 max-h-48 overflow-auto">
+                      {sankeyFlows.map((link, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-1.5 rounded bg-muted/50 px-2 py-1 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="truncate font-medium">
+                              {link.source}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">
+                              →
+                            </span>
+                            <span className="truncate font-medium">
+                              {link.target}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-5 px-1.5 font-mono"
+                            >
+                              {link.value}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                updateSource(
+                                  document.id,
+                                  deleteSankeyLink(
+                                    document.source,
+                                    link.source,
+                                    link.target,
+                                  ),
+                                );
+                                say(
+                                  `Removed flow "${link.source} → ${link.target}"`,
+                                );
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-dashed pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground block mb-2">
+                    Add flow link
+                  </span>
+                  <div className="grid gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Sankey source node"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Source (e.g. Visitors)"
+                        value={sankeySrc}
+                        onChange={(e) => setSankeySrc(e.target.value)}
+                      />
+                      <Input
+                        aria-label="Sankey target node"
+                        className="h-8 text-xs flex-1"
+                        placeholder="Target (e.g. Signups)"
+                        value={sankeyDst}
+                        onChange={(e) => setSankeyDst(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label="Sankey flow value"
+                        type="number"
+                        min="1"
+                        step="any"
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="Flow quantity (e.g. 5000)"
+                        value={sankeyVal}
+                        onChange={(e) => setSankeyVal(e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              addSankeyLink(
+                                document.source,
+                                sankeySrc,
+                                sankeyDst,
+                                sankeyVal,
+                              ),
+                            );
+                            setSankeySrc("");
+                            setSankeyDst("");
+                            setSankeyVal("");
+                            say("Flow link added");
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Flow
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

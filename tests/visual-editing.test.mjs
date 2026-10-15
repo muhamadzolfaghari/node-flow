@@ -79,6 +79,10 @@ import {
   addTimelineSection,
   addTimelineEvent,
   deleteTimelineEvent,
+  isSankey,
+  sankeyLinks,
+  addSankeyLink,
+  deleteSankeyLink,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -569,6 +573,38 @@ test("timeline visual modeling: sections, events, descriptions, deletion", () =>
   assert.equal(launchSec.events.length, 1);
   assert.equal(launchSec.events[0].title, "Public Beta");
 });
+
+test("sankey diagram visual modeling: links, addition, deletion, validation", () => {
+  let sk = `sankey-beta
+    Agricultural Energy, Bio-conversion, 124.729
+    Bio-conversion, Liquid, 0.597
+    Bio-conversion, Solid, 110.252
+    Electricity grid, Thermal generation, 52.5`;
+
+  assert.equal(isSankey({ format: "mermaid", source: sk }), true);
+  let links = sankeyLinks(sk);
+  assert.equal(links.length, 4);
+  assert.equal(links[0].source, "Agricultural Energy");
+  assert.equal(links[0].target, "Bio-conversion");
+  assert.equal(links[0].value, 124.729);
+
+  sk = addSankeyLink(sk, "Solar", "Electricity grid", 45.8);
+  assert.match(sk, /Solar, Electricity grid, 45.8/);
+
+  sk = deleteSankeyLink(sk, "Bio-conversion", "Liquid");
+  assert.doesNotMatch(sk, /Bio-conversion, Liquid/);
+
+  links = sankeyLinks(sk);
+  assert.equal(links.length, 4);
+  assert.equal(links.some((l) => l.source === "Solar"), true);
+  assert.equal(links.some((l) => l.target === "Liquid"), false);
+
+  assert.throws(() => addSankeyLink(sk, "", "Target", 10), /Source node required/);
+  assert.throws(() => addSankeyLink(sk, "Source", "", 10), /Target node required/);
+  assert.throws(() => addSankeyLink(sk, "Source", "Target", -5), /positive number/);
+  assert.throws(() => addSankeyLink(sk, "Source", "Target", "invalid"), /positive number/);
+});
+
 
 
 

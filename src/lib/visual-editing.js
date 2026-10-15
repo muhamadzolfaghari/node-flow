@@ -1453,6 +1453,58 @@ export function deleteTimelineEvent(source, eventName) {
   return lines.join("\n");
 }
 
+/* -------------------------------------------------------------------------- */
+/* SANKEY DIAGRAM VISUAL MODELING                                             */
+/* -------------------------------------------------------------------------- */
+
+export const isSankey = (doc) =>
+  doc?.format === "mermaid" && /^\s*sankey(?:-beta)?\b/m.test(doc.source);
+
+export function sankeyLinks(source) {
+  const links = [];
+  for (const line of source.split("\n")) {
+    if (/^\s*%%/.test(line) || /^\s*sankey/i.test(line)) continue;
+    const parts = line.split(",").map((s) => s.trim());
+    if (parts.length >= 3 && !isNaN(parseFloat(parts[2]))) {
+      links.push({
+        source: parts[0],
+        target: parts[1],
+        value: parseFloat(parts[2]),
+      });
+    }
+  }
+  return links;
+}
+
+export function addSankeyLink(source, srcNode, dstNode, value) {
+  if (!srcNode.trim()) throw new Error("Source node required.");
+  if (!dstNode.trim()) throw new Error("Target node required.");
+  const val = parseFloat(value);
+  if (isNaN(val) || val <= 0)
+    throw new Error("Flow value must be a positive number.");
+  const linkLine = `    ${safeLabel(srcNode.trim())}, ${safeLabel(dstNode.trim())}, ${val}`;
+  return `${source.trimEnd()}\n${linkLine}\n`;
+}
+
+export function deleteSankeyLink(source, srcNode, dstNode) {
+  if (!srcNode.trim() || !dstNode.trim())
+    throw new Error("Source and target required.");
+  const lines = source.split("\n").filter((line) => {
+    const parts = line.split(",").map((s) => s.trim());
+    if (parts.length >= 2) {
+      if (
+        parts[0].toLowerCase() === srcNode.trim().toLowerCase() &&
+        parts[1].toLowerCase() === dstNode.trim().toLowerCase()
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+  return lines.join("\n");
+}
+
+
 
 
 
