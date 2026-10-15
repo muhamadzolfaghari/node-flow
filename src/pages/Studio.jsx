@@ -93,6 +93,8 @@ import {
   changeFlowchartNodeShape,
   getFlowchartNodeShape,
   SHAPES,
+  COLOR_PRESETS,
+  styleFlowchartNode,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -750,10 +752,37 @@ export default function Studio() {
                     </option>
                   ))}
                 </select>
+                <div className="mt-2.5">
+                  <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">Color accent</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(COLOR_PRESETS).map(([key, preset]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-label={`Style ${preset.label}`}
+                        title={preset.label}
+                        disabled={!isFlowchart(document) || !nodeId}
+                        onClick={() => {
+                          try {
+                            updateSource(
+                              document.id,
+                              styleFlowchartNode(document.source, nodeId, key),
+                            );
+                            say(`Applied ${preset.label} style`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                        style={{ backgroundColor: preset.color }}
+                        className="size-5 rounded-full border border-white/20 transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                      />
+                    ))}
+                  </div>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 w-full text-xs"
+                  className="mt-3 w-full text-xs"
                   disabled={!isFlowchart(document) || !nodeId}
                   onClick={() => {
                     try {

@@ -112,6 +112,9 @@ export function deleteFlowchartNode(source, id) {
     if (new RegExp(`^\\s*${escaped}\\s*(\\[\\[|\\(\\(|\\(\\[|\\{|\\[|\\().*(\\]\\]|\\)\\)|\\]\\)|\\}|\\)|\\])\\s*$`).test(line)) {
       continue;
     }
+    if (new RegExp(`^\\s*style\\s+${escaped}\\b`).test(line)) {
+      continue;
+    }
     if (/[-.=~]+>/.test(line)) {
       if (new RegExp(`^\\s*${escaped}\\b`).test(line)) {
         const toMatch = line.match(/[-.=~]+>(?:\|[^|]*\|)?\s*([A-Za-z_][\w-]*\s*(?:\[\[|\(\(|\(\[|\{|\(|\[).*?(?:\]\]|\)\)|\)|\]\)|\}|\]))/);
@@ -132,4 +135,39 @@ export function deleteFlowchartNode(source, id) {
   }
   return result.join("\n");
 }
+
+export const COLOR_PRESETS = {
+  default: { label: "Default", color: "#3b82f6" },
+  blue: { label: "Blue", style: "fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#ffffff", color: "#3b82f6" },
+  emerald: { label: "Emerald", style: "fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff", color: "#10b981" },
+  amber: { label: "Amber", style: "fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#ffffff", color: "#f59e0b" },
+  rose: { label: "Rose", style: "fill:#881337,stroke:#f43f5e,stroke-width:2px,color:#ffffff", color: "#f43f5e" },
+  violet: { label: "Violet", style: "fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#ffffff", color: "#8b5cf6" },
+  cyan: { label: "Cyan", style: "fill:#164e63,stroke:#06b6d4,stroke-width:2px,color:#ffffff", color: "#06b6d4" },
+  slate: { label: "Slate", style: "fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#ffffff", color: "#64748b" },
+};
+
+export function styleFlowchartNode(source, id, colorKey) {
+  if (!id) throw new Error("Choose a node to style.");
+  if (colorKey === "default") {
+    return removeFlowchartNodeStyle(source, id);
+  }
+  const preset = COLOR_PRESETS[colorKey];
+  if (!preset || !preset.style) throw new Error("Unsupported color preset.");
+  const escaped = escapeRegex(id);
+  const stylePattern = new RegExp(`^\\s*style\\s+${escaped}\\s+.*$`, "m");
+  const newStyleLine = `  style ${id} ${preset.style}`;
+  if (stylePattern.test(source)) {
+    return source.replace(stylePattern, newStyleLine);
+  }
+  return `${source.trimEnd()}\n${newStyleLine}\n`;
+}
+
+export function removeFlowchartNodeStyle(source, id) {
+  if (!id) throw new Error("Choose a node.");
+  const escaped = escapeRegex(id);
+  const lines = source.split("\n").filter((line) => !new RegExp(`^\\s*style\\s+${escaped}\\b`).test(line));
+  return lines.join("\n");
+}
+
 

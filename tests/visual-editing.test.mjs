@@ -8,6 +8,8 @@ import {
   deleteFlowchartNode,
   changeFlowchartNodeShape,
   getFlowchartNodeShape,
+  styleFlowchartNode,
+  removeFlowchartNodeStyle,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -30,12 +32,13 @@ test("adding and connecting nodes use unique ids and escaped labels", () => {
     /existing nodes/,
   );
 });
-test("deleting a node removes declaration and connected edges", () => {
-  const source = "flowchart LR\n  A[Client] --> B[Server]\n  B --> C[Database]\n  D[Standalone]";
+test("deleting a node removes declaration, connected edges, and styles", () => {
+  const source = "flowchart LR\n  A[Client] --> B[Server]\n  B --> C[Database]\n  D[Standalone]\n  style B fill:#064e3b";
   const next = deleteFlowchartNode(source, "B");
   assert.equal(next.includes("B[Server]"), false);
   assert.equal(next.includes("A --> B"), false);
   assert.equal(next.includes("B --> C"), false);
+  assert.equal(next.includes("style B"), false);
   assert.equal(next.includes("A[Client]"), true);
   assert.equal(next.includes("D[Standalone]"), true);
 });
@@ -49,5 +52,16 @@ test("changing node shape updates brackets and preserves label", () => {
   assert.match(cylinder, /B\[\("Decision"\)\]/);
   assert.equal(getFlowchartNodeShape(cylinder, "B"), "cylinder");
 });
+test("styling a node applies or replaces style directives", () => {
+  const source = "flowchart TD\n  A[Client] --> B[Server]";
+  const styled = styleFlowchartNode(source, "B", "emerald");
+  assert.match(styled, /style B fill:#064e3b/);
+  const updated = styleFlowchartNode(styled, "B", "rose");
+  assert.match(updated, /style B fill:#881337/);
+  assert.equal(updated.includes("fill:#064e3b"), false);
+  const unstyled = removeFlowchartNodeStyle(updated, "B");
+  assert.equal(unstyled.includes("style B"), false);
+});
+
 
 
