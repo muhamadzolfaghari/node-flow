@@ -44,3 +44,35 @@ export function connectFlowchartNodes(source, from, to, label = "") {
     throw new Error("Choose two existing nodes.");
   return `${source.trimEnd()}\n  ${from} -->${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
 }
+
+export function deleteFlowchartNode(source, id) {
+  if (!id) throw new Error("Choose a node to delete.");
+  const escaped = escapeRegex(id);
+  const lines = source.split("\n");
+  const result = [];
+
+  for (const line of lines) {
+    if (new RegExp(`^\\s*${escaped}\\s*(\\[\\[|\\(\\(|\\(\\[|\\{|\\[|\\().*(\\]\\]|\\)\\)|\\]\\)|\\}|\\)|\\])\\s*$`).test(line)) {
+      continue;
+    }
+    if (/[-.=~]+>/.test(line)) {
+      if (new RegExp(`^\\s*${escaped}\\b`).test(line)) {
+        const toMatch = line.match(/[-.=~]+>(?:\|[^|]*\|)?\s*([A-Za-z_][\w-]*\s*(?:\[\[|\(\(|\(\[|\{|\(|\[).*?(?:\]\]|\)\)|\)|\]\)|\}|\]))/);
+        if (toMatch && !new RegExp(`^${escaped}\\b`).test(toMatch[1])) {
+          result.push(`  ${toMatch[1]}`);
+        }
+        continue;
+      }
+      if (new RegExp(`[-.=~]+>.*\\b${escaped}\\b`).test(line)) {
+        const fromMatch = line.match(/^(\s*[A-Za-z_][\w-]*\s*(?:\[\[|\(\(|\(\[|\{|\(|\[).*?(?:\]\]|\)\)|\)|\]\)|\}|\]))\s*[-.=~]+>/);
+        if (fromMatch && !new RegExp(`\\b${escaped}\\b`).test(fromMatch[1])) {
+          result.push(fromMatch[1]);
+        }
+        continue;
+      }
+    }
+    result.push(line);
+  }
+  return result.join("\n");
+}
+

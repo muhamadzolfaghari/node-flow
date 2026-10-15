@@ -5,6 +5,7 @@ import {
   renameFlowchartNode,
   addFlowchartNode,
   connectFlowchartNodes,
+  deleteFlowchartNode,
 } from "../src/lib/visual-editing.js";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
@@ -27,3 +28,13 @@ test("adding and connecting nodes use unique ids and escaped labels", () => {
     /existing nodes/,
   );
 });
+test("deleting a node removes declaration and connected edges", () => {
+  const source = "flowchart LR\n  A[Client] --> B[Server]\n  B --> C[Database]\n  D[Standalone]";
+  const next = deleteFlowchartNode(source, "B");
+  assert.equal(next.includes("B[Server]"), false);
+  assert.equal(next.includes("A --> B"), false);
+  assert.equal(next.includes("B --> C"), false);
+  assert.equal(next.includes("A[Client]"), true);
+  assert.equal(next.includes("D[Standalone]"), true);
+});
+

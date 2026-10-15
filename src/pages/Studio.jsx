@@ -89,6 +89,7 @@ import {
   renameFlowchartNode,
   addFlowchartNode,
   connectFlowchartNodes,
+  deleteFlowchartNode,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -741,6 +742,26 @@ export default function Studio() {
                   }}
                 >
                   Apply label
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1.5 w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  disabled={!isFlowchart(document) || !nodeId}
+                  onClick={() => {
+                    try {
+                      updateSource(
+                        document.id,
+                        deleteFlowchartNode(document.source, nodeId),
+                      );
+                      setSelected(null);
+                      say("Node removed");
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  Delete node
                 </Button>
               </div>
             )}
