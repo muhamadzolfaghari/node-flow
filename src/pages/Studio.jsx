@@ -255,6 +255,40 @@ import { cn } from "../lib/utils.js";
 
 const BLANK =
   "flowchart TD\n  Start([Start]) --> Process[Process task]\n  Process --> Done([Complete])";
+
+const AI_STARTERS = [
+  {
+    label: "Auth & PKCE Flow",
+    type: "sequence",
+    prompt: "Client initiates OAuth2 login with PKCE challenge to Auth0 server, receives authorization code, exchanges for JWT access token, and queries Protected Resource API",
+  },
+  {
+    label: "Microservices VPC",
+    type: "architecture",
+    prompt: "Public Internet connects via Cloudflare to API Gateway in VPC, routing traffic to User Service and Order Service backed by PostgreSQL and Redis cache",
+  },
+  {
+    label: "E-Commerce DB",
+    type: "er",
+    prompt: "Relational database schema with Users, Products, Categories, Orders, and OrderItems with foreign keys and total price calculations",
+  },
+  {
+    label: "CI/CD Deployment",
+    type: "flowchart",
+    prompt: "Developer pushes git commit, triggers unit tests and lint checks; if passed, builds docker container and deploys to Kubernetes staging, with canary promotion to production",
+  },
+  {
+    label: "Order Lifecycle",
+    type: "state",
+    prompt: "Order lifecycle transitioning from Created to PaymentPending, either Paid to Fulfilled or PaymentFailed to Cancelled, with Refunded terminal state",
+  },
+  {
+    label: "Q4 Roadmap",
+    type: "timeline",
+    prompt: "Quarterly release milestones from Q1 Foundation & Auth, Q2 Core Engine & Plugins, Q3 Cloud Sync & Collaboration, to Q4 Enterprise SSO",
+  },
+];
+
 export default function Studio() {
   const [params] = useSearchParams(),
     location = useLocation(),
@@ -449,6 +483,12 @@ export default function Studio() {
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
+    [aiCustomUrl, setAiCustomUrl] = useState(() => localStorage.getItem("nodeflow_ai_url") || "https://api.openai.com/v1"),
+    [aiApiKey, setAiApiKey] = useState(() => localStorage.getItem("nodeflow_ai_key") || ""),
+    [aiModel, setAiModel] = useState(() => localStorage.getItem("nodeflow_ai_model") || "gpt-4o-mini"),
+    [aiOllamaUrl, setAiOllamaUrl] = useState(() => localStorage.getItem("nodeflow_ollama_url") || "http://localhost:11434"),
+    [aiOllamaModel, setAiOllamaModel] = useState(() => localStorage.getItem("nodeflow_ollama_model") || "deepseek-coder"),
+    [aiDestination, setAiDestination] = useState("new-file"),
     [presentation, setPresentation] = useState(false),
     [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
   const assistant = useDiagramAssistant();
@@ -7042,76 +7082,228 @@ export default function Studio() {
             </>
           )}
           {dialog === "assistant" && (
-            <>
-              <textarea
-                aria-label="Diagram description"
-                className="min-h-32 w-full rounded-md border bg-background p-3 text-sm"
-                placeholder="Describe a system, process, database, or roadmap…"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  aria-label="Assistant diagram type"
-                  className="h-9 rounded border bg-background px-2 text-xs"
-                  value={aiType}
-                  onChange={(e) => setAiType(e.target.value)}
-                >
-                  {SUPPORTED_DIAGRAM_TYPES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.label.replace(/^\S+\s/, "")}
-                    </option>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Inspiration Starters</span>
+                  <span className="text-[10px] text-primary">Click to prefill</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {AI_STARTERS.map((s) => (
+                    <button
+                      key={s.label}
+                      type="button"
+                      onClick={() => {
+                        setPrompt(s.prompt);
+                        setAiType(s.type);
+                      }}
+                      className="rounded-full border border-border/80 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-primary/15 hover:border-primary/40 hover:text-primary transition"
+                    >
+                      {s.label}
+                    </button>
                   ))}
-                </select>
-                <select
-                  aria-label="Assistant engine"
-                  className="h-9 rounded border bg-background px-2 text-xs"
-                  value={aiMode}
-                  onChange={(e) => setAiMode(e.target.value)}
-                >
-                  <option value="instant">Instant · rule-based</option>
-                  <option value="qwen">Qwen · local WebGPU</option>
-                </select>
+                </div>
               </div>
-              <p className="text-xs leading-5 text-muted-foreground">
-                {aiMode === "instant"
-                  ? "Runs immediately using local rules. This is a starting draft, not a trained language model."
-                  : "Downloads Qwen model weights on first use. Requires WebGPU; prompts run on your device."}
-              </p>
-              {assistant.progress && (
-                <p role="status" className="text-xs text-primary">
-                  {assistant.progress}
-                </p>
+
+              <div>
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
+                  Description / Specification
+                </label>
+                <textarea
+                  aria-label="Diagram description"
+                  className="min-h-24 w-full rounded-md border bg-background p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Describe your system, architecture, API interaction, database, or process flow in natural language…"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Diagram Family</label>
+                  <select
+                    aria-label="Assistant diagram type"
+                    className="h-9 w-full rounded border bg-background px-2 text-xs"
+                    value={aiType}
+                    onChange={(e) => setAiType(e.target.value)}
+                  >
+                    {SUPPORTED_DIAGRAM_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">AI Engine</label>
+                  <select
+                    aria-label="Assistant engine"
+                    className="h-9 w-full rounded border bg-background px-2 text-xs"
+                    value={aiMode}
+                    onChange={(e) => setAiMode(e.target.value)}
+                  >
+                    <option value="instant">⚡ Instant · Deterministic (0s)</option>
+                    <option value="qwen">🧠 Qwen 2.5-Coder · WebGPU (Local)</option>
+                    <option value="ollama">🦙 Ollama · Local Daemon (localhost:11434)</option>
+                    <option value="custom">🌐 OpenAI / Groq / OpenRouter API</option>
+                  </select>
+                </div>
+              </div>
+
+              {aiMode === "ollama" && (
+                <div className="grid grid-cols-2 gap-2.5 rounded-lg border border-border/60 bg-muted/20 p-2.5 animate-in fade-in">
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">Ollama URL</label>
+                    <Input
+                      value={aiOllamaUrl}
+                      onChange={(e) => {
+                        setAiOllamaUrl(e.target.value);
+                        localStorage.setItem("nodeflow_ollama_url", e.target.value);
+                      }}
+                      placeholder="http://localhost:11434"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">Ollama Model</label>
+                    <Input
+                      value={aiOllamaModel}
+                      onChange={(e) => {
+                        setAiOllamaModel(e.target.value);
+                        localStorage.setItem("nodeflow_ollama_model", e.target.value);
+                      }}
+                      placeholder="deepseek-coder or llama3"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
               )}
+
+              {aiMode === "custom" && (
+                <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-2.5 animate-in fade-in">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">API Endpoint</label>
+                      <Input
+                        value={aiCustomUrl}
+                        onChange={(e) => {
+                          setAiCustomUrl(e.target.value);
+                          localStorage.setItem("nodeflow_ai_url", e.target.value);
+                        }}
+                        placeholder="https://api.openai.com/v1"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">Model Name</label>
+                      <Input
+                        value={aiModel}
+                        onChange={(e) => {
+                          setAiModel(e.target.value);
+                          localStorage.setItem("nodeflow_ai_model", e.target.value);
+                        }}
+                        placeholder="gpt-4o-mini / llama-3.3-70b-versatile"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">API Key (Stored locally)</label>
+                    <Input
+                      type="password"
+                      value={aiApiKey}
+                      onChange={(e) => {
+                        setAiApiKey(e.target.value);
+                        localStorage.setItem("nodeflow_ai_key", e.target.value);
+                      }}
+                      placeholder="sk-..."
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="size-3 text-primary" /> Auto-validated & repaired
+                </span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="ai-dest"
+                      checked={aiDestination === "new-file"}
+                      onChange={() => setAiDestination("new-file")}
+                      className="accent-primary"
+                    />
+                    <span>New file</span>
+                  </label>
+                  {document && (
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="ai-dest"
+                        checked={aiDestination === "insert"}
+                        onChange={() => setAiDestination("insert")}
+                        className="accent-primary"
+                      />
+                      <span>Insert in active file</span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {assistant.progress && (
+                <div role="status" className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary animate-pulse">
+                  <Sparkles className="size-3.5 shrink-0" />
+                  <span>{assistant.progress}</span>
+                </div>
+              )}
+
               <Button
                 disabled={assistant.busy || !prompt.trim()}
+                className="w-full"
                 onClick={async () => {
                   try {
                     const source = await assistant.generate(
                       prompt,
                       aiType,
                       aiMode,
+                      {
+                        ollamaUrl: aiOllamaUrl,
+                        ollamaModel: aiOllamaModel,
+                        apiUrl: aiCustomUrl,
+                        apiKey: aiApiKey,
+                        apiModel: aiModel,
+                      }
                     );
                     if (!source)
                       throw new Error("No diagram source was generated.");
-                    newFiles([
-                      {
-                        name: "assistant-draft.mmd",
-                        format: "mermaid",
-                        source,
-                      },
-                    ]);
+
+                    if (aiDestination === "insert" && document) {
+                      updateSource(document.id, `${document.source.trimEnd()}\n\n${source}\n`);
+                      say("Generated diagram appended to active document");
+                    } else {
+                      newFiles([
+                        {
+                          name: "assistant-draft.mmd",
+                          format: "mermaid",
+                          source,
+                        },
+                      ]);
+                      say("Draft added as a new file");
+                    }
                     setDialog(null);
-                    say("Draft added as a new file");
                   } catch (e) {
                     say(e.message);
                   }
                 }}
               >
                 <Sparkles />
-                {assistant.busy ? "Generating…" : "Generate new draft"}
+                {assistant.busy ? (assistant.progress || "Generating…") : "Generate Diagram"}
               </Button>
-            </>
+            </div>
           )}
           {dialog === "delete-file" && (
             <DialogFooter>

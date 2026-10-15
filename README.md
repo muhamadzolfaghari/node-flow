@@ -41,7 +41,7 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
   - Built on React 19 utilizing `useActionState` for async transitions, `useOptimistic` for instant tab and title updates, `useDeferredValue` for responsive search filtering, and direct `ref` props across components.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
 - **Project portability & exports:** download SVG with embedded roundtrip source metadata, high-res PNG (2×, 4×), print-ready PDF, standalone offline interactive HTML viewer, 16:9 widescreen PowerPoint presentation slides (`.pptx`), `.atlas` project backups, and ZIP source archives.
-- **Diagram assistant:** local rule-based drafts, plus optional Qwen2.5-Coder inference through WebLLM. Qwen requires WebGPU and downloads model weights on first use; no API key is needed. Generated drafts open as new files for review.
+- **Diagram assistant:** multi-engine diagram synthesis supporting Instant deterministic rule generation (0 latency, offline across 19 diagram families), local in-browser WebGPU inference via Qwen2.5-Coder (`@mlc-ai/web-llm`), local Ollama daemon connection (`localhost:11434`), and custom OpenAI-compatible API endpoints (OpenAI, Groq, OpenRouter) with client-side key storage. Includes clickable inspiration starter chips, automatic post-generation syntax validation and self-repair, and targeted insertion options (New File vs. Append to active document).
 
 ## Supported source formats
 
