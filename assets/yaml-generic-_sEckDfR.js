@@ -1,0 +1,8 @@
+function h(r){if(!r||typeof r!="string")throw new Error("Please provide YAML text.");const e=r.split(`
+`),s=[];for(const o of e){const n=o.match(/^(\s*)([\w./-]+)\s*:\s*(.*)$/);if(!n)continue;const i=n[1].length,a=n[2],c=n[3].trim();a==="---"||a.startsWith("#")||s.push({indent:i,key:a,val:c})}if(s.length<2)throw new Error("No YAML mapping entries found (key: value).");const t=["mindmap",`  root(("${s[0].key.replace(/[^A-Za-z0-9_ ]/g,"").slice(0,30)||"Root"}"))`];return s.slice(1,40).forEach(o=>{const n=Math.min(3,Math.floor(o.indent/2)+1),i=`${o.key}${o.val&&o.val!=="|"&&o.val!==">"?": "+o.val.slice(0,24):""}`.replace(/"/g,"'").slice(0,48);t.push(`${"  ".repeat(n+1)}${i}`)}),t.join(`
+`)+`
+`}function p(r){if(!r||typeof r!="string")throw new Error("Please provide ERD text.");if(!/(\|\|--o\{|\|\|--\||\}o--|\|o--|\bTABLE\b|\bentity\b)/i.test(r))throw new Error("No ERD relations or TABLE blocks found.");const e=["erDiagram"],s=[];if(r.split(`
+`).forEach(l=>{var i;const t=l.trim();if(!t||t.startsWith("#")||t.startsWith("//"))return;if(/(\|\||\}o|\}|\|o)--(o\{|\|\{|o\||--)/.test(t)){s.push(`  ${t}`);return}const o=t.match(/^(?:TABLE|entity)\s+(\w+)/i)||t.match(/^([A-Za-z_]\w*)\s*\{$/);if(o){e.push(`  ${o[1].toUpperCase()} {`);return}if(t==="}"||t===");"){e.push("  }");return}const n=t.match(/^(\w+)\s+([\w()]+)(.*)$/);n&&e.length&&((i=e[e.length-1])!=null&&i.endsWith("{"))&&e.push(`    ${n[2].replace(/\(.*\)/,"")} ${n[1]}`)}),e.length<3&&s.length===0)throw new Error("No ERD relations parsed.");return[...e.slice(0,1),...s,...e.slice(1)].join(`
+`)+`
+`}export{p as parseErdTextToMermaid,h as parseYamlGenericToMermaid};
+//# sourceMappingURL=yaml-generic-_sEckDfR.js.map
