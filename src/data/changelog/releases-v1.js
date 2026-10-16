@@ -1,5 +1,21 @@
 export const RELEASES_V1 = [
   {
+    version: "1.3.2",
+    date: "2026-10-17",
+    type: "patch",
+    title: "AI-Native Pipeline, Token Optimization, Health Diagnostics & Preflight Quality Gate",
+    highlights: [
+      "AI Prompt Token Optimizer: Added heuristic token estimator and context compression to strip comments and style lines, reducing LLM token consumption by 30-50%.",
+      "Provider Health Diagnostics: Built multi-provider health check assessing WebGPU acceleration, local Ollama connectivity, and offline deterministic fallback.",
+      "Resilient Network Policies: Incorporated exponential backoff and jitter across remote AI query endpoints to guarantee zero unhandled network drops.",
+      "Automated Preflight Quality Gate: Added npm run preflight enforcing ESLint, 173 unit tests, 114 diagram & dist checks, and version consistency before commit.",
+      "Studio Live Metrics: Surfaced real-time token budgeting and resilient fallback status inside the Diagram Assistant dialog.",
+    ],
+    commits: [
+      { hash: "HEAD", message: "feat(ai): native token optimizer, provider health diagnostics, resilient retry, and preflight quality gate" },
+    ],
+  },
+  {
     version: "1.3.1",
     date: "2026-10-17",
     type: "patch",

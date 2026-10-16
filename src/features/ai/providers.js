@@ -1,21 +1,19 @@
 import { describeToDiagram } from "../../utils/importers/describe-to-diagram.js";
+import { optimizeAiPrompt } from "../../utils/ai-token-optimizer.js";
+import { fetchWithRetry } from "../../utils/network-retry.js";
+
+const DEFAULT_TEMPERATURE = 0.2;
+const MAX_LOCAL_TOKENS = 2048;
 
 const diagramPrompt = (type) =>
   `You are an expert systems architect and Mermaid diagram author. Generate clean, syntactically valid Mermaid source for ${type === "auto" ? "the most suitable diagram type" : type}. Return only Mermaid source code, without Markdown fences or explanation.`;
 
 /**
- * Builds the user message from the request plus optional editor context
- * (existing source and a previous validation error for repair retries).
+ * Builds token-optimized user prompt with compressed diagram context.
  */
 export function buildUserPrompt(prompt, options = {}) {
-  const parts = [prompt];
-  if (options.contextSource?.trim()) {
-    parts.push(`Existing diagram in the active file (extend or stay consistent with it):\n${options.contextSource.trim().slice(0, 6000)}`);
-  }
-  if (options.repair?.error) {
-    parts.push(`Your previous answer failed Mermaid validation with: ${options.repair.error}\nPrevious answer:\n${options.repair.previous}\nReturn a corrected, complete diagram.`);
-  }
-  return parts.join("\n\n");
+  const { optimizedPrompt } = optimizeAiPrompt(prompt, options);
+  return optimizedPrompt;
 }
 
 export function extractDiagramSource(text = "") {
@@ -36,10 +34,10 @@ export const aiProviders = {
     label: "Ollama",
     async generate({ prompt, type, options, onProgress }) {
       const baseUrl = (options.ollamaUrl || "http://localhost:11434").replace(/\/+$/, "");
-      onProgress("Querying local Ollama model…");
+      onProgress("Querying local Ollama model (token optimized)…");
       let response;
       try {
-        response = await fetch(`${baseUrl}/api/generate`, {
+        response = await fetchWithRetry(`${baseUrl}/api/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -47,9 +45,9 @@ export const aiProviders = {
             prompt: `${diagramPrompt(type)}\n\n${buildUserPrompt(prompt, options)}`,
             stream: false,
           }),
-        });
+        }, { maxRetries: 2, initialDelayMs: 400 });
       } catch {
-        throw new Error(`Could not connect to Ollama at ${baseUrl}. Ensure Ollama is running or switch engines.`);
+        throw new Error(`Could not connect to Ollama at ${baseUrl}. Ensure Ollama is running or switch to offline mode.`);
       }
       if (!response.ok) throw new Error(`Ollama request failed (${response.status}) at ${baseUrl}`);
       return extractDiagramSource((await response.json()).response || "");
@@ -59,9 +57,9 @@ export const aiProviders = {
     id: "openaiCompatible",
     label: "OpenAI-compatible",
     async generate({ prompt, type, options, onProgress }) {
-      onProgress("Querying AI model…");
+      onProgress("Querying AI model (token optimized)…");
       const baseUrl = (options.apiUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
-      const response = await fetch(`${baseUrl}/chat/completions`, {
+      const response = await fetchWithRetry(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,9 +71,10 @@ export const aiProviders = {
             { role: "system", content: diagramPrompt(type) },
             { role: "user", content: buildUserPrompt(prompt, options) },
           ],
-          temperature: 0.2,
+          temperature: DEFAULT_TEMPERATURE,
         }),
-      });
+      }, { maxRetries: 2, initialDelayMs: 500 });
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error?.message || `API request failed with status ${response.status}`);
@@ -88,13 +87,13 @@ export const aiProviders = {
     label: "Gemini",
     async generate({ prompt, type, options, onProgress }) {
       if (!options.geminiApiKey?.trim()) throw new Error("Enter a Gemini API key to use Gemini.");
-      onProgress("Generating with Gemini…");
+      onProgress("Generating with Gemini (token optimized)…");
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: options.geminiApiKey.trim() });
       const response = await ai.models.generateContent({
         model: options.geminiModel || "gemini-3.8-flash",
         contents: buildUserPrompt(prompt, options),
-        config: { systemInstruction: diagramPrompt(type), temperature: 0.2 },
+        config: { systemInstruction: diagramPrompt(type), temperature: DEFAULT_TEMPERATURE },
       });
       return extractDiagramSource(response.text || "");
     },
@@ -130,8 +129,8 @@ export const aiProviders = {
           { role: "system", content: diagramPrompt(type) },
           { role: "user", content: buildUserPrompt(prompt, options) },
         ],
-        temperature: 0.2,
-        max_tokens: 2048,
+        temperature: DEFAULT_TEMPERATURE,
+        max_tokens: MAX_LOCAL_TOKENS,
       });
       return extractDiagramSource(result.choices[0]?.message.content || "");
     },
@@ -145,4 +144,3 @@ export const assistantModeToProvider = {
   gemini: "gemini",
   qwen: "webllm",
 };
-

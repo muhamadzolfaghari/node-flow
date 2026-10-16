@@ -7574,6 +7574,18 @@ export default function Studio() {
                   onChange={(e) => setPrompt(e.target.value)}
                   autoFocus
                 />
+                {prompt.trim() && (
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground bg-secondary/40 rounded-md px-2.5 py-1.5 border border-border/50 mt-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Tokens: ~{assistant.getPromptStats(prompt, { contextSource: aiDestination === "insert" && document ? document.source : "" })?.optimizedTokens || 0}</span>
+                      {(assistant.getPromptStats(prompt, { contextSource: aiDestination === "insert" && document ? document.source : "" })?.savedTokens || 0) > 0 && (
+                        <span className="text-emerald-500 font-medium">({assistant.getPromptStats(prompt, { contextSource: aiDestination === "insert" && document ? document.source : "" })?.reductionPercent}% compressed)</span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/80">Resilient fallback ready</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
