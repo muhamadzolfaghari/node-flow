@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
 import { basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -130,8 +130,9 @@ const diagramLanguage = StreamLanguage.define({
 });
 
 function language(doc) {
-  const name = doc.name.toLowerCase();
-  switch (getFormat(doc.format).language) {
+  if (!doc) return diagramLanguage;
+  const name = (doc.name || "").toLowerCase();
+  switch (getFormat(doc.format || "mermaid").language) {
     case "sql":
       return sql();
     case "xml":
@@ -381,13 +382,17 @@ const keywordCompletions = keywords.map((label) => ({
   type: "keyword",
 }));
 
-export default function CodeEditor({ ref, document, previewError, onChange, onContextMenu }) {
+const CodeEditor = forwardRef(function CodeEditor(
+  { document, previewError, onChange, onContextMenu, isVisible = true },
+  ref
+) {
   const host = useRef(null);
   const editor = useRef(null);
   const latest = useRef({ document, onChange, previewError });
   const states = useRef(new Map());
-  const currentId = useRef(null);
+  const currentId = useRef(document?.id);
   const compartment = useRef(new Compartment());
+  const lastSentTextRef = useRef(document?.source ?? "");
 
   // Interactive AI Fix & Status Banner State
   const [syntaxStatus, setSyntaxStatus] = useState({ valid: true, error: null, line: null, raw: null });
@@ -713,7 +718,12 @@ export default function CodeEditor({ ref, document, previewError, onChange, onCo
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              latest.current.onChange(currentId.current, update.state.doc.toString());
+              const newText = update.state.doc.toString();
+              lastSentTextRef.current = newText;
+              const targetDocId = latest.current.document?.id || currentId.current;
+              if (latest.current.onChange) {
+                latest.current.onChange(targetDocId, newText);
+              }
             }
           }),
         ],
@@ -721,44 +731,86 @@ export default function CodeEditor({ ref, document, previewError, onChange, onCo
     [syntaxLinter, runAiFix]
   );
 
-  // Create the view once per mount. Rebuilding it whenever `document` or
-  // `createState` changed identity dropped focus, selection, history and the
-  // search panel on every keystroke.
+  // Create the view once per mount.
   const hasDocument = Boolean(document);
+  const lastLanguageRef = useRef("");
+
   useEffect(() => {
-    if (!hasDocument) return;
+    if (!hasDocument || !host.current) return;
+    if (editor.current) {
+      editor.current.destroy();
+      editor.current = null;
+    }
+    host.current.innerHTML = "";
+    const initialDoc = latest.current.document;
+    lastSentTextRef.current = initialDoc?.source ?? "";
     editor.current = new EditorView({
-      state: createState(latest.current.document),
+      state: createState(initialDoc),
       parent: host.current,
     });
-    currentId.current = latest.current.document.id;
+    currentId.current = initialDoc?.id;
+    lastLanguageRef.current = `${initialDoc?.format || "mermaid"}:${initialDoc?.name || ""}`;
     return () => {
       editor.current?.destroy();
       editor.current = null;
     };
-  }, [hasDocument]);
+  }, [hasDocument, createState]);
 
   useEffect(() => {
     if (!document || !editor.current) return;
     const view = editor.current;
+
+    // 1. Switched to a different active document
     if (currentId.current !== document.id) {
-      states.current.set(currentId.current, view.state);
+      if (currentId.current) {
+        states.current.set(currentId.current, view.state);
+      }
       currentId.current = document.id;
-      view.setState(states.current.get(document.id) || createState(document));
+      lastSentTextRef.current = document.source ?? "";
+      const cached = states.current.get(document.id);
+      view.setState(cached || createState(document));
+      lastLanguageRef.current = `${document.format || "mermaid"}:${document.name || ""}`;
+      return;
     }
-    if (view.state.doc.toString() !== document.source) {
+
+    // 2. If the document.source matches what was sent from this CodeMirror instance
+    // or matches what the editor already contains, skip re-dispatching to preserve
+    // cursor position, selection, undo tree, and typing flow.
+    const currentDocText = view.state.doc.toString();
+    if (document.source === lastSentTextRef.current || document.source === currentDocText) {
+      return;
+    }
+
+    // 3. Genuine external change to document source (template loaded, AI quick fix, visual drag-and-drop)
+    lastSentTextRef.current = document.source;
+    const curSel = view.state.selection;
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: currentDocText.length,
+        insert: document.source,
+      },
+      selection: curSel
+        ? { anchor: Math.min(curSel.main.anchor, document.source.length) }
+        : undefined,
+    });
+
+    // 4. Reconfigure language compartment only if format or filename changed
+    const langKey = `${document.format || "mermaid"}:${document.name || ""}`;
+    if (lastLanguageRef.current !== langKey) {
+      lastLanguageRef.current = langKey;
       view.dispatch({
-        changes: {
-          from: 0,
-          to: view.state.doc.length,
-          insert: document.source,
-        },
+        effects: compartment.current.reconfigure(language(document)),
       });
     }
-    view.dispatch({
-      effects: compartment.current.reconfigure(language(document)),
-    });
   }, [document?.id, document?.source, document?.format, document?.name, createState]);
+
+  // Re-measure editor when visibility toggles from hidden to split or code
+  useEffect(() => {
+    if (isVisible && editor.current) {
+      editor.current.requestMeasure();
+    }
+  }, [isVisible]);
 
   const formatDocument = useCallback(() => {
     if (!editor.current || !latest.current.document) return;
@@ -982,7 +1034,12 @@ export default function CodeEditor({ ref, document, previewError, onChange, onCo
       {/* CodeMirror Mounting Host */}
       <div
         ref={host}
-        className="code-mirror flex-1 min-h-0 overflow-hidden"
+        className="code-mirror flex-1 min-h-0 overflow-hidden cursor-text"
+        onClick={() => {
+          if (editor.current && !editor.current.hasFocus) {
+            editor.current.focus();
+          }
+        }}
         onContextMenu={(e) => {
           if (onContextMenu) {
             e.preventDefault();
@@ -992,4 +1049,6 @@ export default function CodeEditor({ ref, document, previewError, onChange, onCo
       />
     </div>
   );
-}
+});
+
+export default CodeEditor;

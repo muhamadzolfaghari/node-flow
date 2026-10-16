@@ -30,23 +30,32 @@ export function WorkspaceProvider({ children }) {
     }, 500);
     return () => clearTimeout(timer);
   }, [workspace]);
+  const activeProjId = workspace.projects.some((p) => p.id === workspace.activeProjectId)
+    ? workspace.activeProjectId
+    : workspace.projects[0]?.id;
   const project =
-    workspace.projects.find((p) => p.id === workspace.activeProjectId) ||
+    workspace.projects.find((p) => p.id === activeProjId) ||
     workspace.projects[0];
   const updateProject = (update) =>
-    setWorkspace((w) => ({
-      ...w,
-      projects: w.projects.map((p) =>
-        p.id === w.activeProjectId
-          ? {
-              ...(typeof update === "function"
-                ? update(p)
-                : { ...p, ...update }),
-              updatedAt: new Date().toISOString(),
-            }
-          : p,
-      ),
-    }));
+    setWorkspace((w) => {
+      const targetId = w.projects.some((p) => p.id === w.activeProjectId)
+        ? w.activeProjectId
+        : (project?.id || w.projects[0]?.id);
+      return {
+        ...w,
+        activeProjectId: targetId,
+        projects: w.projects.map((p) =>
+          p.id === targetId
+            ? {
+                ...(typeof update === "function"
+                  ? update(p)
+                  : { ...p, ...update }),
+                updatedAt: new Date().toISOString(),
+              }
+            : p,
+        ),
+      };
+    });
   const addProject = (newProject) =>
     setWorkspace((w) => ({
       ...w,

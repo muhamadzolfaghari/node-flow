@@ -895,13 +895,17 @@ export default function CanvasStage({
     stage.addEventListener("dblclick", dblclick);
     stage.addEventListener("wheel", wheel, { passive: false });
     const keys = (e) => {
-      if (
+      // Guard against intercepting keys when user is typing in code editor, inputs, or textareas
+      const isInput =
         e.altKey ||
-        e.target.closest(
-          'input,textarea,select,button,[contenteditable], [role="dialog"]',
-        )
-      )
-        return;
+        e.target?.closest?.(
+          'input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.cm-content,.code-mirror,[role="dialog"]',
+        ) ||
+        globalThis.document?.activeElement?.closest?.(
+          'input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.cm-content,.code-mirror,[role="dialog"]',
+        );
+      if (isInput) return;
+
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && (key === "p" || (e.shiftKey && key === "o"))) {
         e.preventDefault();
@@ -979,10 +983,16 @@ export default function CanvasStage({
     };
     window.addEventListener("keydown", keys);
     const handleSpaceDown = (e) => {
-      if (
-        (e.code === "Space" || e.key === " ") &&
-        !e.target.closest('input,textarea,select,button,[contenteditable],[role="dialog"]')
-      ) {
+      const isInput =
+        e.target?.closest?.(
+          'input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.cm-content,.code-mirror,[role="dialog"]',
+        ) ||
+        globalThis.document?.activeElement?.closest?.(
+          'input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.cm-content,.code-mirror,[role="dialog"]',
+        );
+      if (isInput) return;
+
+      if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
         if (!spaceHeld.current) {
           spaceHeld.current = true;

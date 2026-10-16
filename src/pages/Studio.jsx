@@ -397,7 +397,10 @@ export default function Studio() {
     addProject,
     setWorkspace,
   } = useWorkspace(params.get("project"));
-  const document = project.documents.find((d) => d.id === project.activeId);
+  const document =
+    project?.documents?.find((d) => d.id === project.activeId) ||
+    project?.documents?.[0] ||
+    null;
   const fileRef = useRef(null),
     folderRef = useRef(null),
     editorRef = useRef(null),
@@ -411,7 +414,6 @@ export default function Studio() {
       setWidth(window.innerWidth);
       if (window.innerWidth < 1024) {
         setExplorer(false);
-        setView((v) => (v === "split" ? "canvas" : v));
       }
       if (window.innerWidth < 1280) setInspector(false);
     };
@@ -421,7 +423,7 @@ export default function Studio() {
   const [explorer, setExplorer] = useState(() => window.innerWidth > 900),
     [inspector, setInspector] = useState(() => window.innerWidth >= 1280),
     [view, setView] = useState(() =>
-      window.innerWidth < 900 ? "canvas" : "split",
+      window.innerWidth < 900 ? "split" : "split",
     );
   const [theme, setTheme] = useState(() => DIAGRAM_THEME_FOR[resolveTheme(getStoredTheme())] || "dark"),
     [grid, setGrid] = useState("dots"),
@@ -712,13 +714,19 @@ export default function Studio() {
     setToast(message);
     setToastUndo(undo);
   };
-  const updateSource = (id, source) =>
-    updateProject((p) => ({
-      ...p,
-      documents: p.documents.map((d) =>
-        d.id === id ? { ...d, source, updatedAt: new Date().toISOString() } : d,
-      ),
-    }));
+  const updateSource = (id, source) => {
+    updateProject((p) => {
+      const targetDocId = id || document?.id || p.activeId || p.documents[0]?.id;
+      return {
+        ...p,
+        documents: p.documents.map((d) =>
+          d.id === targetDocId
+            ? { ...d, source, updatedAt: new Date().toISOString() }
+            : d,
+        ),
+      };
+    });
+  };
   const openDocument = (id) => {
     updateProject((p) => ({
       ...p,
@@ -842,13 +850,16 @@ export default function Studio() {
         e.preventDefault();
         reopenClosedTab();
       }
+      const isInput =
+        e.target?.closest?.("input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.code-mirror") ||
+        globalThis.document?.activeElement?.closest?.("input,textarea,select,button,[contenteditable],.cm-editor,.cm-scroller,.code-mirror");
       if (e.key === "F2" && projectRef.current.activeId) {
-        if (!e.target.closest("input,textarea,[contenteditable]")) {
+        if (!isInput) {
           e.preventDefault();
           startRenameFile(projectRef.current.activeId);
         }
       }
-      if (key === "?" && !e.target.closest("input,textarea,[contenteditable]"))
+      if (key === "?" && !isInput)
         setDialog("shortcuts");
     };
     const fullscreen = () => {
@@ -6097,8 +6108,8 @@ export default function Studio() {
               {(
                 <div
                   className={cn(
-                    "min-h-0 min-w-0 overflow-hidden bg-card",
-                    view === "split" && "hidden lg:block",
+                    "min-h-0 min-w-0 overflow-hidden bg-card h-full flex flex-col",
+                    view === "split" && "hidden md:block",
                     view === "canvas" && "hidden",
                   )}
                 >
@@ -6107,6 +6118,7 @@ export default function Studio() {
                     document={document}
                     previewError={preview.error}
                     onChange={updateSource}
+                    isVisible={view !== "canvas"}
                     onContextMenu={(e) => {
                       setContextMenu({
                         isOpen: true,
