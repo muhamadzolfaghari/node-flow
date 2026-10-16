@@ -1,4 +1,4 @@
-import {
+import React, {
   useEffect,
   useRef,
   useState,
@@ -22,19 +22,26 @@ import {
   Palette,
   Check,
   ChevronDown,
+  ChevronRight,
   Link2,
   Globe,
   Search,
   FolderPlus,
+  FolderTree,
   Sparkles,
   ArrowUpRight,
   Activity,
   Mouse,
   Download,
+  Cloud,
+  BarChart2,
+  Layers,
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
+import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
+import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";
 
 export default function CanvasStage({
   ref,
@@ -62,6 +69,14 @@ export default function CanvasStage({
   onContextMenu,
   presentation = false,
   isGeospatial = false,
+  breadcrumbs = [],
+  onBreadcrumbClick,
+  onDrillDown,
+  drillDownLinks = new Map(),
+  onInsertStencil,
+  documentSource = "",
+  documentFormat = "mermaid",
+  currentDocName = "",
 }) {
   const stageRef = useRef(null),
     canvasRef = useRef(null),
@@ -97,7 +112,9 @@ export default function CanvasStage({
     [searchQuery, setSearchQuery] = useState(""),
     [searchIndex, setSearchIndex] = useState(0),
     [minimapViewport, setMinimapViewport] = useState(null),
-    [isSimulating, setIsSimulating] = useState(false);
+    [isSimulating, setIsSimulating] = useState(false),
+    [showStencilsDrawer, setShowStencilsDrawer] = useState(false),
+    [showMetricsModal, setShowMetricsModal] = useState(false);
 
   const callbacks = useRef({
     onSelect,
@@ -1107,7 +1124,29 @@ export default function CanvasStage({
         )}
       </div>
 
-      {isGeospatial && (
+      {/* C4 Architecture Multi-Level Hierarchical Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-full border border-indigo-500/40 bg-slate-950/90 px-3 py-1.5 text-xs text-slate-200 shadow-2xl backdrop-blur-xl ring-1 ring-indigo-400/20 select-none animate-in fade-in slide-in-from-top-1">
+          <Layers className="size-3.5 text-indigo-400 shrink-0" />
+          <span className="font-semibold text-indigo-300 text-[10px] uppercase tracking-wider pr-1.5 border-r border-slate-700">C4 Hierarchy</span>
+          {breadcrumbs.map((crumb, idx) => (
+            <React.Fragment key={crumb.id || idx}>
+              <button
+                type="button"
+                onClick={() => onBreadcrumbClick?.(crumb.id, idx)}
+                className="text-xs text-slate-300 hover:text-white hover:underline flex items-center gap-1 transition"
+                title={`Navigate back up to ${crumb.name}`}
+              >
+                {crumb.name}
+              </button>
+              <ChevronRight className="size-3 text-slate-500" />
+            </React.Fragment>
+          ))}
+          <span className="font-semibold text-white text-xs">{currentDocName || "Child Diagram"}</span>
+        </div>
+      )}
+
+      {isGeospatial && !breadcrumbs?.length && (
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2 rounded-full border border-sky-500/30 bg-slate-950/85 px-3 py-1.5 text-xs text-sky-200 shadow-xl backdrop-blur-md select-none animate-in fade-in slide-in-from-top-1">
           <Globe className="size-3.5 text-sky-400 animate-spin" style={{ animationDuration: "14s" }} />
           <span className="font-semibold text-slate-100">Geospatial Engine</span>
@@ -1371,6 +1410,24 @@ export default function CanvasStage({
               <Pencil className="size-2.5 opacity-60 ml-0.5" />
             </button>
           )}
+
+          {/* C4 Drill Down Button */}
+          {(() => {
+            const rawId = selected?.id ? flowchartNodeId(selected.id) : null;
+            const targetDocId = rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
+            if (!targetDocId) return null;
+            return (
+              <button
+                type="button"
+                onClick={() => onDrillDown?.(targetDocId)}
+                className="inline-flex items-center gap-1 rounded bg-indigo-500/20 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 hover:bg-indigo-500/30 transition shadow-sm ml-0.5"
+                title="Drill down into child diagram (C4 Component view)"
+              >
+                <FolderTree className="size-3 text-indigo-400" />
+                <span>Drill Down ↗</span>
+              </button>
+            );
+          })()}
 
           <span className="h-4 border-l border-border/80 mx-1" />
 
@@ -1829,6 +1886,20 @@ export default function CanvasStage({
         >
           <Activity className={isSimulating ? "text-cyan-400 animate-pulse" : ""} />
         </Tool>
+        <Tool
+          title="Architecture health & complexity analysis"
+          onClick={() => setShowMetricsModal(true)}
+        >
+          <BarChart2 className="text-emerald-400" />
+        </Tool>
+        <Tool
+          title="Cloud & architecture stencils palette"
+          aria-pressed={showStencilsDrawer}
+          className={showStencilsDrawer ? "bg-accent" : ""}
+          onClick={() => setShowStencilsDrawer(!showStencilsDrawer)}
+        >
+          <Cloud className="text-sky-400" />
+        </Tool>
         <span className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Find a node (⌘/Ctrl+P)" onClick={() => setSearchOpen(true)}>
           <Search />
@@ -1845,6 +1916,24 @@ export default function CanvasStage({
         active={isSimulating}
         onClose={() => setIsSimulating(false)}
         containerRef={containerRef}
+        position={position}
+      />
+
+      {/* Quick Architecture & Cloud Stencils Drawer */}
+      <CloudStencilsDrawer
+        isOpen={showStencilsDrawer}
+        onClose={() => setShowStencilsDrawer(false)}
+        onInsert={(snippet) => {
+          onInsertStencil?.(snippet);
+        }}
+      />
+
+      {/* Architecture Complexity & Metrics Modal */}
+      <ArchitectureMetricsModal
+        isOpen={showMetricsModal}
+        onClose={() => setShowMetricsModal(false)}
+        source={documentSource}
+        format={documentFormat}
       />
     </div>
   );

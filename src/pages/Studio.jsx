@@ -17,6 +17,7 @@ import {
   FilePlus,
   FolderPlus,
   FolderOpen,
+  FolderTree,
   Files,
   Download,
   Upload,
@@ -441,7 +442,8 @@ export default function Studio() {
     [name, setName] = useState(""),
     [query, setQuery] = useState(""),
     [templateRoleFilter, setTemplateRoleFilter] = useState("all"),
-    [assistantRoleFilter, setAssistantRoleFilter] = useState("All");
+    [assistantRoleFilter, setAssistantRoleFilter] = useState("All"),
+    [drillDownBreadcrumbs, setDrillDownBreadcrumbs] = useState([]);
   const deferredQuery = useDeferredValue(query, "");
   const [optimisticDocName, setOptimisticDocName] = useOptimistic(
     document?.name || "No file selected",
@@ -734,6 +736,68 @@ export default function Studio() {
       openIds: p.openIds.includes(id) ? p.openIds : [...p.openIds, id],
     }));
     setSelected(null);
+  };
+
+  const drillDownLinks = useMemo(() => {
+    const map = new Map();
+    if (!document?.source) return map;
+    const regex = /%% @drilldown:\s*(\S+)\s*->\s*(\S+)/g;
+    for (const match of document.source.matchAll(regex)) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  }, [document?.source]);
+
+  const handleDrillDown = (targetDocId) => {
+    if (!targetDocId || !document) return;
+    const targetDoc = project.documents.find((d) => d.id === targetDocId);
+    if (!targetDoc) return;
+    setDrillDownBreadcrumbs((prev) => [
+      ...prev,
+      { id: document.id, name: document.name },
+    ]);
+    openDocument(targetDocId);
+    say(`Drilled down to ${targetDoc.name}`);
+  };
+
+  const handleBreadcrumbClick = (targetDocId, index) => {
+    if (!targetDocId) return;
+    setDrillDownBreadcrumbs((prev) => prev.slice(0, index));
+    openDocument(targetDocId);
+  };
+
+  const createChildDiagramForNode = (nodeId, labelText) => {
+    if (!document || !nodeId) return;
+    const rawId = flowchartNodeId(nodeId);
+    const cleanLabel = (labelText || rawId).replace(/[^\w\s-]/g, "").trim();
+    const childName = `${cleanLabel.replace(/\s+/g, "-").toLowerCase() || "component"}-level3.mmd`;
+    const childSource = `flowchart TD\n  %% C4 Component Level for ${cleanLabel || rawId}\n  In["Inbound Traffic"] --> Core["${cleanLabel || rawId} Core Engine"]\n  Core --> Cache[("Redis Cache")]\n  Core --> DB[("Database Storage")]\n`;
+    const newDoc = {
+      id: uid(),
+      name: childName,
+      format: "mermaid",
+      source: childSource,
+      updatedAt: new Date().toISOString(),
+    };
+    newFiles([newDoc]);
+    const directive = `\n%% @drilldown: ${rawId} -> ${newDoc.id}`;
+    updateSource(document.id, `${document.source}${directive}`);
+    setDrillDownBreadcrumbs((prev) => [
+      ...prev,
+      { id: document.id, name: document.name },
+    ]);
+    openDocument(newDoc.id);
+    say(`Created C4 component view "${childName}"`);
+  };
+
+  const insertStencil = (snippet) => {
+    if (!document || !snippet) return;
+    const current = document.source;
+    const updated = current.endsWith("\n")
+      ? `${current}${snippet}`
+      : `${current}\n${snippet}`;
+    updateSource(document.id, updated);
+    say("Inserted architecture component");
   };
   const newFiles = (docs) => {
     updateProject((p) => addDocuments(p, docs));
@@ -6287,6 +6351,27 @@ export default function Studio() {
                                 }
                               },
                             },
+                            ...(drillDownLinks.has(targetNodeId)
+                              ? [
+                                  {
+                                    id: "c4-drill-down",
+                                    label: "Drill Down to Child Diagram ↗",
+                                    icon: FolderTree,
+                                    onClick: () =>
+                                      handleDrillDown(drillDownLinks.get(targetNodeId)),
+                                  },
+                                ]
+                              : []),
+                            {
+                              id: "c4-create-child",
+                              label: "Create Child Diagram (C4 Component View)...",
+                              icon: FolderPlus,
+                              onClick: () =>
+                                createChildDiagramForNode(
+                                  targetNodeId,
+                                  nodeInfo.label || targetNodeId,
+                                ),
+                            },
                             {
                               id: "edit-label",
                               label: "Edit in Inspector",
@@ -6719,6 +6804,15 @@ export default function Studio() {
                     onOpenExportStudio={() => setIsExportStudioOpen(true)}
                     isGeospatial={isGeospatialDoc}
                     presentation={presentation}
+                    breadcrumbs={drillDownBreadcrumbs}
+                    onBreadcrumbClick={handleBreadcrumbClick}
+                    onDrillDown={handleDrillDown}
+                    drillDownLinks={drillDownLinks}
+                    onInsertStencil={insertStencil}
+                    documentSource={document.source}
+                    documentFormat={document.format}
+                    currentDocName={document.name}
+                    projectDocuments={project.documents}
                   />
                   {preview.error && (
                     <div

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
 
-const CATEGORIES = ["All", "AWS", "GCP", "Azure", "Kubernetes", "Databases", "Security"];
+const CATEGORIES = ["All", "AWS", "GCP", "Azure", "Kubernetes", "Databases", "Observability", "Security"];
 
 export default function CloudStencilModal({
   isOpen,

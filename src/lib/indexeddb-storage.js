@@ -187,26 +187,38 @@ export const CLOUD_STENCILS = [
   { id: "aws-apigw", label: "API Gateway", category: "AWS", icon: "🚪", codeSnippet: '    APIGW["🚪 Amazon API Gateway"]\n' },
   { id: "aws-sqs", label: "AWS SQS", category: "AWS", icon: "📨", codeSnippet: '    SQS>"📨 Amazon SQS Queue"]\n' },
   { id: "aws-ecs", label: "Amazon ECS/Fargate", category: "AWS", icon: "📦", codeSnippet: '    ECS["📦 Amazon ECS Fargate"]\n' },
+  { id: "aws-stepfunc", label: "Step Functions", category: "AWS", icon: "🔄", codeSnippet: '    StepFunc["🔄 AWS Step Functions"]\n' },
   // GCP
   { id: "gcp-cloudrun", label: "Cloud Run", category: "GCP", icon: "🏃", codeSnippet: '    CloudRun["🏃 GCP Cloud Run"]\n' },
   { id: "gcp-bigquery", label: "BigQuery", category: "GCP", icon: "📊", codeSnippet: '    BQ[("📊 Google BigQuery")]\n' },
   { id: "gcp-pubsub", label: "Pub/Sub", category: "GCP", icon: "📢", codeSnippet: '    PubSub>"📢 Google Cloud Pub/Sub"]\n' },
   { id: "gcp-gcs", label: "Cloud Storage", category: "GCP", icon: "🗄️", codeSnippet: '    GCS[("🗄️ Google Cloud Storage")]\n' },
+  { id: "gcp-spanner", label: "Cloud Spanner", category: "GCP", icon: "🌐", codeSnippet: '    Spanner[("🌐 Google Cloud Spanner")]\n' },
   // Azure
   { id: "azure-functions", label: "Azure Functions", category: "Azure", icon: "⚡", codeSnippet: '    AzFunc["⚡ Azure Functions"]\n' },
   { id: "azure-cosmos", label: "Cosmos DB", category: "Azure", icon: "🌐", codeSnippet: '    Cosmos[("🌐 Azure Cosmos DB")]\n' },
   { id: "azure-aks", label: "Azure AKS", category: "Azure", icon: "☸️", codeSnippet: '    AKS["☸️ Azure Kubernetes Service"]\n' },
-  // Kubernetes & CNCF
+  { id: "azure-eventhub", label: "Azure Event Hubs", category: "Azure", icon: "📡", codeSnippet: '    EventHubs>"📡 Azure Event Hubs"]\n' },
+  // Kubernetes & Containers & CNCF
   { id: "k8s-pod", label: "Kubernetes Pod", category: "Kubernetes", icon: "☸️", codeSnippet: '    Pod["☸️ K8s Pod Container"]\n' },
   { id: "k8s-ingress", label: "K8s Ingress", category: "Kubernetes", icon: "🌐", codeSnippet: '    Ingress["🌐 K8s Ingress Controller"]\n' },
   { id: "k8s-service", label: "ClusterIP Service", category: "Kubernetes", icon: "🔌", codeSnippet: '    Svc["🔌 K8s Service"]\n' },
   { id: "k8s-istio", label: "Istio Service Mesh", category: "Kubernetes", icon: "⛵", codeSnippet: '    Mesh["⛵ Istio Envoy Sidecar Mesh"]\n' },
-  // Databases & Caching
+  { id: "docker-container", label: "Docker Container", category: "Kubernetes", icon: "🐳", codeSnippet: '    Docker["🐳 Docker Container Engine"]\n' },
+  { id: "helm-chart", label: "Helm Package", category: "Kubernetes", icon: "⎈", codeSnippet: '    Helm["⎈ Helm Chart Deployment"]\n' },
+  { id: "envoy-proxy", label: "Envoy Proxy", category: "Kubernetes", icon: "🛡️", codeSnippet: '    Envoy["🛡️ Envoy Edge Proxy"]\n' },
+  // Databases & Caching & Search
   { id: "db-postgres", label: "PostgreSQL", category: "Databases", icon: "🐘", codeSnippet: '    Postgres[("🐘 PostgreSQL Database")]\n' },
   { id: "db-redis", label: "Redis Cluster", category: "Databases", icon: "⚡", codeSnippet: '    Redis[("⚡ Redis In-Memory Cache")]\n' },
   { id: "db-kafka", label: "Apache Kafka", category: "Databases", icon: "📨", codeSnippet: '    Kafka>"📨 Apache Kafka Event Hub"]\n' },
+  { id: "db-rabbitmq", label: "RabbitMQ", category: "Databases", icon: "🐇", codeSnippet: '    RabbitMQ>"🐇 RabbitMQ Message Broker"]\n' },
+  { id: "db-elasticsearch", label: "Elasticsearch", category: "Databases", icon: "🔍", codeSnippet: '    ES[("🔍 Elasticsearch Cluster")]\n' },
   { id: "db-snowflake", label: "Snowflake", category: "Databases", icon: "❄️", codeSnippet: '    Snowflake[("❄️ Snowflake Warehouse")]\n' },
-  // Security & Edge
+  // Observability & Telemetry
+  { id: "obs-prometheus", label: "Prometheus", category: "Observability", icon: "🔥", codeSnippet: '    Prometheus[("🔥 Prometheus TSDB")]\n' },
+  { id: "obs-grafana", label: "Grafana Dashboards", category: "Observability", icon: "📊", codeSnippet: '    Grafana["📊 Grafana Analytics"]\n' },
+  { id: "obs-otel", label: "OpenTelemetry Collector", category: "Observability", icon: "🔭", codeSnippet: '    OTel["🔭 OpenTelemetry Collector"]\n' },
+  // Security & Identity & Edge
   { id: "sec-cloudflare", label: "Cloudflare WAF", category: "Security", icon: "🛡️", codeSnippet: '    WAF["🛡️ Cloudflare DDoS / WAF"]\n' },
   { id: "sec-vault", label: "HashiCorp Vault", category: "Security", icon: "🔐", codeSnippet: '    Vault[("🔐 HashiCorp Vault Secrets")]\n' },
   { id: "sec-keycloak", label: "Keycloak / OIDC", category: "Security", icon: "👤", codeSnippet: '    IdP["👤 Keycloak Identity Provider"]\n' },
