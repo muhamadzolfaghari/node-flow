@@ -11,6 +11,7 @@ export const CHANGELOG_ENTRIES = [
       "Line-Targeted Diagnostics: Upgraded explainError in syntax-error-db.js to prioritize the exact reported error line, providing high-precision cause explanations and 1-click line repair.",
       "Context-Aware Autocomplete: Suppressed keywords inside string literals and bracket labels, added node shape snippets, and scoped keywords to active diagram types.",
       "Canvas Content Framing: Extended CANVAS_CONTENT_SELECTOR to include pie charts, quadrant points, commits, block elements, and legends for 100% framing pass.",
+      "Logic & UI Separation: Extracted useExportStudio and useEditorDiagnostics custom hooks, decomposing complex dialogs and editors into focused presentational panes (ExportPreviewPane, ExportControlsPane, EditorDiagnosticsBanner).",
     ],
     commits: [
       { hash: "HEAD", message: "fix(editor): focus retention, deterministic line quick fix, contextual autocomplete, and framing selectors" },
