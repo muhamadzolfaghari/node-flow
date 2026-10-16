@@ -65,51 +65,56 @@ const DEMOS = [
 
 const QUICK_STARTS = [
   { icon: Network, label: "UML & architecture", detail: "Structure, behavior, interactions", query: "UML" },
-  { icon: Database, label: "Entity relationships", detail: "Tables, keys, and data models", query: "erDiagram" },
+  { icon: Database, label: "Entity relationships", detail: "Tables, keys, and data models", query: "ER" },
   { icon: Layers, label: "Charts & planning", detail: "Gantt, timelines, and data charts", query: "Product & Design" },
   { icon: GitBranch, label: "Flows & mindmaps", detail: "Processes and connected ideas", query: "mindmap" },
 ];
 
 const FEATURES = [
   {
-    icon: Files,
-    title: "Projects, not one-off files",
-    description: "Keep source files in a project, work in tabs, and return to your drafts exactly as you left them.",
+    icon: Sparkles,
+    title: "AI Architecture Engine & ADRs",
+    description: "Automated topology classification, coupling & bottleneck analysis, single point of failure (SPOF) detection, and Markdown tech specs.",
   },
   {
     icon: Code2,
-    title: "A real source editor",
-    description: "Syntax highlighting, live error markers, symbol-aware completion, search, undo, and one-click repairs.",
+    title: "High-speed editor & live linting",
+    description: "160ms debounced linter with column squiggles, AI quick-fix hover actions, line jumps, and contextual arrow autocompletion.",
   },
   {
     icon: MousePointerClick,
-    title: "Edit on the canvas",
-    description: "Select a shape to rename, restyle, connect, duplicate, or delete it, and watch the source update.",
-  },
-  {
-    icon: Sparkles,
-    title: "AI you can review",
-    description: "Generate with deterministic rules, WebGPU, Ollama, Gemini, or an OpenAI-compatible API, then approve the proposal.",
-  },
-  {
-    icon: Palette,
-    title: "Themes that fit your team",
-    description: "Studio Dark, Light, Midnight, Nord, High contrast, or match your system, applied across editor and canvas.",
-  },
-  {
-    icon: Download,
-    title: "Deliver anywhere",
-    description: "Export SVG, PNG, PDF, PPTX, or standalone HTML, create checkpoints, and download project backups.",
+    title: "Direct visual canvas modeling",
+    description: "Marquee lasso selection, interactive drag-to-connect ports, dynamic node toolbar, radar minimap, and multi-node batch styling.",
   },
   {
     icon: Shield,
-    title: "STRIDE Threat Modeling",
+    title: "STRIDE Threat Modeling & Audit",
     description: "Automated architecture security audits detecting trust boundaries, cleartext channels, and exposed databases for SOC2 / ISO 27001.",
   },
   {
     icon: Activity,
     title: "Interactive Flow Simulation",
     description: "Trace request packets and glowing photon pulses along directed connections to visually debug microservice lifecycles.",
+  },
+  {
+    icon: Files,
+    title: "Multi-role workspace suite",
+    description: "Tailored starter kits and workflows for Product Managers, QA & Test Engineers, Developers, Operations SOP, and Academics.",
+  },
+  {
+    icon: Palette,
+    title: "8 Curated designer themes",
+    description: "Studio Dark Neon, Light Paper, Nord Arctic, Tokyo Night Indigo, Cyberpunk Gold, Catppuccin Mocha, and Forest Pine.",
+  },
+  {
+    icon: Download,
+    title: "Lossless vector & portable exports",
+    description: "Export SVG with embedded roundtrip source metadata, 4× UHD PNG, vector PDF, PPTX slides, standalone HTML, and .atlas backups.",
+  },
+  {
+    icon: Cloud,
+    title: "100% Client-Side Privacy & AI",
+    description: "Zero telemetry, browser-local IndexedDB storage, WebGPU local LLMs, and air-gapped deterministic generation.",
   },
 ];
 
@@ -163,7 +168,7 @@ export default function Landing() {
               <span>Open source visual workspace</span>
               <span className="text-muted-foreground/60">·</span>
               <a
-                href="https://github.com/muhamadzolfaghari"
+                href="https://github.com/muhamadzolfaghari/node-flow"
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium text-foreground/90 transition-colors hover:text-primary"
@@ -179,8 +184,8 @@ export default function Landing() {
               .
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              NodeFlow is a browser workspace where source code, a live canvas, and an AI assistant edit the same
-              diagram. Start from a template or an import, and keep your projects in your browser.
+              NodeFlow is an AI-native browser workspace where source code, an interactive live canvas, and autonomous
+              architectural agents edit the same diagram. Start from a template or import, and keep your data local.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button size="lg" asChild>
@@ -201,6 +206,7 @@ export default function Landing() {
               <li>Air-Gap Ready</li>
               <li>Zero Telemetry</li>
               <li>{FORMATS.length} Architecture Formats</li>
+              <li>158 Unit Tests Passing</li>
               <li>Hardware Wasm Accelerated</li>
               <li>MIT Licensed</li>
             </ul>
@@ -369,9 +375,9 @@ export default function Landing() {
           </div>
           <dl className="grid grid-cols-3 gap-6 text-center sm:gap-10">
             {[
-              [FORMATS.length, "Source formats"],
+              [FORMATS.length, "Architecture formats"],
               [DIAGRAM_TEMPLATES.length, "Starter templates"],
-              [14, "UML categories"],
+              [14, "UML 2.5 specifications"],
             ].map(([value, label]) => (
               <div key={label}>
                 <dd className="text-3xl font-semibold">{value}</dd>

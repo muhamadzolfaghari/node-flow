@@ -12,15 +12,18 @@ Phone layouts: [home](screenshots/enterprise/mobile-home.png) · [studio](screen
 
 ## What this project demonstrates
 
+- **AI-Native Architecture Agent & Technical Specification Engine:** Automated topology classification (Layered N-Tier, Microservices, Event-Driven Streaming, Cloud VPC, Relational Schemas), fan-in/fan-out coupling bottleneck analysis, single point of failure (SPOF) detection, and automated Markdown architecture specifications & ADRs.
+- **Cross-Disciplinary Studio Workflows:** Purpose-built starter kits and workflows for Product Managers (PM), QA & Testing, Developers, Business Operations (SOP), and Students & Academics.
+- **High-Speed Code Editor & Live Diagnostics:** 160ms debounced linter with column-level error squiggles, in-editor AI Quick Fix hover actions, line jump navigation, and contextual connection arrow autocompletion.
 - **Enterprise STRIDE Threat Model & Compliance Analyzer:** Automated client-side security architecture audits inspecting trust boundaries, cleartext channels, and exposed databases; generates formal SOC2 / ISO 27001 audit markdown reports.
 - **Interactive Request Flow Simulator:** Real-time visual debugging simulating HTTP/gRPC request packets and photon pulses along directed connections on the live canvas.
-- **Cloud & Architecture Stencil Palette:** 80+ curated cloud infrastructure stencils (AWS, GCP, Azure, Kubernetes, CNCF, Databases, Message Queues) with one-click insertion.
+- **Cloud & Architecture Stencil Palette:** Curated cloud infrastructure stencils (AWS, GCP, Azure, Kubernetes, CNCF, Databases, Message Queues) with one-click insertion.
 - **Hardware-Accelerated WebAssembly Suite:** Native C Graphviz layout compilation, 32-bit FNV-1a hardware hashing, and linear memory pixel compositing.
 - **Source-first visual editor:** Synchronized previews and direct manipulation for supported Mermaid diagram families.
-- **Universal 34+ format registry:** Conversion adapters that preserve original source and make conversion limits explicit (Graphviz, PlantUML, D2, SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL, BPMN, C4, Terraform, etc.).
-- **Antigravity Resilient Network Architecture:** Automated retry policies with exponential backoff, jitter, and graceful offline degradation.
+- **Universal 38 format registry:** Conversion adapters that preserve original source and make conversion limits explicit (Graphviz, PlantUML, D2, SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL, BPMN, C4, Terraform, Draw.io, XMind, StarUML, Lucidchart, GeoJSON, MVT, TopoJSON, etc.).
+- **Antigravity Resilient Network Architecture:** Automated retry policies with exponential backoff, jitter, and graceful offline degradation (100% test coverage).
 - **Zero-trust, air-gapped privacy model:** 100% client-side execution, browser storage, version checkpoints, portable backups, and lossless SVG roundtrip metadata.
-- **Dual-engine AI synthesis:** Deterministic local rules, in-browser WebGPU Qwen, Ollama, native Gemini, and OpenAI-compatible endpoints with one-round parser error repair.
+- **Multi-engine AI synthesis:** Deterministic local rules, in-browser WebGPU Qwen, Ollama, native Gemini, and OpenAI-compatible endpoints with one-round parser error repair.
 
 Start with the [interactive examples](https://muhamadzolfaghari.github.io/node-flow/) or browse the [desktop and phone screenshots](screenshots/enterprise).
 
@@ -65,7 +68,7 @@ Start with the [interactive examples](https://muhamadzolfaghari.github.io/node-f
 
 ## Supported source formats
 
-All 34 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry. Full matrix: [docs/FORMATS-ALL.md](docs/FORMATS-ALL.md). Syntax-error database: [docs/SYNTAX-ERROR-DB.md](docs/SYNTAX-ERROR-DB.md). 50-phase plan: [docs/UNIVERSAL-50-PHASE-PLAN.md](docs/UNIVERSAL-50-PHASE-PLAN.md).
+All 38 entries are available in the new-file dialog, file inspector, and import workflow. Formats are defined once in `src/lib/formats.js`; the Formats page displays the same registry. Full matrix: [docs/FORMATS-ALL.md](docs/FORMATS-ALL.md). Syntax-error database: [docs/SYNTAX-ERROR-DB.md](docs/SYNTAX-ERROR-DB.md). 50-phase plan: [docs/UNIVERSAL-50-PHASE-PLAN.md](docs/UNIVERSAL-50-PHASE-PLAN.md).
 
 | Format | Input | Editing and preview scope |
 | --- | --- | --- |
@@ -231,9 +234,10 @@ npm run dev
 
 ```sh
 npm run build
-npm test
-npm run test:unit
-npm run test:browser
+npm test              # 115 syntax, exporter, and Wasm checks
+npm run test:unit     # 158 unit tests with Node native runner
+npm run test:coverage # per-module line/branch/func coverage metrics
+npm run test:browser  # headless browser e2e audit
 ```
 
 Production files are generated in `dist/`, with the GitHub Pages base path `/node-flow/` (or `/diagram-atlas/`, configurable via `VITE_BASE_URL`). The browser suite starts its own local server, exercises source formats and workspace workflows, and closes it afterward. Set `ATLAS_TEST_URL` to use an existing server.
