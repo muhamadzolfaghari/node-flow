@@ -1,2 +1,0 @@
-import{j as t}from"./vendor-react-CuR4BcWE.js";import{c as o}from"./index-CFFL3Pwk.js";function e({className:a,...r}){return t.jsx("div",{"data-slot":"card",className:o("flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",a),...r})}function n({className:a,...r}){return t.jsx("div",{"data-slot":"card-content",className:o("px-6",a),...r})}export{e as C,n as a};
-//# sourceMappingURL=card-IjfFINbl.js.map

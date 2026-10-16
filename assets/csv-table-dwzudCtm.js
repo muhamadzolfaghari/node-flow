@@ -3,4 +3,3 @@ function I(r){if(!r||typeof r!="string")throw new Error("Please provide CSV data
 `}function w(r,a){const s=r.findIndex(t=>t.includes("table")||t.includes("entity")),d=r.findIndex(t=>t.includes("col")||t.includes("field")||t.includes("prop")),i=r.findIndex(t=>t.includes("type")),f=r.findIndex(t=>t.includes("key")||t.includes("constraint")),l={};a.forEach(t=>{const e=(t[s]||"ENTITY").replace(/[^\w\d_]/g,"_").toUpperCase(),n=(t[d]||"id").replace(/[^\w\d_]/g,"_"),c=i!==-1&&t[i]?t[i].replace(/[^\w\d_]/g,"_"):"string",p=f!==-1&&t[f]?t[f].toUpperCase():"";l[e]||(l[e]=[]),l[e].push({colName:n,colType:c,key:p})});const o=["erDiagram"];for(const[t,e]of Object.entries(l))o.push(`  ${t} {`),e.forEach(n=>o.push(`    ${n.colType} ${n.colName}${n.key?` ${n.key}`:""}`)),o.push("  }");return o.join(`
 `)+`
 `}export{I as parseCsvToMermaid};
-//# sourceMappingURL=csv-table-dwzudCtm.js.map

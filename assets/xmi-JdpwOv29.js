@@ -5,4 +5,3 @@ function b(a){if(!a||typeof a!="string")throw new Error("Please provide XMI text
 `}if(s.size===0)throw new Error("No uml:Class, lifeline, or message elements found in XMI.");const p=["classDiagram"];for(const e of new Set(s.values()))p.push(`  class ${e}`);return c.slice(0,30).forEach(e=>p.push(e)),p.join(`
 `)+`
 `}export{b as parseXmiToMermaid};
-//# sourceMappingURL=xmi-JdpwOv29.js.map

@@ -6,4 +6,3 @@ function d(r){return String(r).trim().replace(/[^a-zA-Z0-9_]/g,"_").replace(/^_+
   Sticky1[/"Sprint Backlog & Planning"/] --> Sticky2[/"In Progress & Architecture"/]
   Sticky2 --> Sticky3[/"Quality Review & QA"/]
   Sticky3 --> Sticky4[/"Production Release"/]`}export{C as parseMiroToMermaid};
-//# sourceMappingURL=miro-BcbxDLLG.js.map

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milestone Dependency Progression template — editable diagram | NodeFlow</title>
+<meta name="description" content="High-level milestone progression from infrastructure baseline to project completion with QA gates. Edit it in NodeFlow.">
+<link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/">
+<link rel="icon" type="image/svg+xml" href="https://muhamadzolfaghari.github.io/node-flow/favicon.svg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0c1017">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NodeFlow">
+<meta property="og:title" content="Milestone Dependency Progression template — editable diagram | NodeFlow">
+<meta property="og:description" content="High-level milestone progression from infrastructure baseline to project completion with QA gates. Edit it in NodeFlow.">
+<meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/">
+<meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Milestone Dependency Progression template — editable diagram | NodeFlow">
+<meta name="twitter:description" content="High-level milestone progression from infrastructure baseline to project completion with QA gates. Edit it in NodeFlow.">
+<meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://muhamadzolfaghari.github.io/node-flow/"},{"@type":"ListItem","position":2,"name":"Templates","item":"https://muhamadzolfaghari.github.io/node-flow/templates/"},{"@type":"ListItem","position":3,"name":"Milestone Dependency Progression","item":"https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/"}]},{"@type":"SoftwareSourceCode","name":"Milestone Dependency Progression","description":"High-level milestone progression from infrastructure baseline to project completion with QA gates.","programmingLanguage":"Mermaid","codeSampleType":"full solution","text":"---\nconfig:\n  theme: dark\n  flowchart:\n    useMaxWidth: false\n    curve: basis\n    nodeSpacing: 45\n    rankSpacing: 75\n---\nflowchart LR\n    INFRA[Infrastructure baseline]\n    SPLP[Shared PLP]\n    SPDP[Shared PDP]\n    PASS[Passenger shared]\n    PLP[Parallel service PLPs]\n    PDP[Parallel service PDPs]\n    REVIEW[Parallel service Reviews]\n    TRIPS[My Trips by service]\n    DONE{{All services complete}}\n\n    INFRA --> SPLP --> PLP\n    INFRA --> SPDP --> PDP\n    INFRA --> PASS\n    PLP -->|QA Gate| PDP\n    PDP -->|QA Gate| REVIEW\n    PASS --> REVIEW\n    REVIEW -->|QA Gate| TRIPS -->|QA Gate| DONE\n\n    classDef infra fill:#202a35,stroke:#94a3b8,color:#fff,stroke-width:3px\n    classDef shared fill:#2e2050,stroke:#8b5cf6,color:#fff,stroke-width:2px\n    classDef service fill:#123448,stroke:#0ea5e9,color:#fff,stroke-width:2px\n    classDef milestone fill:#111827,stroke:#f8fafc,color:#fff,stroke-width:2px\n    class INFRA infra\n    class SPLP,SPDP,PASS shared\n    class PLP,PDP,REVIEW,TRIPS service\n    class DONE milestone","url":"https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/","isPartOf":{"@type":"WebApplication","name":"NodeFlow","url":"https://muhamadzolfaghari.github.io/node-flow/"},"license":"https://opensource.org/licenses/MIT"}]}</script>
+<style>
+:root{color-scheme:dark light;--bg:#0c1017;--fg:#e9edf4;--card:#111722;--muted:#96a4b8;--primary:#5e8cfa;--border:#263143;--code:#0a0e15}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fb;--fg:#0f172a;--card:#fff;--muted:#526179;--primary:#2f5fd8;--border:#d8dfea;--code:#f1f4f9}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--primary)}header,main,footer{max-width:960px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}header strong{font-size:18px}
+nav a{margin-right:16px;text-decoration:none;font-size:14px;color:var(--muted)}nav a:hover{color:var(--fg)}
+h1{font-size:2rem;line-height:1.2;margin:.4em 0}h2{margin-top:2em;font-size:1.25rem}
+.lede{color:var(--muted);font-size:1.1rem}.btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--border)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+ul.grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+ul.grid li{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}ul.grid a{font-weight:600;text-decoration:none}
+ul.grid p{margin:.4em 0 0;color:var(--muted);font-size:14px}.crumbs{font-size:13px;color:var(--muted)}footer{color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<header><strong>NodeFlow</strong><nav aria-label="Main"><a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a><a href="https://muhamadzolfaghari.github.io/node-flow/formats/">Formats</a><a href="https://muhamadzolfaghari.github.io/node-flow/#/studio">Open studio</a></nav></header>
+<main>
+
+<p class="crumbs"><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a> › Architecture &amp; Cloud</p>
+<h1>Milestone Dependency Progression</h1>
+<p class="lede">High-level milestone progression from infrastructure baseline to project completion with QA gates.</p>
+<p><a class="btn" href="https://muhamadzolfaghari.github.io/node-flow/#/studio?template=dependency-overview">Open this template in NodeFlow</a>
+<a class="btn alt" href="https://muhamadzolfaghari.github.io/node-flow/templates/">All templates</a></p>
+<h2>Diagram source (Mermaid)</h2>
+<p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
+<pre><code>---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+    curve: basis
+    nodeSpacing: 45
+    rankSpacing: 75
+---
+flowchart LR
+    INFRA[Infrastructure baseline]
+    SPLP[Shared PLP]
+    SPDP[Shared PDP]
+    PASS[Passenger shared]
+    PLP[Parallel service PLPs]
+    PDP[Parallel service PDPs]
+    REVIEW[Parallel service Reviews]
+    TRIPS[My Trips by service]
+    DONE{{All services complete}}
+
+    INFRA --&gt; SPLP --&gt; PLP
+    INFRA --&gt; SPDP --&gt; PDP
+    INFRA --&gt; PASS
+    PLP --&gt;|QA Gate| PDP
+    PDP --&gt;|QA Gate| REVIEW
+    PASS --&gt; REVIEW
+    REVIEW --&gt;|QA Gate| TRIPS --&gt;|QA Gate| DONE
+
+    classDef infra fill:#202a35,stroke:#94a3b8,color:#fff,stroke-width:3px
+    classDef shared fill:#2e2050,stroke:#8b5cf6,color:#fff,stroke-width:2px
+    classDef service fill:#123448,stroke:#0ea5e9,color:#fff,stroke-width:2px
+    classDef milestone fill:#111827,stroke:#f8fafc,color:#fff,stroke-width:2px
+    class INFRA infra
+    class SPLP,SPDP,PASS shared
+    class PLP,PDP,REVIEW,TRIPS service
+    class DONE milestone</code></pre>
+<h2>How to use it</h2>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<h2>Related templates in Architecture &amp; Cloud</h2><ul class="grid"><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/c4-system-context/">C4 Model — System Context &amp; Containers</a><p>C4 model architecture showing users, core software systems, and external banking mainframe boundaries.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/">Kubernetes Cluster Topology</a><p>Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/service-architecture/">Service Architecture &amp; Dependency Graph</a><p>Distributed microservice graph with shared core services, parallel domain pods, and telemetry monitoring.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/hardware-system-block/">Hardware System Block &amp; Bus Architecture</a><p>High-speed system architecture with CPU, memory bus, neural accelerator, and DMA controllers.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/">Systems Engineering Requirements &amp; Traceability</a><p>System-level requirements specification with functional/performance criteria, risk levels, and traceability v…</p></li></ul>
+</main>
+<footer>NodeFlow is open source under the MIT license. Projects are stored in your browser. <a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a></footer>
+</body>
+</html>

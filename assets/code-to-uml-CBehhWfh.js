@@ -2,4 +2,3 @@ function Z(d){if(!d||typeof d!="string")throw new Error("Please provide source c
     <<${t.stereotype}>>`):f.push(`  class ${e} {`),t.fields.slice(0,12).forEach(n=>f.push(`    ${n.vis}${n.type} ${n.name}`)),t.methods.slice(0,10).forEach(n=>f.push(`    ${n.vis}${n.name}(${n.args})`)),f.push("  }");for(const[e,t]of Object.entries(r))t.parents.forEach(n=>{r[n]&&f.push(`  ${n} <|-- ${e}`)}),t.interfaces.forEach(n=>{r[n]&&f.push(`  ${n} <|.. ${e} : implements`)});return f.join(`
 `)+`
 `}export{Z as parseCodeToClassDiagram};
-//# sourceMappingURL=code-to-uml-CBehhWfh.js.map

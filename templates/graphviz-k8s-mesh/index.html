@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kubernetes Cluster Topology template — editable diagram | NodeFlow</title>
+<meta name="description" content="Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine. Edit it in NodeFlow.">
+<link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/">
+<link rel="icon" type="image/svg+xml" href="https://muhamadzolfaghari.github.io/node-flow/favicon.svg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0c1017">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NodeFlow">
+<meta property="og:title" content="Kubernetes Cluster Topology template — editable diagram | NodeFlow">
+<meta property="og:description" content="Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine. Edit it in NodeFlow.">
+<meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/">
+<meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kubernetes Cluster Topology template — editable diagram | NodeFlow">
+<meta name="twitter:description" content="Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine. Edit it in NodeFlow.">
+<meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://muhamadzolfaghari.github.io/node-flow/"},{"@type":"ListItem","position":2,"name":"Templates","item":"https://muhamadzolfaghari.github.io/node-flow/templates/"},{"@type":"ListItem","position":3,"name":"Kubernetes Cluster Topology","item":"https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/"}]},{"@type":"SoftwareSourceCode","name":"Kubernetes Cluster Topology","description":"Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.","programmingLanguage":"Mermaid","codeSampleType":"full solution","text":"digraph KubernetesMesh {\n  rankdir=TB;\n  bgcolor=\"transparent\";\n  fontname=\"Helvetica,Arial,sans-serif\";\n  node [fontname=\"Helvetica,Arial,sans-serif\", shape=box, style=\"filled,rounded\", fillcolor=\"#1e293b\", fontcolor=\"#f8fafc\", color=\"#38bdf8\", penwidth=1.5];\n  edge [fontname=\"Helvetica,Arial,sans-serif\", color=\"#94a3b8\", fontcolor=\"#cbd5e1\"];\n\n  subgraph cluster_ingress {\n    label = \"Edge Ingress Gateway\";\n    style = \"filled,dashed\";\n    fillcolor = \"#0f172a\";\n    fontcolor = \"#38bdf8\";\n    color = \"#0284c7\";\n\n    CloudFlare [label=\"Cloudflare CDN\\n(Edge TLS 1.3)\", fillcolor=\"#334155\", shape=ellipse];\n    EnvoyProxy [label=\"Envoy Proxy / Traefik\\n(Layer 7 Router)\", fillcolor=\"#0369a1\"];\n  }\n\n  subgraph cluster_services {\n    label = \"Kubernetes Pod Mesh\";\n    style = \"filled\";\n    fillcolor = \"#0f172a\";\n    fontcolor = \"#a855f7\";\n    color = \"#7e22ce\";\n\n    AuthService [label=\"Auth Service\\n(OAuth 2.1 / Wasm Guard)\", fillcolor=\"#4c1d95\"];\n    DiagramEngine [label=\"DiagramAtlas Kernel\\n(WebAssembly Runner)\", fillcolor=\"#065f46\", color=\"#10b981\"];\n    ExportWorker [label=\"Rasterizer Worker\\n(SIMD Compositor)\", fillcolor=\"#1e3a8a\", color=\"#60a5fa\"];\n  }\n\n  subgraph cluster_data {\n    label = \"Distributed Storage Tier\";\n    style = \"filled\";\n    fillcolor = \"#0f172a\";\n    fontcolor = \"#f59e0b\";\n    color = \"#b45309\";\n\n    RedisCache [label=\"Redis Cluster\\n(In-Memory State)\", shape=cylinder, fillcolor=\"#7c2d12\"];\n    PostgresDB [label=\"PostgreSQL Primary\\n(Vector & Metadata)\", shape=cylinder, fillcolor=\"#1e3a8a\"];\n  }\n\n  CloudFlare -> EnvoyProxy [label=\"HTTPS / HTTP3\"];\n  EnvoyProxy -> AuthService [label=\"gRPC Verify\"];\n  EnvoyProxy -> DiagramEngine [label=\"WebSocket / SSE\"];\n  DiagramEngine -> ExportWorker [label=\"Task Queue\"];\n  DiagramEngine -> RedisCache [label=\"Fast Hash Key\"];\n  AuthService -> PostgresDB [label=\"User Schema\"];\n  ExportWorker -> RedisCache [label=\"Cache Snapshot\"];\n}","url":"https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/","isPartOf":{"@type":"WebApplication","name":"NodeFlow","url":"https://muhamadzolfaghari.github.io/node-flow/"},"license":"https://opensource.org/licenses/MIT"}]}</script>
+<style>
+:root{color-scheme:dark light;--bg:#0c1017;--fg:#e9edf4;--card:#111722;--muted:#96a4b8;--primary:#5e8cfa;--border:#263143;--code:#0a0e15}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fb;--fg:#0f172a;--card:#fff;--muted:#526179;--primary:#2f5fd8;--border:#d8dfea;--code:#f1f4f9}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--primary)}header,main,footer{max-width:960px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}header strong{font-size:18px}
+nav a{margin-right:16px;text-decoration:none;font-size:14px;color:var(--muted)}nav a:hover{color:var(--fg)}
+h1{font-size:2rem;line-height:1.2;margin:.4em 0}h2{margin-top:2em;font-size:1.25rem}
+.lede{color:var(--muted);font-size:1.1rem}.btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--border)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+ul.grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+ul.grid li{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}ul.grid a{font-weight:600;text-decoration:none}
+ul.grid p{margin:.4em 0 0;color:var(--muted);font-size:14px}.crumbs{font-size:13px;color:var(--muted)}footer{color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<header><strong>NodeFlow</strong><nav aria-label="Main"><a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a><a href="https://muhamadzolfaghari.github.io/node-flow/formats/">Formats</a><a href="https://muhamadzolfaghari.github.io/node-flow/#/studio">Open studio</a></nav></header>
+<main>
+
+<p class="crumbs"><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a> › Architecture &amp; Cloud</p>
+<h1>Kubernetes Cluster Topology</h1>
+<p class="lede">Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.</p>
+<p><a class="btn" href="https://muhamadzolfaghari.github.io/node-flow/#/studio?template=graphviz-k8s-mesh">Open this template in NodeFlow</a>
+<a class="btn alt" href="https://muhamadzolfaghari.github.io/node-flow/templates/">All templates</a></p>
+<h2>Diagram source (Mermaid)</h2>
+<p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
+<pre><code>digraph KubernetesMesh {
+  rankdir=TB;
+  bgcolor=&quot;transparent&quot;;
+  fontname=&quot;Helvetica,Arial,sans-serif&quot;;
+  node [fontname=&quot;Helvetica,Arial,sans-serif&quot;, shape=box, style=&quot;filled,rounded&quot;, fillcolor=&quot;#1e293b&quot;, fontcolor=&quot;#f8fafc&quot;, color=&quot;#38bdf8&quot;, penwidth=1.5];
+  edge [fontname=&quot;Helvetica,Arial,sans-serif&quot;, color=&quot;#94a3b8&quot;, fontcolor=&quot;#cbd5e1&quot;];
+
+  subgraph cluster_ingress {
+    label = &quot;Edge Ingress Gateway&quot;;
+    style = &quot;filled,dashed&quot;;
+    fillcolor = &quot;#0f172a&quot;;
+    fontcolor = &quot;#38bdf8&quot;;
+    color = &quot;#0284c7&quot;;
+
+    CloudFlare [label=&quot;Cloudflare CDN\n(Edge TLS 1.3)&quot;, fillcolor=&quot;#334155&quot;, shape=ellipse];
+    EnvoyProxy [label=&quot;Envoy Proxy / Traefik\n(Layer 7 Router)&quot;, fillcolor=&quot;#0369a1&quot;];
+  }
+
+  subgraph cluster_services {
+    label = &quot;Kubernetes Pod Mesh&quot;;
+    style = &quot;filled&quot;;
+    fillcolor = &quot;#0f172a&quot;;
+    fontcolor = &quot;#a855f7&quot;;
+    color = &quot;#7e22ce&quot;;
+
+    AuthService [label=&quot;Auth Service\n(OAuth 2.1 / Wasm Guard)&quot;, fillcolor=&quot;#4c1d95&quot;];
+    DiagramEngine [label=&quot;DiagramAtlas Kernel\n(WebAssembly Runner)&quot;, fillcolor=&quot;#065f46&quot;, color=&quot;#10b981&quot;];
+    ExportWorker [label=&quot;Rasterizer Worker\n(SIMD Compositor)&quot;, fillcolor=&quot;#1e3a8a&quot;, color=&quot;#60a5fa&quot;];
+  }
+
+  subgraph cluster_data {
+    label = &quot;Distributed Storage Tier&quot;;
+    style = &quot;filled&quot;;
+    fillcolor = &quot;#0f172a&quot;;
+    fontcolor = &quot;#f59e0b&quot;;
+    color = &quot;#b45309&quot;;
+
+    RedisCache [label=&quot;Redis Cluster\n(In-Memory State)&quot;, shape=cylinder, fillcolor=&quot;#7c2d12&quot;];
+    PostgresDB [label=&quot;PostgreSQL Primary\n(Vector &amp; Metadata)&quot;, shape=cylinder, fillcolor=&quot;#1e3a8a&quot;];
+  }
+
+  CloudFlare -&gt; EnvoyProxy [label=&quot;HTTPS / HTTP3&quot;];
+  EnvoyProxy -&gt; AuthService [label=&quot;gRPC Verify&quot;];
+  EnvoyProxy -&gt; DiagramEngine [label=&quot;WebSocket / SSE&quot;];
+  DiagramEngine -&gt; ExportWorker [label=&quot;Task Queue&quot;];
+  DiagramEngine -&gt; RedisCache [label=&quot;Fast Hash Key&quot;];
+  AuthService -&gt; PostgresDB [label=&quot;User Schema&quot;];
+  ExportWorker -&gt; RedisCache [label=&quot;Cache Snapshot&quot;];
+}</code></pre>
+<h2>How to use it</h2>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<h2>Related templates in Architecture &amp; Cloud</h2><ul class="grid"><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/c4-system-context/">C4 Model — System Context &amp; Containers</a><p>C4 model architecture showing users, core software systems, and external banking mainframe boundaries.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/service-architecture/">Service Architecture &amp; Dependency Graph</a><p>Distributed microservice graph with shared core services, parallel domain pods, and telemetry monitoring.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/">Milestone Dependency Progression</a><p>High-level milestone progression from infrastructure baseline to project completion with QA gates.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/hardware-system-block/">Hardware System Block &amp; Bus Architecture</a><p>High-speed system architecture with CPU, memory bus, neural accelerator, and DMA controllers.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/">Systems Engineering Requirements &amp; Traceability</a><p>System-level requirements specification with functional/performance criteria, risk levels, and traceability v…</p></li></ul>
+</main>
+<footer>NodeFlow is open source under the MIT license. Projects are stored in your browser. <a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a></footer>
+</body>
+</html>

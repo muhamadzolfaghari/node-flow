@@ -5,4 +5,3 @@ function h(l){return String(l).trim().replace(/[^a-zA-Z0-9_]/g,"_").replace(/^_+
   OG1["Client Presentation Layer"] --> OG2["API Gateway & Firewall"]
   OG2 --> OG3["Microservice Cluster"]
   OG3 --> OG4[("High-Availability Storage")]`}export{x as parseOmniGraffleToMermaid};
-//# sourceMappingURL=omnigraffle-CC2hDX-B.js.map

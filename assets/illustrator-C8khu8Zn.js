@@ -7,4 +7,3 @@ function $(u){return String(u).trim().replace(/[^a-zA-Z0-9_]/g,"_").replace(/^_+
   Artboard["Illustrator Artboard"] --> Layer1["Vector Graphics Layer"]
   Layer1 --> Layer2["Object Components & Paths"]
   Layer2 --> Export["SVG / Vector Asset"]`}export{_ as parseIllustratorToMermaid};
-//# sourceMappingURL=illustrator-C8khu8Zn.js.map

@@ -3,4 +3,3 @@ function u(l){if(!l||typeof l!="string")throw new Error("Please provide .proto t
 `).forEach(t=>{const o=t.trim().replace(/;.*$/,"").match(/^(\w+)\s*=\s*\d+/);o&&o[1]!=="option"&&e[s].fields.push({name:o[1],type:"int"})})}if(!a.length)throw new Error("No message/enum blocks found. Add: message User { string id = 1; }.");const r=["classDiagram"];for(const s of a.slice(0,25)){const t=e[s];r.push(`  class ${s} {`),r.push(`    <<${t.kind}>>`),t.fields.slice(0,14).forEach(n=>r.push(`    +${n.type} ${n.name}`)),r.push("  }")}for(const s of a)for(const t of e[s].fields)e[t.type]&&r.push(`  ${s} --> ${t.type} : ${t.name}`);return r.join(`
 `)+`
 `}export{u as parseProtoToMermaid};
-//# sourceMappingURL=protobuf-rHFP9n9x.js.map

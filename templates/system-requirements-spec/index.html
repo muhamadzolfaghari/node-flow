@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Systems Engineering Requirements &amp; Traceability template — editable diagram | NodeFlow</title>
+<meta name="description" content="System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links. Edit it in NodeFlow.">
+<link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/">
+<link rel="icon" type="image/svg+xml" href="https://muhamadzolfaghari.github.io/node-flow/favicon.svg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0c1017">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NodeFlow">
+<meta property="og:title" content="Systems Engineering Requirements &amp; Traceability template — editable diagram | NodeFlow">
+<meta property="og:description" content="System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links. Edit it in NodeFlow.">
+<meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/">
+<meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Systems Engineering Requirements &amp; Traceability template — editable diagram | NodeFlow">
+<meta name="twitter:description" content="System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links. Edit it in NodeFlow.">
+<meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://muhamadzolfaghari.github.io/node-flow/"},{"@type":"ListItem","position":2,"name":"Templates","item":"https://muhamadzolfaghari.github.io/node-flow/templates/"},{"@type":"ListItem","position":3,"name":"Systems Engineering Requirements & Traceability","item":"https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/"}]},{"@type":"SoftwareSourceCode","name":"Systems Engineering Requirements & Traceability","description":"System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links.","programmingLanguage":"Mermaid","codeSampleType":"full solution","text":"requirementDiagram\n    requirement req_core_zero_trust {\n        id: 1.1\n        text: All network communications must be mutual TLS encrypted and strictly authenticated.\n        risk: high\n        verifymethod: test\n    }\n    functionalRequirement req_token_rotation {\n        id: 1.2\n        text: Access tokens must rotate automatically every 15 minutes with cryptographic replay protection.\n        risk: medium\n        verifymethod: test\n    }\n    performanceRequirement req_auth_sla {\n        id: 2.1\n        text: Authentication handshakes must complete within 50ms at p99 under 10k RPS load.\n        risk: medium\n        verifymethod: demonstration\n    }\n    interfaceRequirement req_oidc_federation {\n        id: 3.1\n        text: Support standard OIDC and SAML 2.0 identity providers for enterprise SSO.\n        risk: low\n        verifymethod: inspection\n    }\n\n    element identity_gateway {\n        type: service\n    }\n    element vault_kms {\n        type: subsystem\n    }\n    element redis_session_cache {\n        type: storage\n    }\n\n    identity_gateway - satisfies -> req_core_zero_trust\n    identity_gateway - satisfies -> req_token_rotation\n    identity_gateway - traces -> req_oidc_federation\n    vault_kms - satisfies -> req_token_rotation\n    redis_session_cache - satisfies -> req_auth_sla","url":"https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/","isPartOf":{"@type":"WebApplication","name":"NodeFlow","url":"https://muhamadzolfaghari.github.io/node-flow/"},"license":"https://opensource.org/licenses/MIT"}]}</script>
+<style>
+:root{color-scheme:dark light;--bg:#0c1017;--fg:#e9edf4;--card:#111722;--muted:#96a4b8;--primary:#5e8cfa;--border:#263143;--code:#0a0e15}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fb;--fg:#0f172a;--card:#fff;--muted:#526179;--primary:#2f5fd8;--border:#d8dfea;--code:#f1f4f9}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--primary)}header,main,footer{max-width:960px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}header strong{font-size:18px}
+nav a{margin-right:16px;text-decoration:none;font-size:14px;color:var(--muted)}nav a:hover{color:var(--fg)}
+h1{font-size:2rem;line-height:1.2;margin:.4em 0}h2{margin-top:2em;font-size:1.25rem}
+.lede{color:var(--muted);font-size:1.1rem}.btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--border)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+ul.grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+ul.grid li{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}ul.grid a{font-weight:600;text-decoration:none}
+ul.grid p{margin:.4em 0 0;color:var(--muted);font-size:14px}.crumbs{font-size:13px;color:var(--muted)}footer{color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<header><strong>NodeFlow</strong><nav aria-label="Main"><a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a><a href="https://muhamadzolfaghari.github.io/node-flow/formats/">Formats</a><a href="https://muhamadzolfaghari.github.io/node-flow/#/studio">Open studio</a></nav></header>
+<main>
+
+<p class="crumbs"><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a> › Architecture &amp; Cloud</p>
+<h1>Systems Engineering Requirements &amp; Traceability</h1>
+<p class="lede">System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links.</p>
+<p><a class="btn" href="https://muhamadzolfaghari.github.io/node-flow/#/studio?template=system-requirements-spec">Open this template in NodeFlow</a>
+<a class="btn alt" href="https://muhamadzolfaghari.github.io/node-flow/templates/">All templates</a></p>
+<h2>Diagram source (Mermaid)</h2>
+<p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
+<pre><code>requirementDiagram
+    requirement req_core_zero_trust {
+        id: 1.1
+        text: All network communications must be mutual TLS encrypted and strictly authenticated.
+        risk: high
+        verifymethod: test
+    }
+    functionalRequirement req_token_rotation {
+        id: 1.2
+        text: Access tokens must rotate automatically every 15 minutes with cryptographic replay protection.
+        risk: medium
+        verifymethod: test
+    }
+    performanceRequirement req_auth_sla {
+        id: 2.1
+        text: Authentication handshakes must complete within 50ms at p99 under 10k RPS load.
+        risk: medium
+        verifymethod: demonstration
+    }
+    interfaceRequirement req_oidc_federation {
+        id: 3.1
+        text: Support standard OIDC and SAML 2.0 identity providers for enterprise SSO.
+        risk: low
+        verifymethod: inspection
+    }
+
+    element identity_gateway {
+        type: service
+    }
+    element vault_kms {
+        type: subsystem
+    }
+    element redis_session_cache {
+        type: storage
+    }
+
+    identity_gateway - satisfies -&gt; req_core_zero_trust
+    identity_gateway - satisfies -&gt; req_token_rotation
+    identity_gateway - traces -&gt; req_oidc_federation
+    vault_kms - satisfies -&gt; req_token_rotation
+    redis_session_cache - satisfies -&gt; req_auth_sla</code></pre>
+<h2>How to use it</h2>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<h2>Related templates in Architecture &amp; Cloud</h2><ul class="grid"><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/c4-system-context/">C4 Model — System Context &amp; Containers</a><p>C4 model architecture showing users, core software systems, and external banking mainframe boundaries.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/">Kubernetes Cluster Topology</a><p>Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/service-architecture/">Service Architecture &amp; Dependency Graph</a><p>Distributed microservice graph with shared core services, parallel domain pods, and telemetry monitoring.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/">Milestone Dependency Progression</a><p>High-level milestone progression from infrastructure baseline to project completion with QA gates.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/hardware-system-block/">Hardware System Block &amp; Bus Architecture</a><p>High-speed system architecture with CPU, memory bus, neural accelerator, and DMA controllers.</p></li></ul>
+</main>
+<footer>NodeFlow is open source under the MIT license. Projects are stored in your browser. <a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a></footer>
+</body>
+</html>

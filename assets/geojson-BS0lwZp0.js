@@ -93,4 +93,3 @@ function M(t){if(!t||typeof t!="string")return`flowchart TD
 `:u+=`  node_${h}["${i(y)}"]
 `}),u||`flowchart TD
   Geo["Geospatial Layer"]`}function m(t){switch(t){case"Point":case"MultiPoint":case"circle":return"📍";case"LineString":case"MultiLineString":case"line":return"🛣️";case"Polygon":case"MultiPolygon":case"fill":return"🗺️";default:return"🌐"}}function i(t){return String(t||"").replace(/"/g,"'").replace(/[<>]/g,"")}export{M as parseGeoJsonToMermaid};
-//# sourceMappingURL=geojson-BS0lwZp0.js.map

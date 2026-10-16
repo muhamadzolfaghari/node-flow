@@ -4,4 +4,3 @@ function m(i){if(!i||typeof i!="string")throw new Error("Please provide DMN text
 `).map(e=>e.trim()).filter(Boolean).filter(e=>/when|if|then|rule/i.test(e)).slice(0,15);if(!c.length)throw new Error('No DMN rules found. Use XML or "when X then Y" lines.');return o.push('  D0(["Input"])'),c.forEach((e,n)=>o.push(`  D0 --> D${n+1}["${e.slice(0,60).replace(/"/g,"'")}"]`)),o.join(`
 `)+`
 `}export{m as parseDmnToMermaid};
-//# sourceMappingURL=dmn-CLloOl_m.js.map

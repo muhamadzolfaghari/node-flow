@@ -5,4 +5,3 @@ function h(r){if(!r||typeof r!="string")throw new Error("Please provide YAML tex
 `).forEach(l=>{var i;const t=l.trim();if(!t||t.startsWith("#")||t.startsWith("//"))return;if(/(\|\||\}o|\}|\|o)--(o\{|\|\{|o\||--)/.test(t)){s.push(`  ${t}`);return}const o=t.match(/^(?:TABLE|entity)\s+(\w+)/i)||t.match(/^([A-Za-z_]\w*)\s*\{$/);if(o){e.push(`  ${o[1].toUpperCase()} {`);return}if(t==="}"||t===");"){e.push("  }");return}const n=t.match(/^(\w+)\s+([\w()]+)(.*)$/);n&&e.length&&((i=e[e.length-1])!=null&&i.endsWith("{"))&&e.push(`    ${n[2].replace(/\(.*\)/,"")} ${n[1]}`)}),e.length<3&&s.length===0)throw new Error("No ERD relations parsed.");return[...e.slice(0,1),...s,...e.slice(1)].join(`
 `)+`
 `}export{p as parseErdTextToMermaid,h as parseYamlGenericToMermaid};
-//# sourceMappingURL=yaml-generic-_sEckDfR.js.map

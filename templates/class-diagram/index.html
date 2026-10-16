@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class Diagram template — editable diagram | NodeFlow</title>
+<meta name="description" content="Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition. Edit it in NodeFlow.">
+<link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/">
+<link rel="icon" type="image/svg+xml" href="https://muhamadzolfaghari.github.io/node-flow/favicon.svg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0c1017">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NodeFlow">
+<meta property="og:title" content="Class Diagram template — editable diagram | NodeFlow">
+<meta property="og:description" content="Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition. Edit it in NodeFlow.">
+<meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/">
+<meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Class Diagram template — editable diagram | NodeFlow">
+<meta name="twitter:description" content="Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition. Edit it in NodeFlow.">
+<meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://muhamadzolfaghari.github.io/node-flow/"},{"@type":"ListItem","position":2,"name":"Templates","item":"https://muhamadzolfaghari.github.io/node-flow/templates/"},{"@type":"ListItem","position":3,"name":"Class Diagram","item":"https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/"}]},{"@type":"SoftwareSourceCode","name":"Class Diagram","description":"Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition.","programmingLanguage":"Mermaid","codeSampleType":"full solution","text":"classDiagram\n    class CanvasController {\n        -Number zoom\n        -Number panX\n        -Number panY\n        -HTMLElement canvas\n        -HTMLElement stage\n        +setZoom(val, anchorX, anchorY)\n        +fit(animate)\n        +reset(animate)\n        +measure()\n        +applyTransform()\n    }\n\n    class EditorController {\n        -HTMLTextAreaElement textarea\n        -HTMLElement lineNumbers\n        -HTMLElement statusDot\n        -HTMLElement stats\n        +getValue() String\n        +setValue(code)\n        +formatCode()\n        +setStatus(type, msg)\n        +updateStats()\n    }\n\n    class Exporter {\n        +exportSvg(container, filename)\n        +exportPng(container, scale, filename)\n        +exportPdf(container, mode, filename)\n        +exportMarkdown(code, filename)\n        -renderToCanvas(container, scale)\n    }\n\n    class StorageManager {\n        +saveDraft(code, templateId)\n        +getDraft() Object\n        +saveNamedDiagram(name, code, templateId)\n        +listSavedDiagrams() Array\n        +deleteDiagram(id)\n    }\n\n    CanvasController <|-- InteractiveStage : inherits\n    CanvasController *-- MiniMapController : owns\n    EditorController ..> StorageManager : autosaves\n    Exporter ..> CanvasController : captures","url":"https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/","isPartOf":{"@type":"WebApplication","name":"NodeFlow","url":"https://muhamadzolfaghari.github.io/node-flow/"},"license":"https://opensource.org/licenses/MIT"}]}</script>
+<style>
+:root{color-scheme:dark light;--bg:#0c1017;--fg:#e9edf4;--card:#111722;--muted:#96a4b8;--primary:#5e8cfa;--border:#263143;--code:#0a0e15}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fb;--fg:#0f172a;--card:#fff;--muted:#526179;--primary:#2f5fd8;--border:#d8dfea;--code:#f1f4f9}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--primary)}header,main,footer{max-width:960px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}header strong{font-size:18px}
+nav a{margin-right:16px;text-decoration:none;font-size:14px;color:var(--muted)}nav a:hover{color:var(--fg)}
+h1{font-size:2rem;line-height:1.2;margin:.4em 0}h2{margin-top:2em;font-size:1.25rem}
+.lede{color:var(--muted);font-size:1.1rem}.btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--border)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+ul.grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+ul.grid li{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}ul.grid a{font-weight:600;text-decoration:none}
+ul.grid p{margin:.4em 0 0;color:var(--muted);font-size:14px}.crumbs{font-size:13px;color:var(--muted)}footer{color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<header><strong>NodeFlow</strong><nav aria-label="Main"><a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a><a href="https://muhamadzolfaghari.github.io/node-flow/formats/">Formats</a><a href="https://muhamadzolfaghari.github.io/node-flow/#/studio">Open studio</a></nav></header>
+<main>
+
+<p class="crumbs"><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a> › UML Specification</p>
+<h1>Class Diagram</h1>
+<p class="lede">Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition.</p>
+<p><a class="btn" href="https://muhamadzolfaghari.github.io/node-flow/#/studio?template=class-diagram">Open this template in NodeFlow</a>
+<a class="btn alt" href="https://muhamadzolfaghari.github.io/node-flow/templates/">All templates</a></p>
+<h2>Diagram source (Mermaid)</h2>
+<p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
+<pre><code>classDiagram
+    class CanvasController {
+        -Number zoom
+        -Number panX
+        -Number panY
+        -HTMLElement canvas
+        -HTMLElement stage
+        +setZoom(val, anchorX, anchorY)
+        +fit(animate)
+        +reset(animate)
+        +measure()
+        +applyTransform()
+    }
+
+    class EditorController {
+        -HTMLTextAreaElement textarea
+        -HTMLElement lineNumbers
+        -HTMLElement statusDot
+        -HTMLElement stats
+        +getValue() String
+        +setValue(code)
+        +formatCode()
+        +setStatus(type, msg)
+        +updateStats()
+    }
+
+    class Exporter {
+        +exportSvg(container, filename)
+        +exportPng(container, scale, filename)
+        +exportPdf(container, mode, filename)
+        +exportMarkdown(code, filename)
+        -renderToCanvas(container, scale)
+    }
+
+    class StorageManager {
+        +saveDraft(code, templateId)
+        +getDraft() Object
+        +saveNamedDiagram(name, code, templateId)
+        +listSavedDiagrams() Array
+        +deleteDiagram(id)
+    }
+
+    CanvasController &lt;|-- InteractiveStage : inherits
+    CanvasController *-- MiniMapController : owns
+    EditorController ..&gt; StorageManager : autosaves
+    Exporter ..&gt; CanvasController : captures</code></pre>
+<h2>How to use it</h2>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<h2>Related templates in UML Specification</h2><ul class="grid"><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/sequence-auth/">Sequence Diagram</a><p>Interactive message sequence with parallel activations, alt guards, and cryptographic token verification.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/state-diagram/">State Machine Diagram</a><p>UML finite state machine with composite states, fork transitions, and error recovery lifecycles.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/uml-usecase/">Use Case Diagram</a><p>Actors, system boundaries, use case ovals, &lt;&lt;include&gt;&gt; dependencies, and &lt;&lt;extend&gt;&gt; extensions.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/uml-activity/">Activity Diagram</a><p>Initial node, decision diamonds, parallel fork &amp; join synchronization bars, and activity final states.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/uml-component/">Component Diagram</a><p>Component stereotypes, provided and required interfaces, ports, and inter-service dependencies.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/uml-deployment/">Deployment Diagram</a><p>Hardware nodes, execution environments, artifact packages, communication protocols, and cloud topology.</p></li></ul>
+</main>
+<footer>NodeFlow is open source under the MIT license. Projects are stored in your browser. <a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a></footer>
+</body>
+</html>

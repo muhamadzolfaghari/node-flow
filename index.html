@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NodeFlow — Universal Visual Diagram & Architecture Studio</title>
-  <meta name="description" content="NodeFlow is a 100% free, browser-based visual studio for UML, ER diagrams, cloud architecture, flowcharts, and mind maps supporting Mermaid, PlantUML, Draw.io, Graphviz, D2, SQL DDL, and OpenAPI with zero cloud lock-in." />
+  <title>NodeFlow — Visual workspace for diagrams and systems</title>
+  <meta name="description" content="Create and edit diagrams from source, templates, imports, or AI. NodeFlow combines a browser-based code editor, live canvas, format converters, and local or cloud AI providers." />
   <meta name="author" content="Mohammad Zolfaghari" />
   <meta name="theme-color" content="#070b14" />
   <link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/" />
@@ -16,16 +16,20 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="NodeFlow" />
-  <meta property="og:title" content="NodeFlow — Universal Visual Diagram & Architecture Studio" />
-  <meta property="og:description" content="Open source, browser-based, local-first studio for diagrams, data models, architecture, and mind maps. 30+ supported formats, live previews, and private browser storage." />
+  <meta property="og:title" content="NodeFlow — Visual workspace for diagrams and systems" />
+  <meta property="og:description" content="Create and edit diagrams from source, templates, imports, or AI. Work with live previews, direct canvas tools, format converters, and local or cloud AI providers." />
   <meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/" />
-  <meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/favicon.svg" />
+  <meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram" />
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="NodeFlow — Universal Visual Diagram & Architecture Studio" />
-  <meta name="twitter:description" content="Open source, browser-based visual studio for diagrams, architecture, and mind maps with 30+ format converters." />
-  <meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/favicon.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NodeFlow — Visual workspace for diagrams and systems" />
+  <meta name="twitter:description" content="Create and edit diagrams from source, templates, imports, or AI. Work with live previews, direct canvas tools, format converters, and local or cloud AI providers." />
+  <meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png" />
 
   <!-- Structured Data (JSON-LD) for SEO, GEO & AEO -->
   <script type="application/ld+json">
@@ -37,7 +41,7 @@
         "@id": "https://muhamadzolfaghari.github.io/node-flow/#webapp",
         "name": "NodeFlow",
         "url": "https://muhamadzolfaghari.github.io/node-flow/",
-        "description": "Browser-based, local-first visual diagramming and architecture studio supporting Mermaid, PlantUML, Draw.io, Graphviz, D2, SQL DDL, BPMN, GeoJSON, and OpenAPI.",
+        "description": "Open-source browser workspace for creating and editing diagrams from source, templates, imports, and AI, with local project storage and optional cloud AI providers.",
         "applicationCategory": "DesignApplication",
         "operatingSystem": "All",
         "author": {
@@ -48,11 +52,13 @@
         "offers": {
           "@type": "Offer",
           "price": "0",
-          "priceCurrency": "USD"
+          "priceCurrency": "USD",
+          "description": "The NodeFlow application is open source under the MIT license. Third-party AI provider usage may have separate costs."
         },
         "featureList": [
-          "Local-first browser storage with zero cloud telemetry",
-          "30+ diagram and specification formats",
+          "Browser-based project storage with portable backups",
+          "Diagram and specification imports with documented conversion limits",
+          "Local and cloud AI provider options",
           "Real-time syntax validation and diagnostics",
           "Native WebAssembly Graphviz compiler",
           "GeoJSON and geospatial layer visualization",
@@ -69,15 +75,15 @@
             "name": "What is NodeFlow?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "NodeFlow is a 100% free, open-source, local-first visual studio for diagrams, architecture models, and data schemas. It executes entirely in your browser with no cloud telemetry."
+              "text": "NodeFlow is an open-source browser workspace for diagrams, architecture models, and data schemas. Project editing and rendering run in the browser, with optional local and cloud AI providers."
             }
           },
           {
             "@type": "Question",
-            "name": "Does NodeFlow send my proprietary architecture diagrams to external servers?",
+            "name": "Does NodeFlow send my diagrams or prompts to external servers?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. NodeFlow runs entirely client-side inside the browser sandbox. All diagram rendering, WebAssembly Graphviz compilation, and project storage occur locally in IndexedDB and LocalStorage."
+              "text": "Diagram parsing, rendering, and project storage run in your browser. If you choose Gemini or an OpenAI-compatible cloud provider, NodeFlow sends the prompt you submit to that provider. Local deterministic, WebGPU, and Ollama options are also available."
             }
           },
           {
@@ -105,17 +111,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/node-flow/assets/index-CFFL3Pwk.js"></script>
+  <script>
+    // Apply the saved colour theme before first paint to avoid a flash.
+    (function () {
+      try {
+        var id = localStorage.getItem("nodeflow_app_theme") || "auto";
+        if (id === "auto") id = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "studio";
+        if (id !== "studio") document.documentElement.setAttribute("data-app-theme", id);
+      } catch (e) {}
+    })();
+  </script>
+  <script type="module" crossorigin src="/node-flow/assets/index-BGKXAtE2.js"></script>
   <link rel="modulepreload" crossorigin href="/node-flow/assets/vendor-ui-Df4SqoBz.js">
-  <link rel="modulepreload" crossorigin href="/node-flow/assets/vendor-react-CuR4BcWE.js">
-  <link rel="modulepreload" crossorigin href="/node-flow/assets/vendor-mermaid-De2Sn5hg.js">
-  <link rel="stylesheet" crossorigin href="/node-flow/assets/index-B3YMabLS.css">
+  <link rel="modulepreload" crossorigin href="/node-flow/assets/vendor-react-BWh_-4jY.js">
+  <link rel="stylesheet" crossorigin href="/node-flow/assets/index-BehohK8M.css">
 </head>
 <body>
   <div id="root">
     <noscript>
       <div style="font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #e2e8f0; background: #0b1120; border-radius: 8px;">
-        <h1>NodeFlow — Universal Visual Diagram &amp; Architecture Studio</h1>
+        <h1>NodeFlow — Visual workspace for diagrams and systems</h1>
         <p>
           NodeFlow is an open source, browser-based, local-first studio for diagrams, data models, cloud architecture, and mind maps.
           Work in projects with multiple source files, a high-performance code editor, a live diagram canvas, syntax diagnostics, format converters, and version checkpoints.

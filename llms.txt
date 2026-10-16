@@ -1,33 +1,83 @@
-# NodeFlow — Universal Visual Diagram & Architecture Studio
+# NodeFlow
 
-> Open source, browser-based, local-first visual diagramming and system architecture studio.
-> https://muhamadzolfaghari.github.io/node-flow/
+> NodeFlow is an open-source (MIT) browser workspace for creating and editing diagrams. Source code, a live canvas, and an AI assistant edit the same diagram. Projects are stored in the browser; there is no NodeFlow backend or account.
 
-## Overview
-NodeFlow is an enterprise-grade diagramming workbench running entirely client-side inside the browser. It unifies 30+ modeling languages, design formats, and specifications into a live reactive canvas with zero cloud lock-in or telemetry.
+## Key facts
+- 38 source formats (Mermaid and Graphviz render natively; others convert to an editable preview).
+- 51 starter templates for UML, architecture, data models, planning, and role-based workflows.
+- AI engines: deterministic (offline), local WebGPU model, Ollama, Gemini, and OpenAI-compatible APIs. Cloud engines send the submitted prompt (and the active file when inserting) to the provider you choose; the other engines do not use a cloud service.
+- Exports: SVG, PNG, PDF, PPTX, standalone HTML, source files, project backups.
+- Themes: Studio Dark, Light, Midnight, Nord, High contrast, or match system.
 
-## Key Capabilities
-- **Local-First Privacy**: All diagram compilation, WebAssembly execution, and IndexedDB project persistence occur locally. No code or architecture is sent to third-party cloud servers.
-- **Cross-Disciplinary Workflows**:
-  - *Product Managers (PM)*: User story mapping, quarterly OKRs, and customer journey maps.
-  - *QA & Testing*: Defect triage lifecycles, automated CI/CD smoke test gates, and test coverage matrices.
-  - *Developers & Cloud Architects*: Microservice architectures, ER schemas, git trunk flows, and GIS vector tile pipelines.
-  - *Operations & Governance*: Standard Operating Procedures (SOP) and approval chains.
-  - *Students & Researchers*: Thesis structures, scientific method protocols, and semester course plans.
-- **30+ Supported Formats**:
-  - Native Mermaid & Graphviz WebAssembly (C compiler in Wasm)
-  - PlantUML, Draw.io XML, D2, BPMN 2.0, C4 / Structurizr DSL, Terraform HCL
-  - SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL SDL, OpenAPI 3, AsyncAPI
-  - Adobe Illustrator, Figma / FigJam, Lucidchart, OmniGraffle, Miro, StarUML, Visio VDX, Gliffy, Excalidraw, XMind ZEN
-  - GeoJSON, Shapefile attributes, and Mapbox Vector Tile (MVT) protobuf specs
-- **Interactive Multi-Tab Canvas**:
-  - VSCode-style multi-tab management with context menus (Close, Close Others, Close to the Right, Close All, Duplicate)
-  - Auto-centering and content framing without dead whitespace
-  - Dynamic theme-adaptive canvas (Light, Dark, Forest, Neutral) with custom grid rendering
-  - Presentation mode with laser pointer
+## Pages
+- App: https://muhamadzolfaghari.github.io/node-flow/
+- Studio: https://muhamadzolfaghari.github.io/node-flow/studio/
+- Templates: https://muhamadzolfaghari.github.io/node-flow/templates/
+- Formats: https://muhamadzolfaghari.github.io/node-flow/formats/
+- Source code: https://github.com/muhamadzolfaghari/node-flow
 
-## Quick Links
-- Web App Studio: https://muhamadzolfaghari.github.io/node-flow/#/studio
-- Template Library: https://muhamadzolfaghari.github.io/node-flow/#/templates
-- Format Specifications: https://muhamadzolfaghari.github.io/node-flow/#/formats
-- Source Code Repository: https://github.com/muhamadzolfaghari/diagram-atlas
+## Templates
+- [Class Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/): Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition.
+- [Sequence Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/sequence-auth/): Interactive message sequence with parallel activations, alt guards, and cryptographic token verification.
+- [State Machine Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/state-diagram/): UML finite state machine with composite states, fork transitions, and error recovery lifecycles.
+- [Use Case Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-usecase/): Actors, system boundaries, use case ovals, <<include>> dependencies, and <<extend>> extensions.
+- [Activity Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-activity/): Initial node, decision diamonds, parallel fork & join synchronization bars, and activity final states.
+- [Component Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-component/): Component stereotypes, provided and required interfaces, ports, and inter-service dependencies.
+- [Deployment Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-deployment/): Hardware nodes, execution environments, artifact packages, communication protocols, and cloud topology.
+- [Package Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-package/): Namespace decomposition, layer modularization, import dependencies, and domain-driven design bounds.
+- [Object Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-object/): Concrete runtime instance specifications, assigned state values, and instance link relationships.
+- [Composite Structure Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-composite-structure/): Internal decomposition of complex classifiers, ports, parts, and connector bindings.
+- [Timing Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-timing/): Hardware and software state transitions across discrete clock cycles and latency windows.
+- [Communication Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-communication/): Collaboration diagram showing numbered inter-object messages and call dependencies.
+- [Interaction Overview Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-interaction-overview/): Combines activity control flow with sequence interaction frames and decision guards.
+- [Profile Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/uml-profile/): Custom UML profile stereotypes, tagged values, and metaclass extensions for domain modeling.
+- [User Journey Map — Product Experience](https://muhamadzolfaghari.github.io/node-flow/templates/user-journey-onboarding/): Customer experience stages, touchpoints, emotional scores (1-5), and cross-functional team actions.
+- [Agile Kanban Board — Sprint Planning](https://muhamadzolfaghari.github.io/node-flow/templates/kanban-sprint-board/): Agile sprint workflow columns with user story estimation badges and priority tags.
+- [Feature Prioritization Matrix](https://muhamadzolfaghari.github.io/node-flow/templates/prioritization-quadrant/): Eisenhower and product management quadrant chart for strategic feature roadmapping.
+- [Gantt Delivery Sequence — Product Roadmap](https://muhamadzolfaghari.github.io/node-flow/templates/delivery-gantt/): Cross-functional delivery schedule with workstreams, critical paths, and milestone QA gates.
+- [Mindmap — Product Strategy & Architecture](https://muhamadzolfaghari.github.io/node-flow/templates/mindmap-diagram/): Hierarchical brainstorming mindmap of product capabilities, performance pillars, and formats.
+- [Conversion Funnel — User Acquisition](https://muhamadzolfaghari.github.io/node-flow/templates/sankey-funnel/): Sankey flow diagram tracking user acquisition, studio engagement, and export conversions.
+- [Ishikawa Root-Cause Diagram](https://muhamadzolfaghari.github.io/node-flow/templates/ishikawa-root-cause/): Quality engineering root-cause analysis across Method, Machine, Material, and People.
+- [Multi-Quarter Product Roadmap — Timeline](https://muhamadzolfaghari.github.io/node-flow/templates/product-roadmap-timeline/): Quarterly product roadmap with strategic milestones, platform expansions, and release targets.
+- [C4 Model — System Context & Containers](https://muhamadzolfaghari.github.io/node-flow/templates/c4-system-context/): C4 model architecture showing users, core software systems, and external banking mainframe boundaries.
+- [Kubernetes Cluster Topology](https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/): Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.
+- [Service Architecture & Dependency Graph](https://muhamadzolfaghari.github.io/node-flow/templates/service-architecture/): Distributed microservice graph with shared core services, parallel domain pods, and telemetry monitoring.
+- [Milestone Dependency Progression](https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/): High-level milestone progression from infrastructure baseline to project completion with QA gates.
+- [Hardware System Block & Bus Architecture](https://muhamadzolfaghari.github.io/node-flow/templates/hardware-system-block/): High-speed system architecture with CPU, memory bus, neural accelerator, and DMA controllers.
+- [Entity Relationship Schema](https://muhamadzolfaghari.github.io/node-flow/templates/er-diagram/): Relational database schema with Crow’s Foot cardinality notation, primary keys, and foreign keys.
+- [Git Trunk-Based Release & Hotfix Flow](https://muhamadzolfaghari.github.io/node-flow/templates/git-graph/): Trunk-based source control branching strategy with PR merges, release tags, and hotfixes.
+- [API Latency Percentiles & SLA Uptime](https://muhamadzolfaghari.github.io/node-flow/templates/sla-performance-metrics/): Performance benchmark comparison comparing DiagramAtlas WebAssembly response times against legacy tools.
+- [Systems Engineering Requirements & Traceability](https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/): System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links.
+- [TCP/IP Protocol Header](https://muhamadzolfaghari.github.io/node-flow/templates/tcp-packet-bytefield/): Transmission Control Protocol (TCP) 32-bit word packet structure with port numbers, sequence flags, window size, and checksum fields.
+- [Cloud Microservices & VPC](https://muhamadzolfaghari.github.io/node-flow/templates/cloud-service-architecture/): Cloud microservice topology with VPC network boundaries, API gateway, authentication service, relational database, and distributed cache.
+- [Company Organizational Hierarchy](https://muhamadzolfaghari.github.io/node-flow/templates/company-org-chart/): Executive leadership, department heads, cross-functional squads, and operational reporting lines for corporate management.
+- [SWOT Strategic Business Analysis](https://muhamadzolfaghari.github.io/node-flow/templates/swot-strategic-analysis/): Strategic planning framework evaluating internal strengths/weaknesses and external market opportunities/threats.
+- [Talent Acquisition & Hiring Pipeline](https://muhamadzolfaghari.github.io/node-flow/templates/recruitment-pipeline/): End-to-end recruitment lifecycle from application screening, technical assessments, executive debriefs to formal offer.
+- [Customer Retention & Lifecycle Journey](https://muhamadzolfaghari.github.io/node-flow/templates/customer-retention-journey/): Omnichannel customer journey tracking discovery, product activation, value realization, expansion, and advocacy.
+- [Risk Assessment & Mitigation Matrix](https://muhamadzolfaghari.github.io/node-flow/templates/risk-assessment-matrix/): Enterprise risk management matrix plotting likelihood against business impact with severity tiers and mitigation actions.
+- [Customer Refund & Resolution Policy](https://muhamadzolfaghari.github.io/node-flow/templates/customer-refund-decision-tree/): Standard operating procedure decision tree for customer support teams resolving refund requests, replacements, and store credits.
+- [Strategic Quarterly OKR Roadmap](https://muhamadzolfaghari.github.io/node-flow/templates/strategic-okr-roadmap/): Multi-quarter corporate vision, strategic milestones, key results, and organizational goals across 4 quarters.
+- [Marketing & Sales Conversion Funnel](https://muhamadzolfaghari.github.io/node-flow/templates/sales-marketing-funnel/): Conversion flow from initial website visitors through qualified leads, trial activations, paid tiers, and enterprise deals.
+- [Agile Team Sprint Retrospective](https://muhamadzolfaghari.github.io/node-flow/templates/sprint-retrospective-mindmap/): Structured retrospective mindmap categorizing what went well, growth areas, constructive action items, and team kudos.
+- [QA Defect Lifecycle & Bug Triage Workflow](https://muhamadzolfaghari.github.io/node-flow/templates/qa-defect-lifecycle/): Complete defect state machine from discovery and triage prioritization to developer fix, QA verification, and production closure.
+- [Automated CI/CD Quality Gate & Smoke Pipeline](https://muhamadzolfaghari.github.io/node-flow/templates/qa-cicd-quality-gate/): Multi-stage continuous integration and release quality gates: unit tests, DB integration, headless browser E2E, and security scans.
+- [Product Feature Backlog & User Story Map](https://muhamadzolfaghari.github.io/node-flow/templates/pm-story-mapping/): Visual user story mapping organizing feature epics across user journey milestones and release slices (MVP vs V2).
+- [Standard Operating Procedure (SOP) & Approval](https://muhamadzolfaghari.github.io/node-flow/templates/sop-approval-process/): Corporate governance and operational workflow for drafting, compliance review, executive sign-off, and staff rollout.
+- [Academic Research Thesis & Literature Map](https://muhamadzolfaghari.github.io/node-flow/templates/academic-research-thesis/): Comprehensive research structure covering theoretical foundations, empirical methodology, qualitative benchmarks, and limitations.
+- [Scientific Method & Lab Experiment Protocol](https://muhamadzolfaghari.github.io/node-flow/templates/scientific-method-lab/): Step-by-step scientific method protocol from observation and hypothesis testing to controlled experiment and peer-reviewed publication.
+- [Student Semester Course & Exam Plan](https://muhamadzolfaghari.github.io/node-flow/templates/student-study-schedule/): Semester timeline outlining foundation lectures, midterm review sessions, advanced topics, final projects, and exam blitz.
+- [GIS Vector Tile Pyramid & Spatial Data Pipeline](https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/): End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT…
+- [Mapbox Vector Tile (MVT) Protobuf Specification](https://muhamadzolfaghari.github.io/node-flow/templates/mvt-vector-tile-protobuf-spec/): Binary Protobuf encoding specification for Mapbox Vector Tiles (MVT): Tile layers, geometry commands, feature tags, and value dictionaries.
+
+## FAQ
+**Is NodeFlow free?** Yes. NodeFlow is open source under the MIT license, with no account, watermark, or paywall. If you connect a third-party AI provider, that provider may charge for its own usage.
+
+**Is my data private?** Projects, parsing, rendering, and exports run in your browser, and drafts are stored in your browser storage. NodeFlow has no backend of its own. If you choose Gemini or an OpenAI-compatible provider, the prompt you submit (and the active file when you insert into it) is sent to that provider. The deterministic, Ollama, and WebGPU engines do not send it to a cloud service.
+
+**Do I need an API key to use AI?** No. The deterministic engine works instantly without a key, the WebGPU engine runs a small model on your device after a one-time download, and Ollama uses a model on your own machine. Gemini and OpenAI-compatible engines need your own key.
+
+**What can I import and export?** Import Mermaid, PlantUML, Graphviz DOT, Draw.io, D2, SQL, OpenAPI, XMind, Markdown, CSV and many more listed on the Formats page. Export SVG, PNG, PDF, PPTX, standalone HTML, source files, and project backups.
+
+**Can I use it offline?** After the first load, editing, rendering, and exports run client-side. Cloud AI providers and web fonts need a connection.
+
+**How is it different from the Mermaid Live Editor?** NodeFlow adds multi-file projects with version checkpoints, direct canvas editing for flowcharts, converters for dozens of formats, role-based templates, themes, and an AI assistant that shows a reviewable proposal before changing your files.

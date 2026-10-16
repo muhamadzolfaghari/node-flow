@@ -14,4 +14,3 @@ function g(u){if(!u||typeof u!="string")throw new Error("Please provide PlantUML
 `}function w(u){const s=["classDiagram"];for(const t of u){if(!t||t.startsWith("'"))continue;const i=t.match(/^object\s+(?:"([^"]+)"|(\S+))(?:\s+as\s+(\w+))?/i);if(i){const c=i[1]||i[2],o=i[3]||c.replace(/[^A-Za-z0-9_]/g,"_");s.push(`  class ${o} {`),s.push(`    :${c.replace(/"/g,"'")}`),s.push("  }");continue}if(/-->|--|:/.test(t)){s.push(`  ${t}`);continue}s.push(`  ' ${t}`)}return s.join(`
 `)+`
 `}export{g as parsePlantUmlToMermaid};
-//# sourceMappingURL=plantuml-Vij82pFC.js.map

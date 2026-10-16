@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GIS Vector Tile Pyramid &amp; Spatial Data Pipeline template — editable diagram | NodeFlow</title>
+<meta name="description" content="End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.">
+<link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/">
+<link rel="icon" type="image/svg+xml" href="https://muhamadzolfaghari.github.io/node-flow/favicon.svg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0c1017">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NodeFlow">
+<meta property="og:title" content="GIS Vector Tile Pyramid &amp; Spatial Data Pipeline template — editable diagram | NodeFlow">
+<meta property="og:description" content="End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.">
+<meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/">
+<meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NodeFlow — source, canvas, and AI editing the same diagram">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GIS Vector Tile Pyramid &amp; Spatial Data Pipeline template — editable diagram | NodeFlow">
+<meta name="twitter:description" content="End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.">
+<meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://muhamadzolfaghari.github.io/node-flow/"},{"@type":"ListItem","position":2,"name":"Templates","item":"https://muhamadzolfaghari.github.io/node-flow/templates/"},{"@type":"ListItem","position":3,"name":"GIS Vector Tile Pyramid & Spatial Data Pipeline","item":"https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/"}]},{"@type":"SoftwareSourceCode","name":"GIS Vector Tile Pyramid & Spatial Data Pipeline","description":"End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.","programmingLanguage":"Mermaid","codeSampleType":"full solution","text":"flowchart TD\n    subgraph Ingestion[\"1. Spatial Data Ingestion\"]\n        SHP[\"Shapefile / GeoJSON Raw Archives\"]\n        GPS[\"Real-Time GPS Telemetry Stream\"]\n        OSM[\"OpenStreetMap Planet Dumps\"]\n    end\n\n    subgraph Processing[\"2. Spatial Processing & Storage\"]\n        PostGIS[(\"PostgreSQL + PostGIS (H3 Spatial Indexes)\")]\n        Tippecanoe[\"Tippecanoe Vector Tile Compressor\"]\n        ProtobufGen[\"Mapbox Vector Tile (MVT / Protobuf) Encoder\"]\n    end\n\n    subgraph Distribution[\"3. Global Vector Tile Distribution\"]\n        S3[\"Cloud Object Storage (PMTiles / MBTiles)\"]\n        CDN[\"Global Edge CDN Cache\"]\n        MapClient[\"Maplibre / Mapbox Vector Tile Renderer\"]\n    end\n\n    SHP --> PostGIS\n    GPS --> PostGIS\n    OSM --> PostGIS\n    PostGIS --> Tippecanoe\n    Tippecanoe --> ProtobufGen\n    ProtobufGen --> S3\n    S3 --> CDN\n    CDN --> MapClient","url":"https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/","isPartOf":{"@type":"WebApplication","name":"NodeFlow","url":"https://muhamadzolfaghari.github.io/node-flow/"},"license":"https://opensource.org/licenses/MIT"}]}</script>
+<style>
+:root{color-scheme:dark light;--bg:#0c1017;--fg:#e9edf4;--card:#111722;--muted:#96a4b8;--primary:#5e8cfa;--border:#263143;--code:#0a0e15}
+@media (prefers-color-scheme:light){:root{--bg:#f6f8fb;--fg:#0f172a;--card:#fff;--muted:#526179;--primary:#2f5fd8;--border:#d8dfea;--code:#f1f4f9}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--primary)}header,main,footer{max-width:960px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}header strong{font-size:18px}
+nav a{margin-right:16px;text-decoration:none;font-size:14px;color:var(--muted)}nav a:hover{color:var(--fg)}
+h1{font-size:2rem;line-height:1.2;margin:.4em 0}h2{margin-top:2em;font-size:1.25rem}
+.lede{color:var(--muted);font-size:1.1rem}.btn{display:inline-block;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--border)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+ul.grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+ul.grid li{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}ul.grid a{font-weight:600;text-decoration:none}
+ul.grid p{margin:.4em 0 0;color:var(--muted);font-size:14px}.crumbs{font-size:13px;color:var(--muted)}footer{color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<header><strong>NodeFlow</strong><nav aria-label="Main"><a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a><a href="https://muhamadzolfaghari.github.io/node-flow/formats/">Formats</a><a href="https://muhamadzolfaghari.github.io/node-flow/#/studio">Open studio</a></nav></header>
+<main>
+
+<p class="crumbs"><a href="https://muhamadzolfaghari.github.io/node-flow/templates/">Templates</a> › Engineering &amp; Data</p>
+<h1>GIS Vector Tile Pyramid &amp; Spatial Data Pipeline</h1>
+<p class="lede">End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.</p>
+<p><a class="btn" href="https://muhamadzolfaghari.github.io/node-flow/#/studio?template=geospatial-vector-tile-pipeline">Open this template in NodeFlow</a>
+<a class="btn alt" href="https://muhamadzolfaghari.github.io/node-flow/templates/">All templates</a></p>
+<h2>Diagram source (Mermaid)</h2>
+<p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
+<pre><code>flowchart TD
+    subgraph Ingestion[&quot;1. Spatial Data Ingestion&quot;]
+        SHP[&quot;Shapefile / GeoJSON Raw Archives&quot;]
+        GPS[&quot;Real-Time GPS Telemetry Stream&quot;]
+        OSM[&quot;OpenStreetMap Planet Dumps&quot;]
+    end
+
+    subgraph Processing[&quot;2. Spatial Processing &amp; Storage&quot;]
+        PostGIS[(&quot;PostgreSQL + PostGIS (H3 Spatial Indexes)&quot;)]
+        Tippecanoe[&quot;Tippecanoe Vector Tile Compressor&quot;]
+        ProtobufGen[&quot;Mapbox Vector Tile (MVT / Protobuf) Encoder&quot;]
+    end
+
+    subgraph Distribution[&quot;3. Global Vector Tile Distribution&quot;]
+        S3[&quot;Cloud Object Storage (PMTiles / MBTiles)&quot;]
+        CDN[&quot;Global Edge CDN Cache&quot;]
+        MapClient[&quot;Maplibre / Mapbox Vector Tile Renderer&quot;]
+    end
+
+    SHP --&gt; PostGIS
+    GPS --&gt; PostGIS
+    OSM --&gt; PostGIS
+    PostGIS --&gt; Tippecanoe
+    Tippecanoe --&gt; ProtobufGen
+    ProtobufGen --&gt; S3
+    S3 --&gt; CDN
+    CDN --&gt; MapClient</code></pre>
+<h2>How to use it</h2>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<h2>Related templates in Engineering &amp; Data</h2><ul class="grid"><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/er-diagram/">Entity Relationship Schema</a><p>Relational database schema with Crow’s Foot cardinality notation, primary keys, and foreign keys.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/git-graph/">Git Trunk-Based Release &amp; Hotfix Flow</a><p>Trunk-based source control branching strategy with PR merges, release tags, and hotfixes.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/sla-performance-metrics/">API Latency Percentiles &amp; SLA Uptime</a><p>Performance benchmark comparison comparing DiagramAtlas WebAssembly response times against legacy tools.</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/tcp-packet-bytefield/">TCP/IP Protocol Header</a><p>Transmission Control Protocol (TCP) 32-bit word packet structure with port numbers, sequence flags, window si…</p></li><li><a href="https://muhamadzolfaghari.github.io/node-flow/templates/mvt-vector-tile-protobuf-spec/">Mapbox Vector Tile (MVT) Protobuf Specification</a><p>Binary Protobuf encoding specification for Mapbox Vector Tiles (MVT): Tile layers, geometry commands, feature…</p></li></ul>
+</main>
+<footer>NodeFlow is open source under the MIT license. Projects are stored in your browser. <a href="https://muhamadzolfaghari.github.io/node-flow/">Home</a></footer>
+</body>
+</html>

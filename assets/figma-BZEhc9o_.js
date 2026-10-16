@@ -6,4 +6,3 @@ function d(f){return String(f).trim().replace(/[^a-zA-Z0-9_]/g,"_").replace(/^_+
   Frame1["Design Tokens & Variables"] --> Frame2["UI Component Library"]
   Frame2 --> Frame3["Interactive Prototype"]
   Frame3 --> Sticky1[/"Handoff & Design Specs"/]`}export{I as parseFigmaToMermaid};
-//# sourceMappingURL=figma-BZEhc9o_.js.map
