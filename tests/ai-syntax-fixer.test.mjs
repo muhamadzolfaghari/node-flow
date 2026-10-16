@@ -112,3 +112,28 @@ test("repairReportedLine tests targeted edits on the reported error line", async
   const nonExistent = await repairReportedLine(code, "Parse error on line 99: invalid");
   assert.equal(nonExistent, null);
 });
+
+test("fixMermaidSyntax supports AI Assistant engine invocation", async () => {
+  const mockAi = {
+    engineMode: "ollama",
+    ollamaConnected: true,
+    ollamaUrl: "http://localhost:11434",
+    ollamaModel: "qwen",
+    extractMermaidCode: (text) => text.trim(),
+  };
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({ message: { content: "flowchart TD\n  A --> B" } }),
+    });
+    const broken = "flowchart TD\n  A ???\n  B ???";
+    const res = await fixMermaidSyntax(broken, "Parse error on line 2: unclosed", { aiAssistant: mockAi });
+    assert.equal(res.method, "llm");
+    assert.ok(res.success);
+    assert.ok(res.fixedCode.includes("flowchart TD"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+

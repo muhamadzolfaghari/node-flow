@@ -150,3 +150,87 @@ test("assistantModeToProvider maps all modes correctly", () => {
   assert.equal(assistantModeToProvider.gemini, "gemini");
   assert.equal(assistantModeToProvider.qwen, "webllm");
 });
+
+test("aiProviders.gemini validates API key requirements", async () => {
+  await assert.rejects(
+    async () => {
+      await aiProviders.gemini.generate({
+        prompt: "test",
+        type: "flowchart",
+        options: { geminiApiKey: "" },
+        onProgress: () => {},
+      });
+    },
+    /Enter a Gemini API key to use Gemini/
+  );
+
+  await assert.rejects(
+    async () => {
+      await aiProviders.gemini.listModels("");
+    },
+    /Enter a Gemini API key before discovering models/
+  );
+});
+
+test("aiProviders.webllm validates WebGPU and generates with local engine", async () => {
+  // 1. Missing WebGPU (delete or set undefined)
+  const hadGpu = "gpu" in globalThis.navigator;
+  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis.navigator, "gpu");
+
+  try {
+    Object.defineProperty(globalThis.navigator, "gpu", {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+
+    await assert.rejects(
+      async () => {
+        await aiProviders.webllm.generate({
+          prompt: "test",
+          type: "flowchart",
+          options: {},
+          engineRef: { current: null },
+          onProgress: () => {},
+        });
+      },
+      /The local model needs WebGPU/
+    );
+
+    // 2. WebGPU present with preloaded engineRef
+    Object.defineProperty(globalThis.navigator, "gpu", {
+      value: { requestAdapter: async () => ({}) },
+      configurable: true,
+      writable: true,
+    });
+
+    const mockEngine = {
+      chat: {
+        completions: {
+          create: async () => ({
+            choices: [{ message: { content: "```mermaid\nflowchart LR\n  Local1 --> Local2\n```" } }],
+          }),
+        },
+      },
+    };
+
+    let progressLogged = "";
+    const res = await aiProviders.webllm.generate({
+      prompt: "Local test",
+      type: "flowchart",
+      options: {},
+      engineRef: { current: mockEngine },
+      onProgress: (p) => { progressLogged = p; },
+    });
+
+    assert.equal(res, "flowchart LR\n  Local1 --> Local2");
+    assert.ok(progressLogged.includes("device"));
+  } finally {
+    if (hadGpu && originalDescriptor) {
+      Object.defineProperty(globalThis.navigator, "gpu", originalDescriptor);
+    } else {
+      delete globalThis.navigator.gpu;
+    }
+  }
+});
+

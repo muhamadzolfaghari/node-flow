@@ -77,3 +77,59 @@ test("fetchWithRetry retries on network drop / DNS failure", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("fetchWithRetry respects Retry-After header and returns response when max retries exceeded", async () => {
+  let callCount = 0;
+  const mockFetch = async () => {
+    callCount++;
+    const headers = new Map([["Retry-After", "1"]]);
+    return { ok: false, status: 429, headers };
+  };
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch;
+  try {
+    const res = await fetchWithRetry(
+      "https://api.example.com/rate-limited",
+      {},
+      { initialDelayMs: 10, maxRetries: 1 }
+    );
+    assert.equal(res.status, 429);
+    assert.equal(callCount, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("fetchWithRetry throws when network error exceeds maxRetries", async () => {
+  const mockFetch = async () => {
+    throw new Error("DNS lookup failed");
+  };
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch;
+  let retryNotified = false;
+  try {
+    await assert.rejects(
+      async () => {
+        await fetchWithRetry(
+          "https://api.example.com/dead",
+          {},
+          {
+            initialDelayMs: 5,
+            maxRetries: 1,
+            onRetry: (e) => {
+              retryNotified = true;
+              assert.ok(e.error);
+            },
+          }
+        );
+      },
+      { message: "DNS lookup failed" }
+    );
+    assert.equal(retryNotified, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+

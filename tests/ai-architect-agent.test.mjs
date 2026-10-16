@@ -77,3 +77,30 @@ test("generateArchitectureDoc produces Markdown specification", () => {
   assert.ok(doc.includes("Presentation Tier"));
   assert.ok(doc.includes("Data & Persistence Tier"));
 });
+
+test("analyzeArchitecture covers external resilience recommendations and balanced topologies", () => {
+  // External service without retry or gateway
+  const externalDiag = `flowchart TD
+  Worker[Background Worker] --> StripeAPI[Stripe Third-Party Integration]`;
+  const extAnalysis = analyzeArchitecture(externalDiag);
+  assert.ok(extAnalysis.recommendations.some((r) => r.includes("Circuit Breaker")));
+
+  // Perfectly balanced architecture
+  const balanced = `flowchart TD
+  A[Service Alpha] --> B[Service Beta]`;
+  const balancedAnalysis = analyzeArchitecture(balanced);
+  assert.ok(balancedAnalysis.recommendations.some((r) => r.includes("balanced coupling")));
+  assert.equal(balancedAnalysis.complexity, "Low");
+
+  // Moderate and High complexity topologies
+  const highComplexityNodes = Array.from({ length: 18 }, (_, i) => `Node${i}[Service ${i}] --> Node${(i + 1) % 18}`).join("\n");
+  const highDiag = `flowchart TD\n${highComplexityNodes}`;
+  const highAnalysis = analyzeArchitecture(highDiag);
+  assert.equal(highAnalysis.complexity, "High");
+
+  // Fallback scanner on unstructured source
+  const unstructured = "ServiceAlpha calls ServiceBeta and persists to ServiceGamma";
+  const unstructAnalysis = analyzeArchitecture(unstructured);
+  assert.ok(unstructAnalysis.components.length >= 3);
+});
+

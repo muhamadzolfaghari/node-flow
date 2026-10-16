@@ -64,3 +64,21 @@ test("describeToDiagram generates valid Mermaid code for all primary types", () 
     assert.ok(code.length > 10, `Code too short for type: ${type}`);
   }
 });
+
+test("describeToDiagram handles auto-detection and input validation", () => {
+  // Empty or invalid input
+  assert.throws(() => describeToDiagram(""), /Please enter a description/);
+  assert.throws(() => describeToDiagram(null), /Please enter a description/);
+
+  // Auto-detection mode
+  const autoFlow = describeToDiagram("Process alpha transitions to Process beta", "auto", { orientation: "LR" });
+  assert.equal(autoFlow.type, "flowchart");
+  assert.ok(autoFlow.code.includes("Process alpha") && autoFlow.code.includes("flowchart LR"));
+
+  // Persona cues
+  assert.equal(detectDiagramType("User story map and backlog grooming for release slice"), "kanban");
+  assert.equal(detectDiagramType("Defect lifecycle and bug triage lifecycle state transition"), "state");
+  assert.equal(detectDiagramType("Doctoral thesis structure and literature review mindmap"), "mindmap");
+  assert.equal(detectDiagramType("Semester plan and study schedule milestones"), "timeline");
+});
+
