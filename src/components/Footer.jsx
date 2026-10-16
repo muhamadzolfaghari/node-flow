@@ -1,4 +1,34 @@
 import { Link } from "react-router-dom";
+
+const FOOTER_LINKS = [
+  { to: "/studio", label: "Workspace" },
+  { to: "/templates", label: "Templates" },
+  { to: "/formats", label: "Format support" },
+  { to: "/changelog", label: "Changelog" },
+];
+
+const EXTERNAL_LINKS = [
+  { href: "https://github.com/muhamadzolfaghari/node-flow", label: "GitHub ↗" },
+  { href: "https://mermaid.js.org/intro/syntax-reference.html", label: "Mermaid docs ↗" },
+];
+
+function FooterNav() {
+  return (
+    <nav aria-label="Footer navigation" className="flex flex-wrap gap-5 text-xs text-muted-foreground">
+      {FOOTER_LINKS.map((l) => (
+        <Link key={l.to} className="hover:text-foreground" to={l.to}>
+          {l.label}
+        </Link>
+      ))}
+      {EXTERNAL_LINKS.map((l) => (
+        <a key={l.href} className="hover:text-foreground" href={l.href} target="_blank" rel="noreferrer">
+          {l.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 export default function Footer() {
   return (
     <footer className="border-t">
@@ -18,39 +48,7 @@ export default function Footer() {
             · Open source under MIT license
           </p>
         </div>
-        <nav
-          aria-label="Footer navigation"
-          className="flex flex-wrap gap-5 text-xs text-muted-foreground"
-        >
-          <Link className="hover:text-foreground" to="/studio">
-            Workspace
-          </Link>
-          <Link className="hover:text-foreground" to="/templates">
-            Templates
-          </Link>
-          <Link className="hover:text-foreground" to="/formats">
-            Format support
-          </Link>
-          <Link className="hover:text-foreground" to="/changelog">
-            Changelog
-          </Link>
-          <a
-            className="hover:text-foreground"
-            href="https://github.com/muhamadzolfaghari/node-flow"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub ↗
-          </a>
-          <a
-            className="hover:text-foreground"
-            href="https://mermaid.js.org/intro/syntax-reference.html"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Mermaid docs ↗
-          </a>
-        </nav>
+        <FooterNav />
       </div>
     </footer>
   );

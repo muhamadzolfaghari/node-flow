@@ -86,6 +86,44 @@ export default function GitHubSyncDialog({
     }
   };
 
+async function pushFileToGitHub({ repo, path, branch, token, commitMessage, source }) {
+  const cleanRepo = repo.replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
+  const cleanPath = path.replace(/^\/+/, "");
+  const checkUrl = `https://api.github.com/repos/${cleanRepo}/contents/${cleanPath}?ref=${branch}`;
+  const headers = {
+    Accept: "application/vnd.github.v3+json",
+    Authorization: `token ${token.trim()}`,
+  };
+
+  let sha = undefined;
+  const checkRes = await fetch(checkUrl, { headers });
+  if (checkRes.ok) {
+    const fileData = await checkRes.json();
+    sha = fileData.sha;
+  }
+
+  const putUrl = `https://api.github.com/repos/${cleanRepo}/contents/${cleanPath}`;
+  const b64Content = btoa(unescape(encodeURIComponent(source)));
+
+  const putRes = await fetch(putUrl, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      message: commitMessage || `Update ${cleanPath}`,
+      content: b64Content,
+      branch,
+      ...(sha ? { sha } : {}),
+    }),
+  });
+
+  if (!putRes.ok) {
+    const errJson = await putRes.json().catch(() => ({}));
+    throw new Error(errJson.message || `Commit failed with status ${putRes.status}`);
+  }
+
+  return await putRes.json();
+}
+
   const handlePush = async () => {
     if (!token.trim()) {
       setStatus({ type: "error", text: "A GitHub Personal Access Token (repo scope) is required to commit." });
@@ -100,43 +138,14 @@ export default function GitHubSyncDialog({
     saveSettings();
 
     try {
-      const cleanRepo = repo.replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
-      const cleanPath = path.replace(/^\/+/, "");
-      const checkUrl = `https://api.github.com/repos/${cleanRepo}/contents/${cleanPath}?ref=${branch}`;
-      const headers = {
-        Accept: "application/vnd.github.v3+json",
-        Authorization: `token ${token.trim()}`,
-      };
-
-      // 1. Check if file already exists to get its SHA (required for updates)
-      let sha = undefined;
-      const checkRes = await fetch(checkUrl, { headers });
-      if (checkRes.ok) {
-        const fileData = await checkRes.json();
-        sha = fileData.sha;
-      }
-
-      // 2. Put file contents
-      const putUrl = `https://api.github.com/repos/${cleanRepo}/contents/${cleanPath}`;
-      const b64Content = btoa(unescape(encodeURIComponent(currentDocument.source)));
-
-      const putRes = await fetch(putUrl, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({
-          message: commitMessage || `Update ${cleanPath}`,
-          content: b64Content,
-          branch,
-          ...(sha ? { sha } : {}),
-        }),
+      const result = await pushFileToGitHub({
+        repo,
+        path,
+        branch,
+        token,
+        commitMessage,
+        source: currentDocument.source,
       });
-
-      if (!putRes.ok) {
-        const errJson = await putRes.json().catch(() => ({}));
-        throw new Error(errJson.message || `Commit failed with status ${putRes.status}`);
-      }
-
-      const result = await putRes.json();
       setStatus({
         type: "success",
         text: `Committed successfully! Commit: ${result.commit?.sha?.slice(0, 7) || "Done"}`,
