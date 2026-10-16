@@ -42,6 +42,7 @@ import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
 import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";
+import MobileNodeSheet from "./MobileNodeSheet.jsx";
 
 export default function CanvasStage({
   ref,
@@ -77,6 +78,8 @@ export default function CanvasStage({
   documentSource = "",
   documentFormat = "mermaid",
   currentDocName = "",
+  mobileMode = "preview",
+  isMobile = false,
 }) {
   const stageRef = useRef(null),
     canvasRef = useRef(null),
@@ -116,6 +119,16 @@ export default function CanvasStage({
     [showStencilsDrawer, setShowStencilsDrawer] = useState(false),
     [showMetricsModal, setShowMetricsModal] = useState(false);
 
+  const [mobileViewport, setMobileViewport] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
+  useEffect(() => {
+    const handleResize = () => setMobileViewport(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  const activeIsMobile = isMobile || mobileViewport;
+
   const callbacks = useRef({
     onSelect,
     onQuickAdd,
@@ -137,6 +150,8 @@ export default function CanvasStage({
     wheelMode,
     tool,
     spacePanning,
+    mobileMode,
+    activeIsMobile,
   });
   callbacks.current = {
     onSelect,
@@ -159,6 +174,8 @@ export default function CanvasStage({
     wheelMode,
     tool,
     spacePanning,
+    mobileMode,
+    activeIsMobile,
   };
 
   /**
@@ -829,8 +846,16 @@ export default function CanvasStage({
       }
 
       if (!moved && !callbacks.current.presentation && !spaceHeld.current) {
+        // In mobile preview mode, tap does not select or edit nodes, ensuring uninterrupted panning and viewing
+        if (callbacks.current.mobileMode === "preview") {
+          pointers.delete(e.pointerId);
+          drag = null;
+          pinch = null;
+          return;
+        }
+
         if (callbacks.current.tool === "pointer") {
-          if (e.target.closest?.(".stage-floating-toolbar, .stage-batch-toolbar, .studio-canvas-controls, button, input, select, form")) {
+          if (e.target.closest?.(".stage-floating-toolbar, .stage-batch-toolbar, .studio-canvas-controls, button, input, select, form, [role='dialog']")) {
             pointers.delete(e.pointerId);
             drag = null;
             pinch = null;
@@ -860,7 +885,7 @@ export default function CanvasStage({
       pinch = null;
     };
     const dblclick = (e) => {
-      if (callbacks.current.presentation) return;
+      if (callbacks.current.presentation || callbacks.current.mobileMode === "preview") return;
       const node = globalThis.document
         .elementFromPoint(e.clientX, e.clientY)
         ?.closest("g.node, g.entity, g.cluster, g.actor");
@@ -1331,7 +1356,7 @@ export default function CanvasStage({
         </div>
       )}
 
-      {selected && (
+      {!activeIsMobile && selected && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
           className="stage-floating-toolbar absolute z-20 flex max-w-[calc(100%-16px)] items-center gap-0.5 rounded-xl border border-border/70 bg-popover/95 p-1 text-xs shadow-2xl ring-1 ring-black/5 backdrop-blur-xl animate-in fade-in zoom-in-95 select-none transition-[left,top] duration-150"
@@ -1754,7 +1779,7 @@ export default function CanvasStage({
         </div>
       )}
 
-      <div role="toolbar" aria-label="Canvas controls" className={`absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-2xl border p-1 shadow-2xl backdrop-blur-xl ${
+      <div role="toolbar" aria-label="Canvas controls" className={`hidden md:flex absolute bottom-3.5 left-1/2 -translate-x-1/2 items-center gap-0.5 rounded-2xl border p-1 shadow-2xl backdrop-blur-xl ${
         isLight
           ? "border-slate-200/90 bg-white/95 text-slate-800 shadow-slate-300/50 ring-1 ring-black/5"
           : "border-slate-700/60 bg-slate-900/90 text-slate-200 shadow-black/60 ring-1 ring-white/10"
@@ -1935,6 +1960,43 @@ export default function CanvasStage({
         source={documentSource}
         format={documentFormat}
       />
+
+      {/* Mobile Node Bottom Sheet for Touch Devices */}
+      {activeIsMobile && selected && (
+        <MobileNodeSheet
+          isOpen={Boolean(selected)}
+          node={selected}
+          onClose={() => {
+            callbacks.current.onSelect?.(null);
+          }}
+          onRename={(newLabel) => {
+            callbacks.current.onRenameNode?.(newLabel);
+          }}
+          onChangeShape={(shapeId) => {
+            callbacks.current.onChangeShape?.(shapeId);
+          }}
+          onStyleNode={(colorId) => {
+            callbacks.current.onStyleNode?.(colorId);
+          }}
+          onAddChild={(childLabel, arrow) => {
+            callbacks.current.onQuickAdd?.(childLabel, arrow);
+          }}
+          onDuplicate={() => {
+            callbacks.current.onDuplicateSelected?.();
+          }}
+          onDelete={() => {
+            callbacks.current.onDeleteSelected?.();
+          }}
+          onDrillDown={(nodeId) => {
+            callbacks.current.onDrillDown?.(nodeId);
+          }}
+          drillDownDocId={(() => {
+            const rawId = selected?.id ? flowchartNodeId(selected.id) : null;
+            return rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
+          })()}
+          isFlowchart={documentFormat === "mermaid"}
+        />
+      )}
     </div>
   );
 }

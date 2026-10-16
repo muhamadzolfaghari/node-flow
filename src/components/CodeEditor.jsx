@@ -836,6 +836,17 @@ const CodeEditor = forwardRef(function CodeEditor(
     focus: () => editor.current?.focus(),
     format: formatDocument,
     runAiFix,
+    insertText: (snippet) => {
+      const v = editor.current;
+      if (!v || !snippet) return;
+      const sel = v.state.selection.main;
+      v.dispatch({
+        changes: { from: sel.from, to: sel.to, insert: snippet },
+        selection: { anchor: sel.from + snippet.length },
+        effects: EditorView.scrollIntoView(sel.from + snippet.length, { y: "nearest" }),
+      });
+      v.focus();
+    },
     selectAll: () => {
       const v = editor.current;
       if (v) {

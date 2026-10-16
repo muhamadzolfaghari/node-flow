@@ -67,6 +67,7 @@ import {
   Cloud,
   FolderGit2,
   Shield,
+  Eye,
 } from "lucide-react";
 import {
   Button,
@@ -94,6 +95,7 @@ import {
 import CodeEditor from "../components/CodeEditor.jsx";
 import CanvasStage, { GridToggle } from "../components/CanvasStage.jsx";
 import DiagnosticsPanel from "../components/DiagnosticsPanel.jsx";
+import MobileEditorBar from "../components/MobileEditorBar.jsx";
 import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/app-theme.js";
 import { DIAGRAM_TEMPLATES, getTemplateById } from "../components/templates.js";
 import {
@@ -417,14 +419,17 @@ export default function Studio() {
         setExplorer(false);
       }
       if (window.innerWidth < 1280) setInspector(false);
+      setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const [mobileCanvasMode, setMobileCanvasMode] = useState("preview"); // 'preview' | 'edit'
   const [explorer, setExplorer] = useState(() => window.innerWidth > 900),
     [inspector, setInspector] = useState(() => window.innerWidth >= 1280),
     [view, setView] = useState(() =>
-      window.innerWidth < 900 ? "split" : "split",
+      typeof window !== "undefined" && window.innerWidth < 768 ? "canvas" : "split",
     );
   const [theme, setTheme] = useState(() => DIAGRAM_THEME_FOR[resolveTheme(getStoredTheme())] || "dark"),
     [grid, setGrid] = useState("dots"),
@@ -6255,6 +6260,15 @@ export default function Studio() {
                       });
                     }}
                   />
+                  {isMobile && view === "code" && (
+                    <MobileEditorBar
+                      onInsertText={(snippet) => editorRef.current?.insertText?.(snippet)}
+                      onUndo={() => editorRef.current?.undo?.()}
+                      onRedo={() => editorRef.current?.redo?.()}
+                      onFormat={() => editorRef.current?.format?.()}
+                      onAiFix={() => editorRef.current?.runAiFix?.()}
+                    />
+                  )}
                 </div>
               )}
               {view === "split" && (
@@ -6595,14 +6609,14 @@ export default function Studio() {
                         });
                       }
                     }}
-                    onQuickAdd={() => {
+                    onQuickAdd={(childLabel, customArrow) => {
                       if (!isFlowchart(document) || !nodeId) return;
                       try {
                         const res = addFlowchartChild(
                           document.source,
                           nodeId,
-                          "Next step",
-                          edgeArrow,
+                          childLabel || "Next step",
+                          customArrow || edgeArrow,
                         );
                         updateSource(document.id, res.source);
                         setSelected({
@@ -6813,6 +6827,8 @@ export default function Studio() {
                     documentFormat={document.format}
                     currentDocName={document.name}
                     projectDocuments={project.documents}
+                    mobileMode={isMobile ? mobileCanvasMode : "edit"}
+                    isMobile={isMobile}
                   />
                   {preview.error && (
                     <div
@@ -6852,7 +6868,10 @@ export default function Studio() {
             </div>
           )}
           <div
-            className="max-h-32 shrink-0 overflow-auto border-t bg-card px-3 py-2"
+            className={cn(
+              "max-h-32 shrink-0 overflow-auto border-t bg-card px-3 py-2",
+              !preview.error && "hidden md:block",
+            )}
             onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({
@@ -7019,6 +7038,77 @@ export default function Studio() {
           Shortcuts
         </button>
       </div>
+
+      {/* Floating Mobile Thumb Navigation Bar (Canva-style mobile canvas control) */}
+      {isMobile && document && (
+        <div
+          role="navigation"
+          aria-label="Mobile Diagram Controls"
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-border/80 bg-card/95 px-3 py-1.5 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 select-none max-w-[calc(100%-24px)] animate-in fade-in slide-in-from-bottom-2"
+          style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          {view !== "code" ? (
+            <>
+              {/* Preview Mode vs Edit Mode Pill */}
+              <div className="flex items-center rounded-full bg-secondary/80 p-0.5 border border-border/60">
+                <button
+                  onClick={() => {
+                    setMobileCanvasMode("preview");
+                    setSelected(null);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition active:scale-95 touch-manipulation",
+                    mobileCanvasMode === "preview"
+                      ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  title="Preview Mode: Pan & zoom smoothly with zero accidental clicks"
+                >
+                  <Eye className="size-3" />
+                  <span>Preview</span>
+                </button>
+                <button
+                  onClick={() => setMobileCanvasMode("edit")}
+                  className={cn(
+                    "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition active:scale-95 touch-manipulation",
+                    mobileCanvasMode === "edit"
+                      ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  title="Edit Mode: Tap nodes to inspect, style, or connect"
+                >
+                  <Pencil className="size-3" />
+                  <span>Edit</span>
+                </button>
+              </div>
+
+              <div className="h-4 w-px bg-border/80 mx-0.5" />
+
+              {/* View Source Code Button */}
+              <button
+                onClick={() => setView("code")}
+                className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-accent active:scale-95 transition touch-manipulation"
+                title="View & Edit Source Code"
+              >
+                <Code2 className="size-3 text-cyan-400" />
+                <span>Code</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Return to Canvas Button */}
+              <button
+                onClick={() => setView("canvas")}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1 text-[11px] font-semibold text-primary-foreground shadow-xs active:scale-95 transition touch-manipulation"
+                title="Back to Canvas View"
+              >
+                <Shapes className="size-3" />
+                <span>Canvas View</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <Dialog open={explorer && width < 1024} onOpenChange={setExplorer}>
         <DialogContent className="flex h-[70vh] flex-col gap-0 overflow-hidden p-0">
           <DialogHeader className="border-b p-4">
