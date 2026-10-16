@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "node test-diagrams.mjs",
     "test:unit": "node --test tests/*.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.mjs",
     "test:browser": "node scripts/test-browser.mjs",
     "lint": "eslint .",
     "audit:templates": "node scripts/audit-templates.mjs",

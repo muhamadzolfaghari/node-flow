@@ -64,3 +64,25 @@ test("STRIDE: handles empty or trivial diagram gracefully", () => {
   assert.equal(result.edgesCount, 0);
   assert.equal(result.score, 100);
 });
+
+test("STRIDE: detects cleartext inter-service edges and missing audit logging in large topologies", () => {
+  const source = `
+flowchart TD
+  SvcA[Service A] --> SvcB[Service B]
+  SvcB --> SvcC[Service C]
+  SvcC --> SvcD[Service D]
+  SvcD --> SvcE[Service E]
+  SvcE --> SvcF[Service F]
+  SvcF --> SvcG[Service G]
+  SvcG --> SvcH[Service H]
+`;
+  const result = analyzeDiagramThreats(source);
+  assert.ok(result.nodesCount >= 7);
+  // Repudiation finding for absence of central logging
+  assert.ok(result.findings.some((f) => f.categoryKey === "R"));
+  // Tampering finding for cleartext inter-service traffic
+  assert.ok(result.findings.some((f) => f.categoryKey === "T"));
+  // Elevation of privilege finding
+  assert.ok(result.findings.some((f) => f.categoryKey === "E"));
+});
+
