@@ -107,26 +107,147 @@ export async function fixMermaidSyntax(code, errorMessage = '', opts = {}) {
  * is validated; the least destructive passing candidate wins.
  */
 export async function repairReportedLine(code, errorMessage = '') {
-  const lineNumber = Number(String(errorMessage).match(/line\s+(\d+)/i)?.[1]);
+  if (!code || typeof code !== 'string') return null;
+  const parsed = parseErrorDetails(errorMessage, code);
+  const lineNumber = parsed?.line || Number(String(errorMessage).match(/(?:line|Line)\s*[:#]?\s*(\d+)/i)?.[1]) || 1;
   const lines = code.split('\n');
-  if (!lineNumber || lineNumber < 2 || lineNumber > lines.length) return null;
+  if (lineNumber < 1 || lineNumber > lines.length) return null;
   const index = lineNumber - 1;
   const original = lines[index];
-  if (!original.trim()) return null;
-  const candidates = [
-    {
+  if (original === undefined) return null;
+
+  const candidates = [];
+
+  // 1. Missing closing delimiter on line
+  const unclosedBeforeArrow = original.replace(/(\[[^\]\n]+?)\s*(-->|-.->|==>|---|===)/g, '$1] $2');
+  if (unclosedBeforeArrow !== original) {
+    candidates.push({
+      fix: `Closed unclosed bracket before arrow on line ${lineNumber}`,
+      line: unclosedBeforeArrow,
+    });
+  }
+
+  const opens = (original.match(/\[/g) || []).length;
+  const closes = (original.match(/\]/g) || []).length;
+  if (opens > closes) {
+    candidates.push({
+      fix: `Closed unclosed bracket ']' on line ${lineNumber}`,
+      line: `${original}${']'.repeat(opens - closes)}`,
+    });
+  }
+
+  const openParens = (original.match(/\(/g) || []).length;
+  const closeParens = (original.match(/\)/g) || []).length;
+  if (openParens > closeParens) {
+    candidates.push({
+      fix: `Closed unclosed parenthesis ')' on line ${lineNumber}`,
+      line: `${original}${')'.repeat(openParens - closeParens)}`,
+    });
+  }
+
+  // 2. Unbalanced double quotes on line
+  const quotes = (original.match(/"/g) || []).length;
+  if (quotes % 2 !== 0) {
+    const lastBracketIdx = original.search(/[\]\)\}]$/);
+    if (lastBracketIdx > -1) {
+      candidates.push({
+        fix: `Closed unclosed quote '"' before bracket on line ${lineNumber}`,
+        line: `${original.slice(0, lastBracketIdx)}"${original.slice(lastBracketIdx)}`,
+      });
+    }
+    candidates.push({
+      fix: `Closed unclosed quote '"' on line ${lineNumber}`,
+      line: `${original}"`,
+    });
+  }
+
+  // 3. Unquoted special characters inside brackets e.g. A[Title: Subtitle (v2)] -> A["Title: Subtitle (v2)"]
+  const unquotedBracket = original.replace(/(\w+)\s*\[([^\]"\n]*[:()&,+{}<>/][^\]"\n]*)\]/g, '$1["$2"]');
+  if (unquotedBracket !== original) {
+    candidates.push({
+      fix: `Quoted special characters inside node label on line ${lineNumber}`,
+      line: unquotedBracket,
+    });
+  }
+
+  // 4. Single arrow in flowchart or sequence
+  if (!original.includes('-->') && original.includes('->')) {
+    candidates.push({
+      fix: `Replaced single arrow '->' with '-->' on line ${lineNumber}`,
+      line: original.replace(/([^-])->([^-])/g, '$1-->$2'),
+    });
+    candidates.push({
+      fix: `Replaced sequence arrow '->' with '->>' on line ${lineNumber}`,
+      line: original.replace(/->(?![>])/g, '->>'),
+    });
+  }
+
+  // 5. Pipe label spacing: --> |text| -> -->|text|
+  if (/-->\s*\|\s*[^|]*\s*\|\s*/.test(original)) {
+    candidates.push({
+      fix: `Normalized pipe label spacing on line ${lineNumber}`,
+      line: original.replace(/-->\s*\|\s*([^|]*?)\s*\|\s*/g, '-->|$1| '),
+    });
+  }
+
+  // 6. Trailing semicolon: A --> B; -> A --> B
+  if (/;\s*$/.test(original)) {
+    candidates.push({
+      fix: `Removed trailing semicolon on line ${lineNumber}`,
+      line: original.replace(/;\s*$/, ''),
+    });
+  }
+
+  // 7. Sequence message missing colon: A->>B message -> A->>B: message
+  const seqMsg = original.replace(/^(\s*\w+\s*(?:->>|-->>|-\)|--\))\s*\w+)\s+([^:\s][^:\n]*)$/, '$1: $2');
+  if (seqMsg !== original) {
+    candidates.push({
+      fix: `Added missing colon to sequence message on line ${lineNumber}`,
+      line: seqMsg,
+    });
+  }
+
+  // 8. Line 1 diagram header fixes
+  if (lineNumber === 1) {
+    if (/^\s*graph\b/i.test(original)) {
+      candidates.push({
+        fix: `Updated legacy 'graph' to 'flowchart TD'`,
+        line: 'flowchart TD',
+      });
+    }
+    if (/^\s*flowchart\s*$/i.test(original)) {
+      candidates.push({
+        fix: `Added default direction TD to flowchart header`,
+        line: 'flowchart TD',
+      });
+    }
+  }
+
+  // 9. Removed stray text after closed bracket
+  const stray = original.replace(/^(.*[\]\)\}])\s+[^\]\)\}\s][^\]\)\}]*$/, '$1');
+  if (stray !== original) {
+    candidates.push({
       fix: `Removed stray text after the statement on line ${lineNumber}`,
-      line: original.replace(/^(.*[\]\)\}])\s+[^\]\)\}\s][^\]\)\}]*$/, '$1'),
-    },
-    {
-      fix: `Removed the last word on line ${lineNumber}`,
-      line: original.replace(/\s+\S+\s*$/, ''),
-    },
-    {
-      fix: `Commented out the invalid line ${lineNumber}`,
-      line: `${original.match(/^\s*/)[0]}%% ${original.trim()}`,
-    },
-  ];
+      line: stray,
+    });
+  }
+
+  // 10. Removed trailing token on line
+  const lessWord = original.replace(/\s+\S+\s*$/, '');
+  if (lessWord !== original) {
+    candidates.push({
+      fix: `Removed the trailing token on line ${lineNumber}`,
+      line: lessWord,
+    });
+  }
+
+  // 11. Commented out the invalid line
+  const indent = original.match(/^\s*/)?.[0] || '';
+  candidates.push({
+    fix: `Commented out the invalid line ${lineNumber}`,
+    line: `${indent}%% ${original.trim()}`,
+  });
+
   for (const candidate of candidates) {
     if (candidate.line === original || !candidate.line.trim()) continue;
     const next = [...lines];

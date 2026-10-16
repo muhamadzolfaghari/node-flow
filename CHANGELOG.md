@@ -5,6 +5,20 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.3.0] - 2026-10-17
+
+### Added
+- **Context-Aware Autocomplete**: Scoped keyword completions per diagram family (flowchart, sequence, class, state, er), added 8 node shape snippet templates after arrow operators, and suppressed keyword popups inside string literals or bracket labels.
+- **Enhanced Canvas Content Selectors**: Added pie chart, quadrant point, git graph commit, block element, and legend selectors to `CANVAS_CONTENT_SELECTOR` for comprehensive, multi-diagram framing accuracy.
+
+### Fixed
+- **Editor Focus Retention**: Prevented CodeMirror instance destruction on parent re-renders and keystrokes, preserving cursor position, selection, and active input state.
+- **Click-to-Focus & Document End Navigation**: Clicking anywhere within the editor panel host or empty area below source lines focuses CodeMirror and places the cursor at the end of the document.
+- **Deterministic Quick Fix Reliability**: Enhanced `repairReportedLine` to reliably repair line 1 headers, unclosed brackets/quotes before/after arrows, unquoted label punctuation, single arrows (`->` to `-->`), and trailing semicolons.
+- **Line-Targeted Diagnostics**: Upgraded `explainError` in `syntax-error-db.js` to prioritize the exact reported error line, providing actionable diagnostic hints with bad/good syntax comparisons and 1-click line repair.
+
+---
+
 ## [1.2.0] - 2026-10-17
 
 ### Added

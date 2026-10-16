@@ -1,5 +1,22 @@
 export const CHANGELOG_ENTRIES = [
   {
+    version: "1.3.0",
+    date: "2026-10-17",
+    type: "minor",
+    title: "Editor Focus Reliability, Deterministic Quick Fix & Context-Aware Autocomplete",
+    highlights: [
+      "Editor Focus Retention: Preserved CodeMirror instance lifecycle across parent re-renders and keystrokes, eliminating focus loss and editor recreation.",
+      "Click-to-Focus & End Selection: Clicking anywhere in the editor panel or empty space below code immediately focuses and positions cursor at the end of the document.",
+      "Deterministic Quick Fix: Enhanced repairReportedLine to resolve line 1 headers, unclosed brackets/quotes before/after arrows, unquoted punctuation in labels, single arrows (-> to -->), and trailing semicolons.",
+      "Line-Targeted Diagnostics: Upgraded explainError in syntax-error-db.js to prioritize the exact reported error line, providing high-precision cause explanations and 1-click line repair.",
+      "Context-Aware Autocomplete: Suppressed keywords inside string literals and bracket labels, added node shape snippets, and scoped keywords to active diagram types.",
+      "Canvas Content Framing: Extended CANVAS_CONTENT_SELECTOR to include pie charts, quadrant points, commits, block elements, and legends for 100% framing pass.",
+    ],
+    commits: [
+      { hash: "HEAD", message: "fix(editor): focus retention, deterministic line quick fix, contextual autocomplete, and framing selectors" },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-10-17",
     type: "minor",
@@ -12,7 +29,7 @@ export const CHANGELOG_ENTRIES = [
       "Achieved 100% pass across all unit, syntax, audit, and quality suites (npm run test:unit, npm test, audit:quality).",
     ],
     commits: [
-      { hash: "HEAD", message: "feat(quality): modularize theme variables, geospatial engines, and export options" },
+      { hash: "584aa31", message: "feat(quality): modularize theme variables, geospatial engines, and export options" },
     ],
   },
   {
