@@ -21,9 +21,12 @@ import { undo, redo } from "@codemirror/commands";
 import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
 import { getFormat } from "../lib/formats.js";
 import { fixAnySyntax, testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
+import { repairReportedLine } from "../utils/ai-syntax-fixer.js";
 import { explainError } from "../utils/syntax-error-db.js";
 import { formatMermaidCode } from "../utils/mermaid-formatter.js";
-import { Sparkles, CheckCircle2, AlertTriangle, Lightbulb, Check, ChevronDown, Wand2 } from "lucide-react";
+import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
+import { scanNodeDeclarations } from "../lib/visual-editing.js";
+import { Sparkles, CheckCircle2, AlertTriangle, Lightbulb, Check, ChevronDown, Wand2, ArrowRight } from "lucide-react";
 
 // Diagram types list for tokenizer & completions
 const diagramHeaders = [
@@ -31,7 +34,7 @@ const diagramHeaders = [
   "erDiagram", "mindmap", "gantt", "pie", "xychart-beta", "xychart", "C4Context", "C4Container",
   "C4Component", "C4Dynamic", "C4Deployment", "gitGraph", "journey", "timeline", "sankey-beta",
   "sankey", "quadrantChart", "kanban", "block-beta", "block", "requirementDiagram", "packet-beta",
-  "packet", "architecture-beta", "architecture", "digraph", "strict digraph", "d2"
+  "packet", "architecture-beta", "architecture", "zenuml", "digraph", "strict digraph", "d2"
 ];
 
 // Structural and diagram keywords
@@ -40,14 +43,20 @@ const keywords = [
   "subgraph", "end", "direction", "TB", "TD", "BT", "RL", "LR",
   "participant", "actor", "boundary", "control", "entity", "database", "collections",
   "create", "destroy", "box", "autonumber", "activate", "deactivate", "alt", "else", "opt",
-  "loop", "par", "critical", "break", "rect", "note", "over", "right of", "left of", "as",
-  "class", "interface", "enum", "state", "fork", "join", "choice",
+  "loop", "par", "and", "critical", "break", "rect", "note", "over", "right of", "left of", "as",
+  "class", "interface", "enum", "state", "fork", "join", "choice", "abstract",
   "title", "accTitle", "accDescr", "section", "dateFormat", "axisFormat", "todayMarker",
   "excludes", "includes", "commit", "branch", "checkout", "merge", "tag", "order", "id",
-  "group", "service", "in", "junction", "icon",
+  "cherry-pick", "type", "msg", "NORMAL", "REVERSE", "HIGHLIGHT",
+  "group", "service", "in", "junction", "icon", "disk", "server", "cloud", "internet", "router", "gateway",
+  "Person", "Person_Ext", "System", "System_Ext", "SystemDb", "SystemDb_Ext", "SystemQueue",
+  "Container", "ContainerDb", "ContainerQueue", "Component", "ComponentDb",
+  "Boundary", "Enterprise_Boundary", "System_Boundary", "Container_Boundary",
+  "Rel", "BiRel", "Rel_Back", "Rel_Neighbor", "Rel_D", "Rel_U", "Rel_L", "Rel_R", "UpdateLayoutConfig",
   "requirement", "functionalRequirement", "interfaceRequirement", "performanceRequirement",
   "designConstraint", "physicalRequirement", "element", "satisfies", "traces", "contains",
-  "copies", "derives", "verifies", "refines", "style", "classDef", "linkStyle", "interpolate"
+  "copies", "derives", "verifies", "refines", "docRef", "risk", "verifymethod", "text",
+  "style", "classDef", "linkStyle", "interpolate", "click"
 ];
 
 // Rich Total Syntax Tokenizer for Mermaid, PlantUML, DOT, D2 & Architecture
@@ -66,9 +75,9 @@ const diagramLanguage = StreamLanguage.define({
       return "string";
     }
 
-    // 4. Arrow and edge operators (20+ styles)
+    // 4. Arrow and edge operators (flowchart, sequence, state, class, er, plantuml, d2)
     if (
-      stream.match(/^(?:-->|-->>|->>|-\)|--\)|-\.->|==>|~~~|--o|--x|o--o|x--x|<-->|<--|->|--|<\|--|\*--|o--|\.\.\|>|\.\.|\|\|--o\{|\}\|--\|\{|\|o--o\||\|o--o\{|\|\|--\|\||\}\|--\|\{|\}o--o\{)/)
+      stream.match(/^(?:-->|-->>|->>|-\)|--\)|-\.->|-.-|==>|===|~~~|--o|--x|o--o|x--x|<-->|<--|->|--|<\|--|\*--|o--|\.\.\|>|\.\.|\|\|--o\{|\}\|--\|\{|\|o--o\||\|o--o\{|\|\|--\|\||\}\|--\|\{|\}o--o\{|<-|&)/)
     ) {
       return "operator";
     }
@@ -78,32 +87,37 @@ const diagramLanguage = StreamLanguage.define({
       return "string";
     }
 
-    // 6. Hex color codes (#1e293b, #38bdf8)
+    // 6. Packet bytefield bit ranges (e.g. 0-15:, 16-31:)
+    if (stream.match(/^\b\d+(?:-\d+)?:\b/)) {
+      return "number";
+    }
+
+    // 7. Hex color codes (#1e293b, #38bdf8)
     if (stream.match(/^#[0-9a-fA-F]{3,8}\b/)) {
       return "number";
     }
 
-    // 7. Numbers and units (e.g. 100, 20px, 1.5, 3d, 2w)
+    // 8. Numbers and units (e.g. 100, 20px, 1.5, 3d, 2w)
     if (stream.match(/^\b\d+(?:\.\d+)?(?:px|em|pt|ms|s|%|d|w)?\b/)) {
       return "number";
     }
 
-    // 8. Node shape brackets and delimiters
-    if (stream.match(/^(?:\[\[|\]\]|\[\(|\)\]|\(\(|\)\)|\{\{|\}\}|\[\/|\/\]|\[\\|\\\]|\[|\]|\(|\)|\{|\})/)) {
+    // 9. Node shape brackets and delimiters (all 14 flowchart shapes + C4)
+    if (stream.match(/^(?:\[\[|\]\]|\[\(|\)\]|\(\(\(|\)\)\)|\(\(|\)\)|\{\{|\}\}|\[\/|\/\]|\[\\|\\\]|\[|\]|\(|\)|\{|\}|>)/)) {
       return "bracket";
     }
 
-    // 9. CSS style properties inside style/classDef
-    if (stream.match(/^(?:fill|stroke|stroke-width|stroke-dasharray|color|font-size|opacity|rx|ry):/)) {
+    // 10. CSS style properties inside style/classDef
+    if (stream.match(/^(?:fill|stroke|stroke-width|stroke-dasharray|color|font-size|opacity|rx|ry|stroke-dashoffset):/)) {
       return "propertyName";
     }
 
-    // 10. Types in ER & Class diagrams
+    // 11. Types in ER & Class diagrams
     if (stream.match(/^\b(?:string|int|integer|boolean|bool|datetime|date|timestamp|uuid|float|double|PK|FK|UK)\b/i)) {
       return "typeName";
     }
 
-    // 11. Diagram keywords
+    // 12. Diagram keywords
     for (const kw of keywords) {
       if (stream.match(new RegExp(`^\\b${kw}\\b`))) {
         return "keyword";
@@ -172,30 +186,35 @@ const theme = EditorView.theme(
       backgroundPosition: "left bottom",
       backgroundRepeat: "repeat-x",
       paddingBottom: "1px",
+      backgroundColor: "rgba(244, 63, 94, 0.12)",
+      borderRadius: "2px",
     },
     ".cm-lintRange-warning": {
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='m0 2.5 l2 -2 l2 2 l2 -2' fill='none' stroke='%23f59e0b' stroke-width='1.2'/%3E%3C/svg%3E")`,
       backgroundPosition: "left bottom",
       backgroundRepeat: "repeat-x",
       paddingBottom: "1px",
+      backgroundColor: "rgba(245, 158, 11, 0.12)",
+      borderRadius: "2px",
     },
     ".cm-lint-marker": {
       display: "inline-block",
-      width: "8px",
-      height: "8px",
+      width: "9px",
+      height: "9px",
       borderRadius: "50%",
       cursor: "pointer",
+      transition: "transform 0.2s ease",
     },
     ".cm-lint-marker-error": {
       backgroundColor: "#f43f5e",
-      boxShadow: "0 0 6px #f43f5e88",
+      boxShadow: "0 0 8px #f43f5e",
     },
     ".cm-lint-marker-warning": {
       backgroundColor: "#f59e0b",
-      boxShadow: "0 0 6px #f59e0b88",
+      boxShadow: "0 0 8px #f59e0b",
     },
     ".cm-diagnostic": {
-      padding: "6px 10px",
+      padding: "8px 12px",
       fontSize: "12px",
       lineHeight: "18px",
     },
@@ -203,7 +222,7 @@ const theme = EditorView.theme(
       borderLeft: "3px solid #f43f5e",
     },
     ".cm-diagnosticAction": {
-      backgroundColor: "#3b82f6",
+      backgroundColor: "#2563eb",
       color: "#ffffff",
       borderRadius: "4px",
       padding: "2px 8px",
@@ -212,10 +231,11 @@ const theme = EditorView.theme(
       marginLeft: "8px",
       cursor: "pointer",
       border: "none",
-      transition: "background-color 0.15s ease",
+      transition: "all 0.15s ease",
     },
     ".cm-diagnosticAction:hover": {
-      backgroundColor: "#2563eb",
+      backgroundColor: "#1d4ed8",
+      transform: "scale(1.02)",
     },
   },
   { dark: true },
@@ -295,19 +315,66 @@ const diagramSnippets = [
   snippetCompletion('${1:id}[["${2:Subroutine}"]]', { label: "node-subroutine", detail: "Node: Subroutine [[label]]", type: "variable" }),
   snippetCompletion('${1:id}[("${2:Database})"]', { label: "node-cylinder", detail: "Node: Cylinder [(label)]", type: "variable" }),
   snippetCompletion('${1:id}(("${2:Circle})")', { label: "node-circle", detail: "Node: Circle ((label))", type: "variable" }),
+  snippetCompletion('${1:id}((("${2:Double Circle})")))', { label: "node-doublecircle", detail: "Node: Double Circle (((label)))", type: "variable" }),
   snippetCompletion('${1:id}{"${2:Decision?}"}', { label: "node-diamond", detail: "Node: Diamond {label}", type: "variable" }),
   snippetCompletion('${1:id}{{"${2:Hexagon}"}}', { label: "node-hexagon", detail: "Node: Hexagon {{label}}", type: "variable" }),
+  snippetCompletion('${1:id}[/"${2:Input/Output}"/]', { label: "node-parallelogram", detail: "Node: Parallelogram [/label/]", type: "variable" }),
+  snippetCompletion('${1:id}[/"${2:Trapezoid}"\\]', { label: "node-trapezoid", detail: "Node: Trapezoid [/label\\]", type: "variable" }),
+  snippetCompletion('${1:id}>"${2:Flag}"]', { label: "node-flag", detail: "Node: Asymmetric Flag >label]", type: "variable" }),
   // Style and Decorator snippets
   snippetCompletion('style ${1:NodeId} fill:${2:#1e293b},stroke:${3:#38bdf8},stroke-width:2px,color:#fff', { label: "style", detail: "Node style directive", type: "property" }),
   snippetCompletion('classDef ${1:accent} fill:${2:#0284c7},stroke:${3:#38bdf8},color:#fff', { label: "classDef", detail: "Reusable class style definition", type: "property" }),
   snippetCompletion('linkStyle ${1:0} stroke:${2:#f59e0b},stroke-width:2px', { label: "linkStyle", detail: "Connection link style directive", type: "property" }),
 ];
 
+// C4 Architectural Component Snippets
+const c4Snippets = [
+  snippetCompletion('Person(${1:user}, "${2:Customer}", "${3:User of the service}")', { label: "Person", detail: "C4 Person actor", type: "snippet" }),
+  snippetCompletion('System(${1:system}, "${2:Core Platform}", "${3:Primary system description}")', { label: "System", detail: "C4 Software System", type: "snippet" }),
+  snippetCompletion('System_Ext(${1:ext}, "${2:Third-Party Service}", "${3:External system}")', { label: "System_Ext", detail: "C4 External System", type: "snippet" }),
+  snippetCompletion('Container(${1:app}, "${2:Web App}", "${3:Next.js / Node}", "${4:Serves user UI}")', { label: "Container", detail: "C4 Container Application", type: "snippet" }),
+  snippetCompletion('ContainerDb(${1:db}, "${2:Primary DB}", "${3:PostgreSQL / DynamoDB}", "${4:Persists records}")', { label: "ContainerDb", detail: "C4 Database Container", type: "snippet" }),
+  snippetCompletion('Rel(${1:user}, ${2:system}, "${3:Uses}", "${4:HTTPS / OAuth2}")', { label: "Rel", detail: "C4 Unidirectional Relationship", type: "snippet" }),
+  snippetCompletion('BiRel(${1:systemA}, ${2:systemB}, "${3:Syncs with}", "${4:gRPC / mTLS}")', { label: "BiRel", detail: "C4 Bidirectional Relationship", type: "snippet" }),
+];
+
+// Cloud & Infrastructure Stencils Snippets
+const cloudSnippets = (CLOUD_STENCILS || []).map((stencil) =>
+  snippetCompletion(stencil.codeSnippet.trim(), {
+    label: `cloud-${stencil.id}`,
+    detail: `${stencil.icon} ${stencil.label} (${stencil.category})`,
+    type: "snippet",
+    boost: 2,
+  })
+);
+
+// High-Priority Arrow / Operator Completions
+const arrowCompletions = [
+  { label: "-->", detail: "Directed arrow link", type: "operator", boost: 16 },
+  { label: "-.->", detail: "Dotted directed arrow", type: "operator", boost: 15 },
+  { label: "==>", detail: "Thick directed arrow", type: "operator", boost: 15 },
+  { label: "-->|label|", detail: "Directed arrow with text label", type: "operator", boost: 14 },
+  { label: "-.->|label|", detail: "Dotted arrow with text label", type: "operator", boost: 14 },
+  { label: "==>|label|", detail: "Thick arrow with text label", type: "operator", boost: 14 },
+  { label: "---", detail: "Solid open line link", type: "operator", boost: 13 },
+  { label: "-.-", detail: "Dotted open line link", type: "operator", boost: 13 },
+  { label: "===", detail: "Thick open line link", type: "operator", boost: 13 },
+  { label: "<-->", detail: "Bidirectional arrow", type: "operator", boost: 12 },
+  { label: "--o", detail: "Circle head link", type: "operator", boost: 11 },
+  { label: "--x", detail: "Cross head link", type: "operator", boost: 11 },
+  { label: "o--o", detail: "Bidirectional circle link", type: "operator", boost: 10 },
+  { label: "x--x", detail: "Bidirectional cross link", type: "operator", boost: 10 },
+  { label: "->>", detail: "Sequence solid sync message", type: "operator", boost: 14 },
+  { label: "-->>", detail: "Sequence dashed reply message", type: "operator", boost: 14 },
+];
+
+const allSnippets = [...diagramSnippets, ...c4Snippets, ...cloudSnippets];
+
 const diagramTypeKeywords = new Set([
   "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram",
   "gantt", "pie", "journey", "gitGraph", "mindmap", "timeline", "quadrantChart", "xychart", "xychart-beta",
   "sankey", "sankey-beta", "block", "block-beta", "packet", "packet-beta", "architecture", "architecture-beta",
-  "requirementDiagram", "C4Context", "kanban",
+  "requirementDiagram", "C4Context", "kanban", "zenuml",
 ]);
 const keywordCompletions = keywords.map((label) => ({
   label,
@@ -375,6 +442,59 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
     }
   }, []);
 
+  const goToLine = useCallback((line) => {
+    const v = editor.current;
+    if (v && line) {
+      const at = v.state.doc.line(
+        Math.max(1, Math.min(line, v.state.doc.lines))
+      ).from;
+      v.dispatch({
+        selection: { anchor: at },
+        effects: EditorView.scrollIntoView(at, { y: "center" }),
+      });
+      v.focus();
+    }
+  }, []);
+
+  const commentOutLine = useCallback((lineNum) => {
+    if (!editor.current) return;
+    const view = editor.current;
+    const l = Math.max(1, Math.min(lineNum || 1, view.state.doc.lines));
+    const lineObj = view.state.doc.line(l);
+    view.dispatch({
+      changes: { from: lineObj.from, to: lineObj.from, insert: "%% " },
+    });
+    latest.current.onChange(currentId.current, view.state.doc.toString());
+  }, []);
+
+  const applyLineRepair = useCallback(async () => {
+    if (!editor.current) return;
+    const view = editor.current;
+    const docText = view.state.doc.toString();
+    const status = syntaxStatusRef.current;
+    setFixBusy(true);
+    try {
+      const lineRepair = await repairReportedLine(docText, status.raw || status.error || "");
+      if (lineRepair && lineRepair.code && lineRepair.code !== docText) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: lineRepair.code },
+        });
+        latest.current.onChange(currentId.current, lineRepair.code);
+        setFixSuccessMsg(lineRepair.fix);
+        setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+        setShowSuggestions(false);
+        setTimeout(() => setFixSuccessMsg(null), 4000);
+      } else {
+        await runAiFix();
+      }
+    } catch (e) {
+      console.warn("Line repair error:", e);
+      await runAiFix();
+    } finally {
+      setFixBusy(false);
+    }
+  }, [runAiFix]);
+
   // Real-time As-You-Type CodeMirror Linter Extension
   const syntaxLinter = useMemo(() => {
     return linter(
@@ -424,15 +544,20 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
 
         const lineNum = Math.max(1, Math.min(details.line, view.state.doc.lines));
         const lineObj = view.state.doc.line(lineNum);
-        const from = lineObj.from;
-        const to = lineObj.to > from ? lineObj.to : Math.min(view.state.doc.length, from + 1);
+        const col = details.column || 0;
+        const from = col > 0 && lineObj.from + col <= lineObj.to
+          ? lineObj.from + Math.max(0, col - 1)
+          : lineObj.from;
+        const to = col > 0 && lineObj.from + col <= lineObj.to
+          ? Math.min(lineObj.to, from + 4)
+          : (lineObj.to > from ? lineObj.to : Math.min(view.state.doc.length, from + 1));
 
         return [
           {
             from,
             to,
             severity: "error",
-            message: details.message,
+            message: `Line ${details.line}: ${details.message}`,
             actions: [
               {
                 name: "⚡ AI Quick Fix",
@@ -440,11 +565,21 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
                   runAiFix();
                 },
               },
+              {
+                name: "💬 Comment Line",
+                apply(v) {
+                  const l = v.state.doc.lineAt(from);
+                  v.dispatch({
+                    changes: { from: l.from, to: l.from, insert: "%% " },
+                  });
+                  latest.current.onChange(currentId.current, v.state.doc.toString());
+                },
+              },
             ],
           },
         ];
       },
-      { delay: 280 }
+      { delay: 160 }
     );
   }, [runAiFix]);
 
@@ -477,29 +612,83 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
           autocompletion({
             override: [
               (context) => {
-                const word = context.matchBefore(/\w*/);
-                if (!word || (word.from === word.to && !context.explicit)) return null;
                 const doc = context.state.doc;
+                const text = doc.toString();
                 const line = doc.lineAt(context.pos);
                 const lineBeforeCursor = line.text.slice(0, context.pos - line.from);
-                // Whole-diagram templates and type keywords only make sense on
-                // the first line or an empty line, not mid-statement.
-                const atStatementStart = line.number === 1 || !lineBeforeCursor.slice(0, word.from - line.from).trim();
-                const text = doc.toString();
-                const seen = new Set();
+
+                // 1. Arrow / operator matching (typing -, =, ., <, >, |)
+                const arrowMatch = context.matchBefore(/[-=.><|]+/);
+                if (arrowMatch && arrowMatch.from !== arrowMatch.to) {
+                  const query = arrowMatch.text;
+                  const matches = arrowCompletions.filter(
+                    (a) => a.label.startsWith(query) || query.length <= 1
+                  );
+                  if (matches.length > 0) {
+                    return {
+                      from: arrowMatch.from,
+                      options: matches,
+                    };
+                  }
+                }
+
+                // 2. Word or identifier matching
+                const word = context.matchBefore(/[\w-]*/);
+                if (!word || (word.from === word.to && !context.explicit)) return null;
+
+                const atStatementStart =
+                  line.number === 1 ||
+                  !lineBeforeCursor.slice(0, word.from - line.from).trim();
+                const isAfterArrow =
+                  /(?:-->|-.->|==>|---|===|->>|-->>|<-->|\s+as\s+)\s*$/.test(
+                    lineBeforeCursor.slice(0, word.from - line.from)
+                  );
+
+                // Dynamically scan declared nodes in the active file
+                const declaredNodes = [];
+                try {
+                  const decls = scanNodeDeclarations(text);
+                  const seenIds = new Set();
+                  for (const [, decl] of decls) {
+                    if (!seenIds.has(decl.id)) {
+                      seenIds.add(decl.id);
+                      declaredNodes.push({
+                        label: decl.id,
+                        detail: `${decl.open}${decl.label || decl.id}${decl.close}`,
+                        type: "variable",
+                        boost: isAfterArrow ? 18 : 8,
+                      });
+                    }
+                  }
+                } catch {
+                  // Fallback gracefully
+                }
+
+                const seen = new Set(declaredNodes.map((d) => d.label));
                 const symbols = [];
                 for (const match of text.matchAll(/\b[A-Za-z_][\w-]*\b/g)) {
                   const id = match[0];
-                  if (id.length < 2 || seen.has(id) || id === text.slice(word.from, word.to)) continue;
+                  if (id.length < 2 || seen.has(id) || id === word.text) continue;
                   seen.add(id);
-                  if (!keywords.includes(id)) symbols.push({ label: id, type: "variable", detail: "in this file", boost: 2 });
+                  if (!keywords.includes(id)) {
+                    symbols.push({
+                      label: id,
+                      type: "variable",
+                      detail: "in this file",
+                      boost: isAfterArrow ? 10 : 2,
+                    });
+                  }
                 }
+
                 const structural = line.number === 1 || !text.slice(0, line.from).trim();
                 return {
                   from: word.from,
                   options: [
-                    ...(structural || !lineBeforeCursor.trim() ? diagramSnippets : []),
-                    ...(atStatementStart || structural ? keywordCompletions : keywordCompletions.filter((k) => !diagramTypeKeywords.has(k.label))),
+                    ...(structural || !lineBeforeCursor.trim() ? allSnippets : []),
+                    ...(atStatementStart || structural
+                      ? keywordCompletions
+                      : keywordCompletions.filter((k) => !diagramTypeKeywords.has(k.label))),
+                    ...declaredNodes,
                     ...symbols,
                   ],
                 };
@@ -644,12 +833,17 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
             </span>
           ) : (
             <div className="flex items-center gap-2 overflow-hidden">
-              <span className="inline-flex items-center gap-1.5 text-rose-400 font-medium truncate">
+              <button
+                type="button"
+                onClick={() => goToLine(syntaxStatus.line)}
+                className="inline-flex items-center gap-1.5 text-rose-400 hover:text-rose-300 font-medium truncate group text-left cursor-pointer"
+                title={`Jump to line ${syntaxStatus.line || 1}`}
+              >
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-500 animate-pulse" />
-                <span className="truncate">
+                <span className="truncate group-hover:underline">
                   Line {syntaxStatus.line || 1}: {syntaxStatus.error || "Syntax error detected"}
                 </span>
-              </span>
+              </button>
 
               {/* ⚡ One-Click AI Quick Fix Button */}
               <button
@@ -713,8 +907,8 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
 
       {/* Suggestion Dropdown Popover */}
       {showSuggestions && explanations.length > 0 && (
-        <div className="border-b border-[#334155] bg-[#111827] p-3 text-xs shadow-xl animate-fadeIn z-20 max-h-56 overflow-auto">
-          <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-800">
+        <div className="border-b border-[#334155] bg-[#111827] p-3 text-xs shadow-xl animate-fadeIn z-20 max-h-60 overflow-auto">
+          <div className="flex items-center justify-between pb-1.5 mb-2.5 border-b border-slate-800">
             <span className="font-semibold text-slate-200 flex items-center gap-1.5">
               <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
               <span>Diagnostic Hints & Syntax Fixes</span>
@@ -726,12 +920,34 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
               ✕ Close
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {explanations.slice(0, 3).map((e) => (
-              <div key={e.id} className="rounded border border-slate-700 bg-slate-900/80 p-2">
-                <p className="font-semibold text-amber-300 text-[11px]">{e.symptom}</p>
-                <p className="text-foreground/80 mt-0.5 text-[11px] leading-relaxed"><span className="text-muted-foreground font-medium">Cause:</span> {e.cause}</p>
-                <div className="mt-1.5 grid grid-cols-2 gap-2 text-[10px] font-mono">
+              <div key={e.id} className="rounded border border-slate-700 bg-slate-900/80 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold text-amber-300 text-[11px]">{e.symptom}</p>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={applyLineRepair}
+                      disabled={fixBusy}
+                      className="rounded bg-emerald-600/30 border border-emerald-500/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-600/50 transition disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                      title="Apply AI repair to current error"
+                    >
+                      <Sparkles className="h-2.5 w-2.5 text-emerald-400" />
+                      <span>Repair Line {syntaxStatus.line || 1}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => commentOutLine(syntaxStatus.line)}
+                      className="rounded bg-slate-800 border border-slate-600 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700 transition cursor-pointer"
+                      title="Comment out this line with %%"
+                    >
+                      Comment Out
+                    </button>
+                  </div>
+                </div>
+                <p className="text-foreground/80 mt-1 text-[11px] leading-relaxed"><span className="text-muted-foreground font-medium">Cause:</span> {e.cause}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] font-mono">
                   <div className="rounded bg-rose-950/40 border border-rose-900/50 p-1.5 text-rose-300">
                     <span className="text-rose-500 font-bold block mb-0.5">✗ Incorrect:</span>
                     {e.exampleBad}
