@@ -371,6 +371,76 @@ const arrowCompletions = [
 
 const allSnippets = [...diagramSnippets, ...c4Snippets, ...cloudSnippets];
 
+const nodeShapeSnippets = [
+  snippetCompletion('${1:id}["${2:Process}"]', {
+    label: 'id["Label"]',
+    detail: 'Rectangle node',
+    type: 'variable',
+    boost: 22,
+  }),
+  snippetCompletion('${1:id}("${2:Rounded}")', {
+    label: 'id("Rounded")',
+    detail: 'Rounded node',
+    type: 'variable',
+    boost: 21,
+  }),
+  snippetCompletion('${1:id}[("${2:Database}")]', {
+    label: 'id[("Database")]',
+    detail: 'Database cylinder shape',
+    type: 'variable',
+    boost: 21,
+  }),
+  snippetCompletion('${1:id}(("${2:Circle}"))', {
+    label: 'id(("Circle"))',
+    detail: 'Circle shape',
+    type: 'variable',
+    boost: 20,
+  }),
+  snippetCompletion('${1:id}{"${2:Decision}"}', {
+    label: 'id{"Decision"}',
+    detail: 'Diamond / decision shape',
+    type: 'variable',
+    boost: 20,
+  }),
+  snippetCompletion('${1:id}{{"${2:Hexagon}"}}', {
+    label: 'id{{"Hexagon"}}',
+    detail: 'Hexagon shape',
+    type: 'variable',
+    boost: 19,
+  }),
+  snippetCompletion('${1:id}[["${2:Subroutine}"]]', {
+    label: 'id[["Subroutine"]]',
+    detail: 'Subroutine shape',
+    type: 'variable',
+    boost: 19,
+  }),
+  snippetCompletion('${1:id}[/"${2:Input/Output}"/]', {
+    label: 'id[/"Input/Output"/]',
+    detail: 'Parallelogram shape',
+    type: 'variable',
+    boost: 19,
+  }),
+];
+
+const flowchartKeywords = [
+  "subgraph", "end", "direction", "TB", "TD", "BT", "RL", "LR",
+  "style", "classDef", "linkStyle", "interpolate", "click"
+];
+const sequenceKeywords = [
+  "participant", "actor", "boundary", "control", "entity", "database", "collections",
+  "create", "destroy", "box", "autonumber", "activate", "deactivate", "alt", "else", "opt",
+  "loop", "par", "and", "critical", "break", "rect", "note", "over", "right of", "left of", "as"
+];
+const classKeywords = [
+  "class", "interface", "enum", "abstract", "service"
+];
+const stateKeywords = [
+  "state", "fork", "join", "choice"
+];
+const erKeywords = [
+  "string", "int", "integer", "boolean", "datetime", "timestamp", "uuid", "float", "PK", "FK", "UK"
+];
+
 const diagramTypeKeywords = new Set([
   "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram",
   "gantt", "pie", "journey", "gitGraph", "mindmap", "timeline", "quadrantChart", "xychart", "xychart-beta",
@@ -653,7 +723,15 @@ const CodeEditor = forwardRef(function CodeEditor(
                   }
                 }
 
-                // 2. Word or identifier matching
+                // 2. Suppress keyword completion inside quoted strings or node shape brackets
+                const quoteCount = (lineBeforeCursor.match(/"/g) || []).length;
+                if (quoteCount % 2 === 1) return null;
+
+                const openBrackets = (lineBeforeCursor.match(/\[/g) || []).length;
+                const closeBrackets = (lineBeforeCursor.match(/\]/g) || []).length;
+                if (openBrackets > closeBrackets) return null;
+
+                // 3. Word or identifier matching
                 const word = context.matchBefore(/[\w-]*/);
                 if (!word || (word.from === word.to && !context.explicit)) return null;
 
@@ -677,12 +755,22 @@ const CodeEditor = forwardRef(function CodeEditor(
                         label: decl.id,
                         detail: `${decl.open}${decl.label || decl.id}${decl.close}`,
                         type: "variable",
-                        boost: isAfterArrow ? 18 : 8,
+                        boost: isAfterArrow ? 25 : 8,
                       });
                     }
                   }
                 } catch {
                   // Fallback gracefully
+                }
+
+                if (isAfterArrow) {
+                  return {
+                    from: word.from,
+                    options: [
+                      ...declaredNodes,
+                      ...nodeShapeSnippets,
+                    ],
+                  };
                 }
 
                 const seen = new Set(declaredNodes.map((d) => d.label));
@@ -696,19 +784,34 @@ const CodeEditor = forwardRef(function CodeEditor(
                       label: id,
                       type: "variable",
                       detail: "in this file",
-                      boost: isAfterArrow ? 10 : 2,
+                      boost: 2,
                     });
                   }
+                }
+
+                const firstLine = text.split("\n").find((l) => l.trim().length > 0) || "";
+                let contextualKeywords = [];
+                if (/^(?:flowchart|graph)\b/i.test(firstLine)) {
+                  contextualKeywords = flowchartKeywords.map((label) => ({ label, type: "keyword", boost: 12 }));
+                } else if (/^sequenceDiagram\b/i.test(firstLine)) {
+                  contextualKeywords = sequenceKeywords.map((label) => ({ label, type: "keyword", boost: 12 }));
+                } else if (/^classDiagram\b/i.test(firstLine)) {
+                  contextualKeywords = classKeywords.map((label) => ({ label, type: "keyword", boost: 12 }));
+                } else if (/^stateDiagram\b/i.test(firstLine)) {
+                  contextualKeywords = stateKeywords.map((label) => ({ label, type: "keyword", boost: 12 }));
+                } else if (/^erDiagram\b/i.test(firstLine)) {
+                  contextualKeywords = erKeywords.map((label) => ({ label, type: "keyword", boost: 12 }));
+                } else {
+                  contextualKeywords = keywordCompletions.filter((k) => !diagramTypeKeywords.has(k.label));
                 }
 
                 const structural = line.number === 1 || !text.slice(0, line.from).trim();
                 return {
                   from: word.from,
                   options: [
-                    ...(structural || !lineBeforeCursor.trim() ? allSnippets : []),
-                    ...(atStatementStart || structural
-                      ? keywordCompletions
-                      : keywordCompletions.filter((k) => !diagramTypeKeywords.has(k.label))),
+                    ...(structural ? allSnippets : []),
+                    ...(structural ? keywordCompletions.filter((k) => diagramTypeKeywords.has(k.label)) : []),
+                    ...(atStatementStart ? contextualKeywords : []),
                     ...declaredNodes,
                     ...symbols,
                   ],
@@ -737,10 +840,7 @@ const CodeEditor = forwardRef(function CodeEditor(
 
   useEffect(() => {
     if (!hasDocument || !host.current) return;
-    if (editor.current) {
-      editor.current.destroy();
-      editor.current = null;
-    }
+    if (editor.current) return; // Prevent recreation and focus loss on parent re-renders
     host.current.innerHTML = "";
     const initialDoc = latest.current.document;
     lastSentTextRef.current = initialDoc?.source ?? "";
@@ -896,7 +996,14 @@ const CodeEditor = forwardRef(function CodeEditor(
   }));
 
   return (
-    <div className="flex h-full flex-col min-h-0 bg-background">
+    <div
+      className="flex h-full flex-col min-h-0 bg-background"
+      onClick={(e) => {
+        if (editor.current && !editor.current.hasFocus && !e.target.closest("button, a, input, select, textarea")) {
+          editor.current.focus();
+        }
+      }}
+    >
       {/* Floating AI Diagnostic, Fix & Autocomplete Status Bar */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-card/95 px-3 py-1.5 text-[11px] backdrop-blur select-none z-10">
         <div className="flex items-center gap-2 overflow-hidden">
@@ -1046,9 +1153,16 @@ const CodeEditor = forwardRef(function CodeEditor(
       <div
         ref={host}
         className="code-mirror flex-1 min-h-0 overflow-hidden cursor-text"
-        onClick={() => {
-          if (editor.current && !editor.current.hasFocus) {
+        onClick={(e) => {
+          if (!editor.current) return;
+          if (!editor.current.hasFocus) {
             editor.current.focus();
+          }
+          const content = host.current?.querySelector(".cm-content");
+          if (content && e.clientY > content.getBoundingClientRect().bottom) {
+            editor.current.dispatch({
+              selection: { anchor: editor.current.state.doc.length },
+            });
           }
         }}
         onContextMenu={(e) => {

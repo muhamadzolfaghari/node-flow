@@ -93,7 +93,87 @@ export function lookupErrors(code, format = 'mermaid') {
 }
 
 export function explainError(code, format, message = '') {
-  const hits = lookupErrors(code, format);
-  const msgHits = ERROR_DB.filter(e => message && message.toLowerCase().includes(e.id.split('-')[1] || '___'));
-  return [...msgHits, ...hits].slice(0, 8);
+  if (!code || typeof code !== 'string') return [];
+  const lines = code.split('\n');
+  const lineMatch = String(message).match(/(?:line|Line)\s*[:#]?\s*(\d+)/i) || String(message).match(/at line (\d+)/i);
+  const lineNum = lineMatch ? Math.max(1, parseInt(lineMatch[1], 10)) : null;
+  const lineText = lineNum && lineNum <= lines.length ? lines[lineNum - 1] : '';
+
+  const targetedHits = [];
+  const seenIds = new Set();
+
+  // 1. Direct diagnostic check on the reported error line
+  if (lineText && (format === 'mermaid' || !format)) {
+    if (lineNum === 1 && !/^\s*(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|journey|xychart|sankey|kanban|block|C4)\b/i.test(lineText.trim())) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-missing-header');
+      if (entry) {
+        targetedHits.push({ ...entry, symptom: `Line 1: Missing diagram header` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (/\w+\[[^\]"'\n]*[()\/&:,+{}<>][^\]"'\n]*\]/.test(lineText)) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-flow-unquoted-special');
+      if (entry) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Unquoted special characters (: / & , ( ) +) in label` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (/\w+\([^"'\n]*[()[\]{}][^"'\n]*\)/.test(lineText)) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-flow-unquoted-paren');
+      if (entry) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Nested parentheses inside round node (label)` });
+        seenIds.add(entry.id);
+      }
+    }
+    if ((lineText.match(/\[/g) || []).length !== (lineText.match(/\]/g) || []).length) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-unbalanced-brackets');
+      if (entry && !seenIds.has(entry.id)) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Unclosed bracket [ ]` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (((lineText.match(/"/g) || []).length % 2) === 1) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-unbalanced-quotes');
+      if (entry && !seenIds.has(entry.id)) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Unbalanced double quotes` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (!lineText.includes('-->') && /(^|[^-])->([^-]|$)/.test(lineText)) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-flow-single-arrow');
+      if (entry && !seenIds.has(entry.id)) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Flowchart uses single '->' instead of '-->'` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (/-->\s*\|\s*[^|]*\s*\|\s*\w/.test(lineText)) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-flow-pipe-spaces');
+      if (entry && !seenIds.has(entry.id)) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Stray spacing inside pipe label -->|label|` });
+        seenIds.add(entry.id);
+      }
+    }
+    if (/^\s*\w+\s*(->>|-->>|-\)|--\))\s*\w+\s+[^:\n]+$/.test(lineText)) {
+      const entry = ERROR_DB.find((e) => e.id === 'mermaid-seq-missing-colon');
+      if (entry && !seenIds.has(entry.id)) {
+        targetedHits.push({ ...entry, symptom: `Line ${lineNum}: Sequence message missing colon (A->>B: text)` });
+        seenIds.add(entry.id);
+      }
+    }
+  }
+
+  // 2. Parser message token matches
+  const msgLower = (message || '').toLowerCase();
+  for (const e of ERROR_DB) {
+    if (seenIds.has(e.id)) continue;
+    const tag = e.id.replace(/^(?:mermaid|plantuml|dot|d2|sql|graphql)-/, '');
+    if (tag.length > 2 && msgLower.includes(tag)) {
+      targetedHits.push(e);
+      seenIds.add(e.id);
+    }
+  }
+
+  // 3. Document-wide structural checks
+  const docHits = lookupErrors(code, format || 'mermaid').filter((e) => !seenIds.has(e.id));
+  return [...targetedHits, ...docHits].slice(0, 8);
 }

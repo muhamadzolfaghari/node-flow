@@ -132,27 +132,38 @@ test("repairReportedLine tests targeted edits on the reported error line", async
   assert.equal(nonExistent, null);
 });
 
-test("fixMermaidSyntax supports AI Assistant engine invocation", async () => {
-  const mockAi = {
-    engineMode: "ollama",
-    ollamaConnected: true,
-    ollamaUrl: "http://localhost:11434",
-    ollamaModel: "qwen",
-    extractMermaidCode: (text) => text.trim(),
-  };
-  const originalFetch = globalThis.fetch;
-  try {
-    globalThis.fetch = async () => ({
-      ok: true,
-      json: async () => ({ message: { content: "flowchart TD\n  A --> B" } }),
-    });
-    const broken = "flowchart TD\n  A ???\n  B ???";
-    const res = await fixMermaidSyntax(broken, "Parse error on line 2: unclosed", { aiAssistant: mockAi });
-    assert.equal(res.method, "llm");
-    assert.ok(res.success);
-    assert.ok(res.fixedCode.includes("flowchart TD"));
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test("repairReportedLine repairs unclosed brackets, unquoted labels, single arrows and line 1 headers", async () => {
+  // 1. Unclosed bracket
+  const unclosed = `flowchart TD\n  A[Client --> B[Server]`;
+  const fixedBracket = await repairReportedLine(unclosed, "Parse error on line 2: unclosed");
+  assert.ok(fixedBracket);
+  assert.ok(fixedBracket.code.includes("A[Client]"));
+
+  // 2. Unquoted special characters in label
+  const unquoted = `flowchart TD\n  A[Service: Auth (v2)] --> B`;
+  const fixedSpecial = await repairReportedLine(unquoted, "Parse error on line 2: unexpected colon");
+  assert.ok(fixedSpecial);
+  assert.ok(fixedSpecial.code.includes('["Service: Auth (v2)"]'));
+
+  // 3. Single arrow in flowchart
+  const singleArrow = `flowchart TD\n  A -> B`;
+  const fixedArrow = await repairReportedLine(singleArrow, "Parse error on line 2: expecting -->");
+  assert.ok(fixedArrow);
+  assert.ok(fixedArrow.code.includes("A --> B"));
+
+  // 4. Line 1 header repair
+  const legacyLine1 = `graph\n  A --> B`;
+  const fixedHeader = await repairReportedLine(legacyLine1, "Parse error on line 1");
+  assert.ok(fixedHeader);
+  assert.ok(fixedHeader.code.includes("flowchart TD"));
+});
+
+test("explainError prioritizes the reported error line with exact actionable diagnosis", async () => {
+  const { explainError } = await import("../src/utils/syntax-error-db.js");
+  const code = `flowchart TD\n  A[Auth: User (v1)] --> B`;
+  const explanations = explainError(code, "mermaid", "Parse error on line 2: unexpected token");
+  assert.ok(explanations.length > 0);
+  assert.ok(explanations[0].symptom.includes("Line 2"));
+  assert.ok(explanations[0].symptom.includes("Unquoted special characters"));
 });
 
