@@ -68,6 +68,11 @@ import {
   FolderGit2,
   Shield,
   Eye,
+  Award,
+  FileText,
+  Terminal,
+  GitCompare,
+  Building2,
 } from "lucide-react";
 import {
   Button,
@@ -5791,6 +5796,45 @@ export default function Studio() {
             <FolderGit2 className="size-3.5 text-emerald-400" />
             <span className="hidden sm:inline">Git Sync</span>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden text-xs gap-1.5 sm:inline-flex border-purple-500/30 text-purple-300 hover:text-purple-200 hover:bg-purple-950/40"
+                title="Enterprise Architecture Governance Suite"
+              >
+                <Building2 className="size-3.5 text-purple-400" />
+                <span className="hidden sm:inline">Enterprise</span>
+                <ChevronDown className="size-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Governance & Systems</DropdownMenuLabel>
+              <Item onSelect={() => canvasRef.current?.openArb()} icon={Award}>
+                ARB Well-Architected Audit
+              </Item>
+              <Item onSelect={() => canvasRef.current?.openAdr()} icon={FileText}>
+                Architecture Decision Records
+              </Item>
+              <Item onSelect={() => canvasRef.current?.openIac()} icon={Terminal}>
+                IaC Synthesizer (Terraform)
+              </Item>
+              <Item onSelect={() => canvasRef.current?.openStoryboard()} icon={Compass}>
+                Executive Storyboard Walkthrough
+              </Item>
+              <Item onSelect={() => canvasRef.current?.openDiff()} icon={GitCompare}>
+                Visual PR Diff & Review
+              </Item>
+              <Item onSelect={() => setIsThreatModelOpen(true)} icon={Shield}>
+                STRIDE Threat Modeling
+              </Item>
+              <DropdownMenuSeparator />
+              <Item onSelect={() => setIsExportStudioOpen(true)} icon={Sparkles}>
+                Backstage Catalog Export...
+              </Item>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="text-xs" disabled={!document}>

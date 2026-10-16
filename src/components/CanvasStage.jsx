@@ -502,6 +502,13 @@ export default function CanvasStage({
     zoomOut: () => zoomBy(0.8),
     jumpToNode: (id) => jumpToNode({ id, rawId: id, label: id }),
     openSearch: () => setSearchOpen(true),
+    openAdr: () => setShowAdrModal(true),
+    openDiff: () => setShowDiffModal(true),
+    openIac: () => setShowIacModal(true),
+    openArb: () => setShowArbModal(true),
+    openStoryboard: () => setShowStoryboard(true),
+    toggleFinOps: () => setShowFinOps((v) => !v),
+    setLens: (lens) => setActiveLens(lens),
   }));
   const lastRenderSig = useRef("");
   useEffect(() => {
@@ -2092,10 +2099,22 @@ export default function CanvasStage({
           <DollarSign className="text-emerald-400" />
         </Tool>
         <Tool
+          title="Architecture Decision Records (ADRs)"
+          onClick={() => setShowAdrModal(true)}
+        >
+          <FileText className="text-amber-400" />
+        </Tool>
+        <Tool
           title="Architecture Review Board (ARB) Well-Architected Auditor"
           onClick={() => setShowArbModal(true)}
         >
           <Award className="text-emerald-400" />
+        </Tool>
+        <Tool
+          title="Visual Architecture Diff & PR Review"
+          onClick={() => setShowDiffModal(true)}
+        >
+          <GitCompare className="text-blue-400" />
         </Tool>
         <Tool
           title="Infrastructure-as-Code (Terraform / Compose)"
