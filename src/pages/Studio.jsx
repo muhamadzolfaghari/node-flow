@@ -1455,381 +1455,412 @@ export default function Studio() {
       >
         {document && (
           <>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              File properties
-            </p>
-            <label
-              className="mt-4 block text-muted-foreground"
-              htmlFor="file-format"
-            >
-              Source format
-            </label>
-            <select
-              id="file-format"
-              aria-label="Source format"
-              value={document.format}
-              onChange={(e) =>
-                updateProject((p) => ({
-                  ...p,
-                  documents: p.documents.map((d) =>
-                    d.id === document.id ? { ...d, format: e.target.value } : d,
-                  ),
-                }))
-              }
-              className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
-            >
-              {FORMATS.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-3 leading-5 text-muted-foreground">
-              {definition.description}
-            </p>
-            <div className="mt-3 flex gap-2">
-              <Badge tone={definition.mode === "Native" ? "green" : "indigo"}>
-                {definition.mode === "Native"
-                  ? "Native renderer"
-                  : "Derived preview"}
-              </Badge>
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-3 border-y py-3 text-muted-foreground">
-              <span>
-                Lines{" "}
-                <strong className="block pt-1 text-foreground">
-                  {document.source.split("\n").length}
-                </strong>
-              </span>
-              <span>
-                Characters{" "}
-                <strong className="block pt-1 text-foreground">
-                  {document.source.length.toLocaleString()}
-                </strong>
-              </span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 w-full text-xs"
-              onClick={() => {
-                setName(document.name);
-                setDialog("rename");
-              }}
-            >
-              <Pencil />
-              Rename file
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-1 w-full text-xs"
-              onClick={() => newFiles([{ ...document, name: document.name }])}
-            >
-              <Copy />
-              Duplicate file
-            </Button>
-            {document?.format === "mermaid" && (
-              <div className="mt-4 border-t pt-3">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-medium flex items-center gap-1.5 text-foreground">
-                    <Palette className="size-3.5 text-primary" />
-                    Diagram style & look
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <label className="text-[10px] text-muted-foreground block mb-1">
-                      Render look
-                    </label>
-                    <select
-                      aria-label="Diagram render look"
-                      className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
-                      value={diagramConfig.look}
-                      onChange={(e) => {
-                        try {
-                          updateSource(
-                            document.id,
-                            updateDiagramConfig(document.source, {
-                              look: e.target.value,
-                            }),
-                          );
-                          say(`Look changed to ${e.target.value}`);
-                        } catch (err) {
-                          say(err.message);
-                        }
-                      }}
-                    >
-                      {Object.entries(DIAGRAM_LOOKS).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted-foreground block mb-1">
-                      Mermaid theme
-                    </label>
-                    <select
-                      aria-label="Mermaid theme preset"
-                      className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
-                      value={diagramConfig.theme}
-                      onChange={(e) => {
-                        try {
-                          updateSource(
-                            document.id,
-                            updateDiagramConfig(document.source, {
-                              theme: e.target.value,
-                            }),
-                          );
-                          say(`Theme changed to ${e.target.value}`);
-                        } catch (err) {
-                          say(err.message);
-                        }
-                      }}
-                    >
-                      {Object.entries(DIAGRAM_THEMES).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-            {selected && (
-              <div className="mt-5 border-t pt-4">
-                <p className="font-medium">Selected element</p>
-                <p className="mt-2 break-all text-muted-foreground">
-                  {selected.label}
-                </p>
-                <Input
-                  aria-label="Selected node label"
-                  className="mt-3 h-8 text-xs"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                />
-                <select
-                  aria-label="Node shape"
-                  className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
-                  value={nodeId ? getFlowchartNodeShape(document.source, nodeId) : "rectangle"}
-                  onChange={(e) => {
-                    try {
-                      updateSource(
-                        document.id,
-                        changeFlowchartNodeShape(document.source, nodeId, e.target.value),
-                      );
-                      say(`Shape changed to ${SHAPES[e.target.value]?.label || e.target.value}`);
-                    } catch (err) {
-                      say(err.message);
-                    }
-                  }}
+            <details open className="group rounded-lg border border-border/60 bg-card/40 p-3 transition">
+              <summary className="flex cursor-pointer items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground select-none">
+                <span className="flex items-center gap-1.5">
+                  <FileCode2 className="size-3.5 text-primary" />
+                  File properties
+                </span>
+                <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="pt-3">
+                <label
+                  className="block text-muted-foreground text-[11px]"
+                  htmlFor="file-format"
                 >
-                  {Object.entries(SHAPES).map(([key, val]) => (
-                    <option key={key} value={key}>
-                      {val.label}
+                  Source format
+                </label>
+                <select
+                  id="file-format"
+                  aria-label="Source format"
+                  value={document.format}
+                  onChange={(e) =>
+                    updateProject((p) => ({
+                      ...p,
+                      documents: p.documents.map((d) =>
+                        d.id === document.id ? { ...d, format: e.target.value } : d,
+                      ),
+                    }))
+                  }
+                  className="mt-1.5 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                >
+                  {FORMATS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
                     </option>
                   ))}
                 </select>
-                <div className="mt-2.5">
-                  <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">Color accent</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(COLOR_PRESETS).map(([key, preset]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        aria-label={`Style ${preset.label}`}
-                        title={preset.label}
-                        disabled={!isFlowchart(document) || !nodeId}
-                        onClick={() => {
+                <p className="mt-2.5 leading-5 text-muted-foreground text-[11px]">
+                  {definition.description}
+                </p>
+                <div className="mt-2.5 flex gap-2">
+                  <Badge tone={definition.mode === "Native" ? "green" : "indigo"}>
+                    {definition.mode === "Native"
+                      ? "Native renderer"
+                      : "Derived preview"}
+                  </Badge>
+                </div>
+                <div className="mt-3.5 grid grid-cols-2 gap-3 border-y py-2.5 text-muted-foreground text-[11px]">
+                  <span>
+                    Lines{" "}
+                    <strong className="block pt-0.5 text-foreground text-xs">
+                      {document.source.split("\n").length}
+                    </strong>
+                  </span>
+                  <span>
+                    Characters{" "}
+                    <strong className="block pt-0.5 text-foreground text-xs">
+                      {document.source.length.toLocaleString()}
+                    </strong>
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs h-7"
+                    onClick={() => {
+                      setName(document.name);
+                      setDialog("rename");
+                    }}
+                  >
+                    <Pencil className="size-3" />
+                    Rename
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs h-7"
+                    onClick={() => newFiles([{ ...document, name: document.name }])}
+                  >
+                    <Copy className="size-3" />
+                    Duplicate
+                  </Button>
+                </div>
+              </div>
+            </details>
+            {document?.format === "mermaid" && (
+              <details open className="group mt-3 rounded-lg border border-border/60 bg-card/40 p-3 transition">
+                <summary className="flex cursor-pointer items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground select-none">
+                  <span className="flex items-center gap-1.5">
+                    <Palette className="size-3.5 text-primary" />
+                    Style & look
+                  </span>
+                  <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="pt-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground block mb-1">
+                        Render look
+                      </label>
+                      <select
+                        aria-label="Diagram render look"
+                        className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
+                        value={diagramConfig.look}
+                        onChange={(e) => {
                           try {
                             updateSource(
                               document.id,
-                              styleFlowchartNode(document.source, nodeId, key),
+                              updateDiagramConfig(document.source, {
+                                look: e.target.value,
+                              }),
                             );
-                            say(`Applied ${preset.label} style`);
+                            say(`Look changed to ${e.target.value}`);
                           } catch (err) {
                             say(err.message);
                           }
                         }}
-                        style={{ backgroundColor: preset.color }}
-                        className="size-5 rounded-full border border-white/20 transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
-                      />
-                    ))}
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3 w-full text-xs"
-                  disabled={!isFlowchart(document) || !nodeId}
-                  onClick={() => {
-                    try {
-                      updateSource(
-                        document.id,
-                        renameFlowchartNode(document.source, nodeId, label),
-                      );
-                      say("Node label updated");
-                    } catch (e) {
-                      say(e.message);
-                    }
-                  }}
-                >
-                  Apply label
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-1.5 w-full text-xs"
-                  disabled={!isFlowchart(document) || !nodeId}
-                  onClick={() => {
-                    try {
-                      const res = addFlowchartChild(
-                        document.source,
-                        nodeId,
-                        "Next step",
-                        edgeArrow,
-                      );
-                      updateSource(document.id, res.source);
-                      setSelected({
-                        id: `flowchart-${res.childId}-0`,
-                        label: res.childLabel,
-                      });
-                      setLabel(res.childLabel);
-                      say(`Added connected step ${res.childId}`);
-                    } catch (e) {
-                      say(e.message);
-                    }
-                  }}
-                >
-                  <Plus className="size-3.5" />
-                  Add connected step
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-1.5 w-full text-xs"
-                  disabled={!isFlowchart(document) || !nodeId}
-                  onClick={() => {
-                    try {
-                      const res = duplicateFlowchartNode(
-                        document.source,
-                        nodeId,
-                      );
-                      updateSource(document.id, res.source);
-                      setSelected({
-                        id: `flowchart-${res.duplicateId}-0`,
-                        label: res.duplicateLabel,
-                      });
-                      setLabel(res.duplicateLabel);
-                      say(`Duplicated node as ${res.duplicateId}`);
-                    } catch (e) {
-                      say(e.message);
-                    }
-                  }}
-                >
-                  <Copy className="size-3.5" />
-                  Duplicate node
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1.5 w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  disabled={!isFlowchart(document) || !nodeId}
-                  onClick={() => {
-                    try {
-                      updateSource(
-                        document.id,
-                        deleteFlowchartNode(document.source, nodeId),
-                      );
-                      setSelected(null);
-                      say("Node removed");
-                    } catch (e) {
-                      say(e.message);
-                    }
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                  Delete node
-                </Button>
-                {relatedEdges.length > 0 && (
-                  <div className="mt-4 border-t pt-3">
-                    <span className="text-[11px] font-medium text-muted-foreground block mb-2">
-                      Connections ({relatedEdges.length})
-                    </span>
-                    <div className="space-y-1.5 max-h-36 overflow-auto">
-                      {relatedEdges.map((e, idx) => {
-                        const isOutgoing = e.from === nodeId;
-                        const otherId = isOutgoing ? e.to : e.from;
-                        const otherNode = nodes.find((n) => n.id === otherId);
-                        const otherLabel = otherNode?.label || otherId;
-                        return (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between gap-1.5 rounded bg-muted/40 px-2 py-1 text-[11px]"
-                          >
-                            <span className="truncate">
-                              {isOutgoing ? (
-                                <>
-                                  <span className="text-muted-foreground font-mono">
-                                    {e.symbol}
-                                  </span>{" "}
-                                  {otherLabel}
-                                </>
-                              ) : (
-                                <>
-                                  {otherLabel}{" "}
-                                  <span className="text-muted-foreground font-mono">
-                                    {e.symbol}
-                                  </span>
-                                </>
-                              )}
-                              {e.label ? (
-                                <span className="ml-1 text-[10px] text-muted-foreground italic">
-                                  ({e.label})
-                                </span>
-                              ) : null}
-                            </span>
-                            <button
-                              type="button"
-                              title="Disconnect"
-                              aria-label={`Disconnect ${otherLabel}`}
-                              className="text-muted-foreground hover:text-destructive shrink-0 p-0.5 rounded transition"
-                              onClick={() => {
-                                try {
-                                  updateSource(
-                                    document.id,
-                                    deleteFlowchartEdge(
-                                      document.source,
-                                      e.from,
-                                      e.to,
-                                    ),
-                                  );
-                                  say(`Disconnected ${e.from} and ${e.to}`);
-                                } catch (err) {
-                                  say(err.message);
-                                }
-                              }}
-                            >
-                              <X className="size-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
+                      >
+                        {Object.entries(DIAGRAM_LOOKS).map(([k, v]) => (
+                          <option key={k} value={k}>
+                            {v.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground block mb-1">
+                        Mermaid theme
+                      </label>
+                      <select
+                        aria-label="Mermaid theme preset"
+                        className="h-7 w-full rounded border bg-background px-1.5 text-[11px]"
+                        value={diagramConfig.theme}
+                        onChange={(e) => {
+                          try {
+                            updateSource(
+                              document.id,
+                              updateDiagramConfig(document.source, {
+                                theme: e.target.value,
+                              }),
+                            );
+                            say(`Theme changed to ${e.target.value}`);
+                          } catch (err) {
+                            say(err.message);
+                          }
+                        }}
+                      >
+                        {Object.entries(DIAGRAM_THEMES).map(([k, v]) => (
+                          <option key={k} value={k}>
+                            {v.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              </details>
+            )}
+            {selected && (
+              <details open className="group mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 transition">
+                <summary className="flex cursor-pointer items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-primary select-none">
+                  <span className="flex items-center gap-1.5">
+                    <Shapes className="size-3.5 text-primary" />
+                    Selected element ({nodeId || "node"})
+                  </span>
+                  <ChevronDown className="size-3.5 text-primary transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="pt-3">
+                  <p className="break-all text-muted-foreground text-[11px]">
+                    {selected.label}
+                  </p>
+                  <Input
+                    aria-label="Selected node label"
+                    className="mt-2.5 h-8 text-xs bg-background"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                  />
+                  <select
+                    aria-label="Node shape"
+                    className="mt-2 h-8 w-full rounded-md border bg-background px-2 text-xs"
+                    value={nodeId ? getFlowchartNodeShape(document.source, nodeId) : "rectangle"}
+                    onChange={(e) => {
+                      try {
+                        updateSource(
+                          document.id,
+                          changeFlowchartNodeShape(document.source, nodeId, e.target.value),
+                        );
+                        say(`Shape changed to ${SHAPES[e.target.value]?.label || e.target.value}`);
+                      } catch (err) {
+                        say(err.message);
+                      }
+                    }}
+                  >
+                    {Object.entries(SHAPES).map(([key, val]) => (
+                      <option key={key} value={key}>
+                        {val.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-2.5">
+                    <span className="text-[10px] text-muted-foreground block mb-1.5 font-medium uppercase tracking-wider">Color accent</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(COLOR_PRESETS).map(([key, preset]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          aria-label={`Style ${preset.label}`}
+                          title={preset.label}
+                          disabled={!isFlowchart(document) || !nodeId}
+                          onClick={() => {
+                            try {
+                              updateSource(
+                                document.id,
+                                styleFlowchartNode(document.source, nodeId, key),
+                              );
+                              say(`Applied ${preset.label} style`);
+                            } catch (err) {
+                              say(err.message);
+                            }
+                          }}
+                          style={{ backgroundColor: preset.color }}
+                          className="size-5 rounded-full border border-white/20 transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs h-7"
+                      disabled={!isFlowchart(document) || !nodeId}
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            renameFlowchartNode(document.source, nodeId, label),
+                          );
+                          say("Node label updated");
+                        } catch (e) {
+                          say(e.message);
+                        }
+                      }}
+                    >
+                      Apply label
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs h-7"
+                      disabled={!isFlowchart(document) || !nodeId}
+                      onClick={() => {
+                        try {
+                          const res = addFlowchartChild(
+                            document.source,
+                            nodeId,
+                            "Next step",
+                            edgeArrow,
+                          );
+                          updateSource(document.id, res.source);
+                          setSelected({
+                            id: `flowchart-${res.childId}-0`,
+                            label: res.childLabel,
+                          });
+                          setLabel(res.childLabel);
+                          say(`Added connected step ${res.childId}`);
+                        } catch (e) {
+                          say(e.message);
+                        }
+                      }}
+                    >
+                      <Plus className="size-3" />
+                      Add step
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs h-7"
+                      disabled={!isFlowchart(document) || !nodeId}
+                      onClick={() => {
+                        try {
+                          const res = duplicateFlowchartNode(
+                            document.source,
+                            nodeId,
+                          );
+                          updateSource(document.id, res.source);
+                          setSelected({
+                            id: `flowchart-${res.duplicateId}-0`,
+                            label: res.duplicateLabel,
+                          });
+                          setLabel(res.duplicateLabel);
+                          say(`Duplicated node as ${res.duplicateId}`);
+                        } catch (e) {
+                          say(e.message);
+                        }
+                      }}
+                    >
+                      <Copy className="size-3" />
+                      Duplicate
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs h-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      disabled={!isFlowchart(document) || !nodeId}
+                      onClick={() => {
+                        try {
+                          updateSource(
+                            document.id,
+                            deleteFlowchartNode(document.source, nodeId),
+                          );
+                          setSelected(null);
+                          say("Node removed");
+                        } catch (e) {
+                          say(e.message);
+                        }
+                      }}
+                    >
+                      <Trash2 className="size-3" />
+                      Delete
+                    </Button>
+                  </div>
+                  {relatedEdges.length > 0 && (
+                    <div className="mt-3 border-t pt-2.5">
+                      <span className="text-[10px] font-medium text-muted-foreground block mb-1.5 uppercase tracking-wider">
+                        Connections ({relatedEdges.length})
+                      </span>
+                      <div className="space-y-1.5 max-h-36 overflow-auto">
+                        {relatedEdges.map((e, idx) => {
+                          const isOutgoing = e.from === nodeId;
+                          const otherId = isOutgoing ? e.to : e.from;
+                          const otherNode = nodes.find((n) => n.id === otherId);
+                          const otherLabel = otherNode?.label || otherId;
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-1.5 rounded bg-muted/40 px-2 py-1 text-[11px]"
+                            >
+                              <span className="truncate">
+                                {isOutgoing ? (
+                                  <>
+                                    <span className="text-muted-foreground font-mono">
+                                      {e.symbol}
+                                    </span>{" "}
+                                    {otherLabel}
+                                  </>
+                                ) : (
+                                  <>
+                                    {otherLabel}{" "}
+                                    <span className="text-muted-foreground font-mono">
+                                      {e.symbol}
+                                    </span>
+                                  </>
+                                )}
+                                {e.label ? (
+                                  <span className="ml-1 text-[10px] text-muted-foreground italic">
+                                    ({e.label})
+                                  </span>
+                                ) : null}
+                              </span>
+                              <button
+                                type="button"
+                                title="Disconnect"
+                                aria-label={`Disconnect ${otherLabel}`}
+                                className="text-muted-foreground hover:text-destructive shrink-0 p-0.5 rounded transition"
+                                onClick={() => {
+                                  try {
+                                    updateSource(
+                                      document.id,
+                                      deleteFlowchartEdge(
+                                        document.source,
+                                        e.from,
+                                        e.to,
+                                      ),
+                                    );
+                                    say(`Disconnected ${e.from} and ${e.to}`);
+                                  } catch (err) {
+                                    say(err.message);
+                                  }
+                                }}
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </details>
             )}
             {isFlowchart(document) && (
-              <div className="mt-5 border-t pt-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">Visual model tools</p>
-                  <select
-                    aria-label="Flowchart layout direction"
-                    className="h-7 rounded-md border bg-background px-2 text-[11px]"
+              <details open className="group mt-3 rounded-lg border border-border/60 bg-card/40 p-3 transition">
+                <summary className="flex cursor-pointer items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground select-none">
+                  <span className="flex items-center gap-1.5">
+                    <Boxes className="size-3.5 text-cyan-400" />
+                    Visual model tools
+                  </span>
+                  <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="pt-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-xs">Direction & Steps</p>
+                    <select
+                      aria-label="Flowchart layout direction"
+                      className="h-7 rounded-md border bg-background px-2 text-[11px]"
                     value={getFlowchartDirection(document.source)}
                     onChange={(e) => {
                       try {
@@ -1958,6 +1989,7 @@ export default function Studio() {
                   </Button>
                 </div>
               </div>
+            </details>
             )}
             {isSequence(document) && (
               <div className="mt-5 border-t pt-4">
@@ -5472,6 +5504,100 @@ export default function Studio() {
               <Trash2 />
               Delete file
             </Button>
+            {selected && nodeId && isFlowchart(document) && (
+              <div className="sticky bottom-0 -mx-4 -mb-4 mt-6 border-t bg-card/95 backdrop-blur-md p-3 shadow-lg flex items-center gap-1.5 z-10">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1 text-xs h-7"
+                  onClick={() => {
+                    try {
+                      updateSource(
+                        document.id,
+                        renameFlowchartNode(document.source, nodeId, label),
+                      );
+                      say("Node label updated");
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  Apply
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  title="Add connected step"
+                  onClick={() => {
+                    try {
+                      const res = addFlowchartChild(
+                        document.source,
+                        nodeId,
+                        "Next step",
+                        edgeArrow,
+                      );
+                      updateSource(document.id, res.source);
+                      setSelected({
+                        id: `flowchart-${res.childId}-0`,
+                        label: res.childLabel,
+                      });
+                      setLabel(res.childLabel);
+                      say(`Added connected step ${res.childId}`);
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  <Plus className="size-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  title="Duplicate node"
+                  onClick={() => {
+                    try {
+                      const res = duplicateFlowchartNode(
+                        document.source,
+                        nodeId,
+                      );
+                      updateSource(document.id, res.source);
+                      setSelected({
+                        id: `flowchart-${res.duplicateId}-0`,
+                        label: res.duplicateLabel,
+                      });
+                      setLabel(res.duplicateLabel);
+                      say(`Duplicated node as ${res.duplicateId}`);
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  <Copy className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 px-2 text-destructive hover:bg-destructive/10"
+                  title="Delete node"
+                  onClick={() => {
+                    try {
+                      updateSource(
+                        document.id,
+                        deleteFlowchartNode(document.source, nodeId),
+                      );
+                      setSelected(null);
+                      say("Node removed");
+                    } catch (e) {
+                      say(e.message);
+                    }
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            )}
           </>
         )}
       </TabsContent>
@@ -6656,11 +6782,13 @@ export default function Studio() {
                     onQuickAdd={(childLabel, customArrow) => {
                       if (!isFlowchart(document) || !nodeId) return;
                       try {
+                        const effectiveLabel = typeof childLabel === "string" && childLabel.trim() ? childLabel.trim() : "Next step";
+                        const effectiveArrow = typeof customArrow === "string" && customArrow ? customArrow : edgeArrow;
                         const res = addFlowchartChild(
                           document.source,
                           nodeId,
-                          childLabel || "Next step",
-                          customArrow || edgeArrow,
+                          effectiveLabel,
+                          effectiveArrow,
                         );
                         updateSource(document.id, res.source);
                         setSelected({

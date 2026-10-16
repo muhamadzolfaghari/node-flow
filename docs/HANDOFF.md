@@ -1,6 +1,6 @@
 # NodeFlow handoff
 
-State of the project for whoever picks it up next. Read this first, then `docs/PHASES.md` (what was done, in order), `docs/TECH-DEBT-DISCOVERY.md` (dependency and debt findings), and `docs/IMPROVEMENT-LOOP.md` (the sprint plan and backlog).
+State of the project for whoever picks it up next. Read this first, then `docs/PHASES.md` (what was done, in order), `docs/TECH-DEBT-DISCOVERY.md` (dependency and debt findings), and `docs/IMPROVEMENT-LOOP.md` (the sprint plan and backlog). `docs/PLAN.md` consolidates every open item below into ordered phases with an exit check each.
 
 ## What it is
 
@@ -19,6 +19,8 @@ A browser-only diagram workspace (React 19, Vite 6, Tailwind 4, CodeMirror 6, Me
 | `npm run audit:templates` | Opens all 51 templates, checks render and canvas framing |
 | `npm run audit:studio` | Clicks every menu item and toolbar button, reports crashes and error toasts |
 | `npm run audit:canvas` | Real-click canvas flows: all 14 shapes, colour, add, connect, duplicate, delete, undo, syntax error + AI fix |
+| `npm run audit:framing` | Measures every template's drawn content against the canvas viewport; fails when a diagram is off-centre, clipped or framed on empty space. Writes `docs/framing-audit.json` |
+| `npm run audit:quality` | Checks file and function length, nesting and parameters against `.agents/rules/code-quality-metrics.md`; reports duplication, commented-out code and unnamed literals. Exits non-zero on hard-limit failures |
 
 All of the above passed at handoff.
 

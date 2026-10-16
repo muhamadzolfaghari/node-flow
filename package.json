@@ -1,6 +1,6 @@
 {
   "name": "node-flow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "NodeFlow \u2014 Free universal visual diagramming and architecture studio supporting Mermaid, XMind, Draw.io, PlantUML, Graphviz, D2, SQL DDL, and Markdown.",
   "type": "module",
   "scripts": {
@@ -15,7 +15,9 @@
     "audit:templates": "node scripts/audit-templates.mjs",
     "audit:studio": "node scripts/audit-studio-tools.mjs",
     "build:app": "vite build",
-    "audit:canvas": "node scripts/audit-canvas-flows.mjs"
+    "audit:canvas": "node scripts/audit-canvas-flows.mjs",
+    "audit:framing": "node scripts/audit-canvas-framing.mjs",
+    "audit:quality": "node scripts/audit-code-quality.mjs"
   },
   "repository": {
     "type": "git",

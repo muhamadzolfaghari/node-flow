@@ -46,8 +46,10 @@ import {
   Terminal,
   Award,
   Compass,
+  MoreHorizontal,
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
+import { CANVAS_CONTENT_SELECTOR } from "../lib/canvas-content.js";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
@@ -106,7 +108,9 @@ export default function CanvasStage({
     spaceHeld = useRef(false),
     marqueeRef = useRef(null),
     connectDragRef = useRef(null),
-    minimapRef = useRef(null);
+    minimapRef = useRef(null),
+    contentBoundsRef = useRef(null),
+    rafRef = useRef(0);
   const [position, setPosition] = useState(camera.current),
     [size, setSize] = useState({ w: 1000, h: 700 }),
     [thumbnail, setThumbnail] = useState(""),
@@ -141,7 +145,8 @@ export default function CanvasStage({
     [selectedAdrId, setSelectedAdrId] = useState(null),
     [showIacModal, setShowIacModal] = useState(false),
     [showArbModal, setShowArbModal] = useState(false),
-    [showStoryboard, setShowStoryboard] = useState(false);
+    [showStoryboard, setShowStoryboard] = useState(false),
+    [showMoreTools, setShowMoreTools] = useState(false);
 
   const [mobileViewport, setMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -277,124 +282,265 @@ export default function CanvasStage({
    * Eliminates dead whitespace offsets and centers on the true diagram geometry
    * across all Mermaid, Graphviz, Mindmap, Architecture, Packet, Gantt, Pie, and Sequence diagrams.
    */
+  /**
+   * Measures the visible content box from what is actually rendered and converts it
+   * back to user units.
+   *
+   * Mermaid wraps content in translated groups, so the per-child getBBox/CTM route
+   * below mis-measured whole families (timing, user journey, C4 reported boxes far
+   * larger or smaller than the drawing) — the fit then zoomed far out, pushed the
+   * chart off-centre, or clipped it. Measuring on screen is exact for every family
+   * because it does not depend on how the renderer nested its groups.
+   */
+  // Screen-space union of the drawn content, clipped to the SVG's own box (the SVG
+  // renders exactly the viewBox area, so anything outside it is not visible).
+  const contentScreenRect = (svg) => {
+    if (!svg || typeof svg.getBoundingClientRect !== "function") return null;
+    const sr = svg.getBoundingClientRect();
+    if (!(sr.width > 1 && sr.height > 1)) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, found = false;
+    svg.querySelectorAll(CANVAS_CONTENT_SELECTOR).forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (!(r.width > 0.5 || r.height > 0.5)) return;
+      // Skip anything spanning (almost) the whole rendered canvas: that is a
+      // background or defs artefact, not content.
+      if (r.width >= sr.width * 0.995 && r.height >= sr.height * 0.995) return;
+      minX = Math.min(minX, Math.max(r.left, sr.left));
+      minY = Math.min(minY, Math.max(r.top, sr.top));
+      maxX = Math.max(maxX, Math.min(r.right, sr.right));
+      maxY = Math.max(maxY, Math.min(r.bottom, sr.bottom));
+      found = true;
+    });
+    if (!found || !(maxX > minX) || !(maxY > minY)) return null;
+    return { left: minX, top: minY, right: maxX, bottom: maxY, sr };
+  };
+
+  const measureContentBounds = (svg, viewBoxBounds) => {
+    if (!viewBoxBounds) return null;
+    const screen = contentScreenRect(svg);
+    if (!screen) return null;
+    const sr = screen.sr;
+    // Screen pixels per user unit, taken from the element itself rather than from
+    // the camera, so this stays correct even mid-gesture or before a fit runs.
+    const scale = sr.width / viewBoxBounds.w;
+    if (!(scale > 0) || !Number.isFinite(scale)) return null;
+    return {
+      x: viewBoxBounds.x + (screen.left - sr.left) / scale,
+      y: viewBoxBounds.y + (screen.top - sr.top) / scale,
+      w: (screen.right - screen.left) / scale,
+      h: (screen.bottom - screen.top) / scale,
+    };
+  };
+
+  /**
+   * Chooses the box the canvas should frame.
+   *
+   * Prefers the scanned content bounds over the raw viewBox (which often carries large
+   * empty margins, e.g. Gantt/timeline canvases), never steps outside the SVG's own
+   * visible area, and never clamps padded bounds to 0: content with a negative or
+   * non-zero origin (mindmaps, C4, custom viewBox origins) was framed off-centre by the
+   * old `Math.max(0, …)` clamp.
+   */
+  const selectFrameTarget = ({ measuredBox, elementsBBox, viewBoxBounds, rootBBox }) => {
+    const CONTENT_PADDING_RATIO = 0.04;
+    const MIN_CONTENT_PADDING = 12;
+    const MAX_CONTENT_PADDING = 64;
+    const MIN_USABLE_BOX = 10;
+    const VIEWBOX_IS_TIGHT_ENOUGH = 0.98;
+    const contentBox =
+      measuredBox && measuredBox.w > MIN_USABLE_BOX && measuredBox.h > MIN_USABLE_BOX
+        ? measuredBox
+        : elementsBBox;
+    if (!contentBox || contentBox.w <= MIN_USABLE_BOX || contentBox.h <= MIN_USABLE_BOX) {
+      return viewBoxBounds || rootBBox || null;
+    }
+
+    const pad = Math.min(
+      MAX_CONTENT_PADDING,
+      Math.max(MIN_CONTENT_PADDING, Math.max(contentBox.w, contentBox.h) * CONTENT_PADDING_RATIO),
+    );
+    let contentTarget = {
+      x: contentBox.x - pad,
+      y: contentBox.y - pad,
+      w: contentBox.w + pad * 2,
+      h: contentBox.h + pad * 2,
+    };
+    if (!viewBoxBounds) return contentTarget;
+
+    // The SVG element renders exactly the viewBox area, so intersecting the two keeps
+    // the frame on visible content while still dropping empty margins.
+    const x0 = Math.max(contentTarget.x, viewBoxBounds.x);
+    const y0 = Math.max(contentTarget.y, viewBoxBounds.y);
+    const x1 = Math.min(contentTarget.x + contentTarget.w, viewBoxBounds.x + viewBoxBounds.w);
+    const y1 = Math.min(contentTarget.y + contentTarget.h, viewBoxBounds.y + viewBoxBounds.h);
+    const w = x1 - x0;
+    const h = y1 - y0;
+    if (w <= MIN_USABLE_BOX || h <= MIN_USABLE_BOX) {
+      // Content sits almost entirely outside the visible viewBox.
+      return viewBoxBounds;
+    }
+    contentTarget = { x: x0, y: y0, w, h };
+    // Content already fills the visible area: the viewBox is the tighter box, and using
+    // it avoids a pointless 1.05x zoom-in.
+    const fillsViewBox =
+      contentTarget.w >= viewBoxBounds.w * VIEWBOX_IS_TIGHT_ENOUGH &&
+      contentTarget.h >= viewBoxBounds.h * VIEWBOX_IS_TIGHT_ENOUGH;
+    return fillsViewBox ? viewBoxBounds : contentTarget;
+  };
+
+  /**
+   * Screen-space correction after a fit.
+   *
+   * The first measurement can be taken a frame before web fonts or late-rendered labels
+   * settle, which left some diagrams slightly off-centre. Re-measuring what is actually
+   * drawn and translating by the delta (never re-scaling, so it cannot oscillate) makes
+   * the frame self-correcting.
+   */
+  const nudgeToDrawnContent = (stage, topInset, bottomInset) => {
+    const MIN_NOTICEABLE_SHIFT = 1;
+    const drawn = contentScreenRect(containerRef.current?.querySelector("svg"));
+    if (!drawn) return;
+    const stageRect = stage.getBoundingClientRect();
+    const expectedCx = stageRect.left + stageRect.width / 2;
+    const expectedCy = stageRect.top + topInset + (stageRect.height - topInset - bottomInset) / 2;
+    const dx = expectedCx - (drawn.left + drawn.right) / 2;
+    const dy = expectedCy - (drawn.top + drawn.bottom) / 2;
+    if (Math.abs(dx) <= MIN_NOTICEABLE_SHIFT && Math.abs(dy) <= MIN_NOTICEABLE_SHIFT) return;
+    camera.current.x += dx;
+    camera.current.y += dy;
+    apply();
+  };
+
+  /**
+   * Fallback measurement: unions the bounding boxes of the SVG's direct content groups,
+   * mapped into the outer SVG's user space. Used when nothing is rendered on screen yet.
+   */
+  const scanChildBounds = (svg) => {
+    try {
+      const contentNodes = svg.querySelectorAll(
+        ":scope > g:not(defs):not([class*='marker']), :scope > svg:not(defs)",
+      );
+      if (!contentNodes.length) return null;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, found = false;
+      contentNodes.forEach((node) => {
+        if (typeof node.getBBox !== "function") return;
+        const nb = node.getBBox();
+        if (!nb || !(nb.width > 0) || !(nb.height > 0)) return;
+        if (!Number.isFinite(nb.x) || !Number.isFinite(nb.y)) return;
+        const box = mapToOuterUserSpace(svg, node, nb);
+        minX = Math.min(minX, box.x0);
+        minY = Math.min(minY, box.y0);
+        maxX = Math.max(maxX, box.x1);
+        maxY = Math.max(maxY, box.y1);
+        found = true;
+      });
+
+      // Chromium excludes HTML foreignObject children from SVG getBBox, so add them here.
+      svg.querySelectorAll("foreignObject").forEach((fo) => {
+        const fx = parseFloat(fo.getAttribute("x") || "0");
+        const fy = parseFloat(fo.getAttribute("y") || "0");
+        const fw = parseFloat(fo.getAttribute("width") || "0");
+        const fh = parseFloat(fo.getAttribute("height") || "0");
+        if (!(fw > 0 && fh > 0) || !Number.isFinite(fx) || !Number.isFinite(fy)) return;
+        minX = Math.min(minX, fx);
+        minY = Math.min(minY, fy);
+        maxX = Math.max(maxX, fx + fw);
+        maxY = Math.max(maxY, fy + fh);
+        found = true;
+      });
+
+      if (!found || !(maxX > minX) || !(maxY > minY)) return null;
+      return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    } catch {
+      return null;
+    }
+  };
+
+  // Maps a node's own bounding box into the outer SVG's user space.
+  const mapToOuterUserSpace = (svg, node, nodeBox) => {
+    const box = {
+      x0: nodeBox.x,
+      y0: nodeBox.y,
+      x1: nodeBox.x + nodeBox.width,
+      y1: nodeBox.y + nodeBox.height,
+    };
+    const ctm = node.getCTM ? node.getCTM() : null;
+    const svgCtm = svg.getCTM ? svg.getCTM() : null;
+    if (!ctm || !svgCtm || typeof svg.createSVGPoint !== "function") return box;
+    try {
+      const matrix = svgCtm.inverse().multiply(ctm);
+      const p0 = svg.createSVGPoint();
+      const p1 = svg.createSVGPoint();
+      p0.x = box.x0;
+      p0.y = box.y0;
+      p1.x = box.x1;
+      p1.y = box.y1;
+      const t0 = p0.matrixTransform(matrix);
+      const t1 = p1.matrixTransform(matrix);
+      return {
+        x0: Math.min(t0.x, t1.x),
+        y0: Math.min(t0.y, t1.y),
+        x1: Math.max(t0.x, t1.x),
+        y1: Math.max(t0.y, t1.y),
+      };
+    } catch {
+      return box;
+    }
+  };
+
+  const rootSvgBounds = (svg) => {
+    const MIN_ROOT_BOX = 10;
+    try {
+      if (typeof svg.getBBox !== "function") return null;
+      const b = svg.getBBox();
+      if (!b || b.width <= MIN_ROOT_BOX || b.height <= MIN_ROOT_BOX) return null;
+      if (!Number.isFinite(b.x) || !Number.isFinite(b.y)) return null;
+      return { x: b.x, y: b.y, w: b.width, h: b.height };
+    } catch {
+      return null;
+    }
+  };
+
+  // Reads the viewBox and gives the SVG explicit pixel dimensions matching it, so one
+  // user unit equals one screen pixel — the assumption the screen-space measurement
+  // converts back through.
+  const readViewBoxBounds = (svg) => {
+    const MIN_VIEWBOX_SIZE = 5;
+    const base = svg.viewBox?.baseVal;
+    if (base && base.width > MIN_VIEWBOX_SIZE && base.height > MIN_VIEWBOX_SIZE) {
+      return { x: base.x, y: base.y, w: base.width, h: base.height };
+    }
+    const raw = svg.getAttribute("viewBox");
+    if (!raw) return null;
+    const parts = raw.trim().split(/[\s,]+/).map(Number);
+    const usable = parts.length === 4 && parts.every(Number.isFinite);
+    if (!usable || parts[2] <= MIN_VIEWBOX_SIZE || parts[3] <= MIN_VIEWBOX_SIZE) return null;
+    return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+  };
+
+  const primeSvgPixelSize = (svg, viewBoxBounds) => {
+    if (!viewBoxBounds) return;
+    if (!svg.style.width || svg.style.width.includes("%")) {
+      svg.style.width = `${viewBoxBounds.w}px`;
+    }
+    if (!svg.style.height || svg.style.height.includes("%")) {
+      svg.style.height = `${viewBoxBounds.h}px`;
+    }
+  };
+
   const getContentBounds = () => {
     const svg = containerRef.current?.querySelector("svg");
     if (!svg) return { x: 0, y: 0, w: 1000, h: 700 };
 
-    // 1. Parse viewBox from baseVal or raw attribute
-    let vb = svg.viewBox?.baseVal;
-    let viewBoxBounds = null;
-    if (vb && vb.width > 5 && vb.height > 5) {
-      viewBoxBounds = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
-    } else {
-      const rawVb = svg.getAttribute("viewBox");
-      if (rawVb) {
-        const parts = rawVb.trim().split(/[\s,]+/).map(Number);
-        if (parts.length === 4 && parts.every(Number.isFinite) && parts[2] > 5 && parts[3] > 5) {
-          viewBoxBounds = { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
-        }
-      }
-    }
+    const viewBoxBounds = readViewBoxBounds(svg);
+    primeSvgPixelSize(svg, viewBoxBounds);
 
-    // Ensure SVG element has explicit pixel dimensions matching viewBox so 1 user unit === 1 screen px
-    if (viewBoxBounds) {
-      if (!svg.style.width || svg.style.width.includes("%")) {
-        svg.style.width = `${viewBoxBounds.w}px`;
-      }
-      if (!svg.style.height || svg.style.height.includes("%")) {
-        svg.style.height = `${viewBoxBounds.h}px`;
-      }
-    }
-
-    // 2. Scan child content elements (groups, nodes, edges, labels, foreignObjects) to find the actual content boundary
-    let elementsBBox = null;
-    try {
-      const contentNodes = svg.querySelectorAll(":scope > g:not(defs):not([class*='marker']), :scope > svg:not(defs)");
-      if (contentNodes.length > 0) {
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        let found = false;
-        contentNodes.forEach((node) => {
-          if (typeof node.getBBox === "function") {
-            const nb = node.getBBox();
-            if (nb && nb.width > 0 && nb.height > 0 && Number.isFinite(nb.x) && Number.isFinite(nb.y)) {
-              let x0 = nb.x, y0 = nb.y, x1 = nb.x + nb.width, y1 = nb.y + nb.height;
-              const ctm = node.getCTM ? node.getCTM() : null;
-              const sctm = svg.getCTM ? svg.getCTM() : null;
-              if (ctm && sctm && typeof svg.createSVGPoint === "function") {
-                try {
-                  const m = sctm.inverse().multiply(ctm);
-                  const p0 = svg.createSVGPoint(); p0.x = x0; p0.y = y0;
-                  const p1 = svg.createSVGPoint(); p1.x = x1; p1.y = y1;
-                  const tp0 = p0.matrixTransform(m);
-                  const tp1 = p1.matrixTransform(m);
-                  x0 = Math.min(tp0.x, tp1.x);
-                  x1 = Math.max(tp0.x, tp1.x);
-                  y0 = Math.min(tp0.y, tp1.y);
-                  y1 = Math.max(tp0.y, tp1.y);
-                } catch {}
-              }
-              minX = Math.min(minX, x0);
-              minY = Math.min(minY, y0);
-              maxX = Math.max(maxX, x1);
-              maxY = Math.max(maxY, y1);
-              found = true;
-            }
-          }
-        });
-
-        // Also check HTML foreignObject elements (which Chromium excludes from SVG getBBox)
-        svg.querySelectorAll("foreignObject").forEach((fo) => {
-          const fx = parseFloat(fo.getAttribute("x") || "0");
-          const fy = parseFloat(fo.getAttribute("y") || "0");
-          const fw = parseFloat(fo.getAttribute("width") || "0");
-          const fh = parseFloat(fo.getAttribute("height") || "0");
-          if (fw > 0 && fh > 0 && Number.isFinite(fx) && Number.isFinite(fy)) {
-            minX = Math.min(minX, fx);
-            minY = Math.min(minY, fy);
-            maxX = Math.max(maxX, fx + fw);
-            maxY = Math.max(maxY, fy + fh);
-            found = true;
-          }
-        });
-
-        if (found && maxX > minX && maxY > minY) {
-          elementsBBox = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-        }
-      }
-    } catch {}
-
-    // 3. Try root svg.getBBox()
-    let rootBBox = null;
-    try {
-      if (typeof svg.getBBox === "function") {
-        const b = svg.getBBox();
-        if (b && b.width > 10 && b.height > 10 && Number.isFinite(b.x) && Number.isFinite(b.y)) {
-          rootBBox = { x: b.x, y: b.y, w: b.width, h: b.height };
-        }
-      }
-    } catch {}
-
-    // 4. Select the target bounds that best frames where the content actually exists:
-    // If elementsBBox is significantly smaller than a wide/empty viewBox (such as in Gantt charts or oversized canvases),
-    // we frame elementsBBox with padding to focus directly on the diagram's content.
-    let target = null;
-    if (elementsBBox && elementsBBox.w > 10 && elementsBBox.h > 10) {
-      if (viewBoxBounds && (viewBoxBounds.w > elementsBBox.w * 1.4 || viewBoxBounds.h > elementsBBox.h * 1.4)) {
-        // Empty space in viewBox (like 2400px Gantt chart width) -> focus on actual content!
-        target = {
-          x: Math.max(0, elementsBBox.x - 24),
-          y: Math.max(0, elementsBBox.y - 20),
-          w: elementsBBox.w + 48,
-          h: elementsBBox.h + 40,
-        };
-      } else {
-        target = viewBoxBounds || elementsBBox;
-      }
-    } else if (viewBoxBounds) {
-      target = viewBoxBounds;
-    } else if (rootBBox) {
-      target = rootBBox;
-    }
+    // Prefer the on-screen measurement; fall back to the child scan when the SVG is not
+    // laid out yet (first paint, hidden pane).
+    const measuredBox = measureContentBounds(svg, viewBoxBounds);
+    const elementsBBox = scanChildBounds(svg);
+    const rootBBox = rootSvgBounds(svg);
+    const target = selectFrameTarget({ measuredBox, elementsBBox, viewBoxBounds, rootBBox });
 
     if (target) {
       const vbOriginX = viewBoxBounds && Number.isFinite(viewBoxBounds.x) ? viewBoxBounds.x : 0;
@@ -423,11 +569,41 @@ export default function CanvasStage({
     return { w: b.w, h: b.h };
   };
 
+  // Zoom/pan runs on every wheel and pointermove event. The transform and the grid
+  // background are written straight to the DOM so a gesture stays off the React
+  // render path, and the React state sync (grid fallback, zoom HUD, zoom-level
+  // highlight) is coalesced to at most one update per frame. Previously every wheel
+  // event queued a re-render of this whole component, which is what made zooming
+  // feel steppy on large diagrams.
   const apply = () => {
+    const cam = camera.current;
     if (canvasRef.current)
-      canvasRef.current.style.transform = `translate3d(${camera.current.x}px,${camera.current.y}px,0) scale(${camera.current.z})`;
-    setPosition({ ...camera.current });
+      canvasRef.current.style.transform = `translate3d(${cam.x}px,${cam.y}px,0) scale(${cam.z})`;
+    if (stageRef.current)
+      stageRef.current.style.backgroundPosition = `${cam.x}px ${cam.y}px`;
+    if (rafRef.current) return;
+    if (typeof requestAnimationFrame !== "function") {
+      setPosition({ ...camera.current });
+      return;
+    }
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      setPosition({ ...camera.current });
+    });
   };
+
+  useEffect(() => {
+    // Prime the imperatively-managed grid background to match the initial camera,
+    // and drop any pending frame on unmount so a gesture cannot set state after it.
+    if (stageRef.current)
+      stageRef.current.style.backgroundPosition = `${camera.current.x}px ${camera.current.y}px`;
+    return () => {
+      if (rafRef.current && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+  }, []);
 
   const fit = () => {
     const s = stageRef.current;
@@ -436,6 +612,7 @@ export default function CanvasStage({
     // ResizeObserver retries while shouldFit is still set.
     if (s.clientWidth < 100 || s.clientHeight < 100) return false;
     const b = getContentBounds();
+    contentBoundsRef.current = b;
     setSize({ w: b.w, h: b.h });
     const paddingX = Math.min(96, Math.max(36, s.clientWidth * 0.08));
     const topInset = 54;
@@ -460,13 +637,14 @@ export default function CanvasStage({
       z,
     };
     apply();
+    nudgeToDrawnContent(s, topInset, bottomInset);
     return true;
   };
 
   const center = () => {
     const s = stageRef.current;
     if (!s) return;
-    const b = getContentBounds();
+    const b = contentBoundsRef.current || getContentBounds();
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
     const topInset = 54;
@@ -521,7 +699,12 @@ export default function CanvasStage({
     const currentSig = `${documentId}:${svg.getAttribute("id") || ""}:${svg.children.length}`;
     const needsFit = shouldFit.current || (lastRenderSig.current !== "" && lastRenderSig.current !== currentSig);
     lastRenderSig.current = currentSig;
-    setSize(dimensions());
+    // Measure once per rendered diagram and cache it: getContentBounds reads layout
+    // for every content element, so calling it per frame while panning or zooming
+    // would cost more than the render it replaced.
+    const bounds = getContentBounds();
+    contentBoundsRef.current = bounds;
+    setSize({ w: bounds.w, h: bounds.h });
     setThumbnail(
       `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`,
     );
@@ -623,7 +806,8 @@ export default function CanvasStage({
   // Calculate viewport boundary for interactive radar minimap
   useEffect(() => {
     if (!stageRef.current) return;
-    const b = getContentBounds();
+    const b = contentBoundsRef.current || getContentBounds();
+    contentBoundsRef.current = b;
     const totalW = Math.max(b.w, 100);
     const totalH = Math.max(b.h, 100);
     const stageW = stageRef.current.clientWidth || 1000;
@@ -1224,16 +1408,13 @@ export default function CanvasStage({
                 ? `blueprint-grid ${isLight ? "theme-light" : ""}`
                 : ""
         }`}
-        style={{
-          touchAction: "none",
-          backgroundPosition: `${position.x}px ${position.y}px`,
-        }}
+        style={{ touchAction: "none" }}
         onPointerLeave={() => setLaser(null)}
       >
         <div
           ref={canvasRef}
-          className="absolute left-0 top-0"
-          style={{ transformOrigin: "0 0" }}
+          className="absolute left-0 top-0 will-change-transform"
+          style={{ transformOrigin: "0 0", willChange: "transform" }}
         >
           <div ref={containerRef} className="mermaid-stage" />
         </div>
@@ -1695,7 +1876,7 @@ export default function CanvasStage({
 
           {callbacks.current.onQuickAdd && (
             <button
-              onClick={callbacks.current.onQuickAdd}
+              onClick={() => callbacks.current.onQuickAdd?.()}
               className="inline-flex size-7 items-center justify-center rounded-md text-foreground/80 transition hover:bg-accent hover:text-foreground hover:!bg-primary/15 hover:!text-primary"
               title="Add connected child step (Tab)"
             >
