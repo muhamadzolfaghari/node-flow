@@ -23,6 +23,8 @@ import {
   MousePointerClick,
   Download,
   FileInput,
+  Activity,
+  Cloud,
 } from "lucide-react";
 import { Button, Badge, Card, CardContent } from "../components/ui.jsx";
 import { FORMATS } from "../lib/formats.js";
@@ -98,6 +100,16 @@ const FEATURES = [
     icon: Download,
     title: "Deliver anywhere",
     description: "Export SVG, PNG, PDF, PPTX, or standalone HTML, create checkpoints, and download project backups.",
+  },
+  {
+    icon: Shield,
+    title: "STRIDE Threat Modeling",
+    description: "Automated architecture security audits detecting trust boundaries, cleartext channels, and exposed databases for SOC2 / ISO 27001.",
+  },
+  {
+    icon: Activity,
+    title: "Interactive Flow Simulation",
+    description: "Trace request packets and glowing photon pulses along directed connections to visually debug microservice lifecycles.",
   },
 ];
 
@@ -183,12 +195,14 @@ export default function Landing() {
               </Button>
             </div>
             <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-              <li className="flex items-center gap-1.5">
-                <Shield className="size-3.5" /> Local project storage
+              <li className="flex items-center gap-1.5 font-medium text-foreground/80">
+                <Shield className="size-3.5 text-emerald-500" /> 100% Client-Side Privacy
               </li>
-              <li>No account required</li>
-              <li>MIT licensed</li>
-              <li>{FORMATS.length} source formats</li>
+              <li>Air-Gap Ready</li>
+              <li>Zero Telemetry</li>
+              <li>{FORMATS.length} Architecture Formats</li>
+              <li>Hardware Wasm Accelerated</li>
+              <li>MIT Licensed</li>
             </ul>
           </div>
 

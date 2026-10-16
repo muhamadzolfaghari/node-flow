@@ -12,11 +12,15 @@ Phone layouts: [home](screenshots/enterprise/mobile-home.png) · [studio](screen
 
 ## What this project demonstrates
 
-- A source-first visual editor with synchronized previews and direct manipulation for supported Mermaid diagram families.
-- A format registry and conversion adapters that preserve original source and make conversion limits explicit.
-- Provider-based AI generation, including deterministic and local inference plus native Gemini and OpenAI-compatible APIs.
-- A local-first project model with browser storage, version checkpoints, portable backups, and explicit export paths.
-- A responsive React workspace with keyboard navigation, diagnostics, and accessible interface primitives.
+- **Enterprise STRIDE Threat Model & Compliance Analyzer:** Automated client-side security architecture audits inspecting trust boundaries, cleartext channels, and exposed databases; generates formal SOC2 / ISO 27001 audit markdown reports.
+- **Interactive Request Flow Simulator:** Real-time visual debugging simulating HTTP/gRPC request packets and photon pulses along directed connections on the live canvas.
+- **Cloud & Architecture Stencil Palette:** 80+ curated cloud infrastructure stencils (AWS, GCP, Azure, Kubernetes, CNCF, Databases, Message Queues) with one-click insertion.
+- **Hardware-Accelerated WebAssembly Suite:** Native C Graphviz layout compilation, 32-bit FNV-1a hardware hashing, and linear memory pixel compositing.
+- **Source-first visual editor:** Synchronized previews and direct manipulation for supported Mermaid diagram families.
+- **Universal 34+ format registry:** Conversion adapters that preserve original source and make conversion limits explicit (Graphviz, PlantUML, D2, SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL, BPMN, C4, Terraform, etc.).
+- **Antigravity Resilient Network Architecture:** Automated retry policies with exponential backoff, jitter, and graceful offline degradation.
+- **Zero-trust, air-gapped privacy model:** 100% client-side execution, browser storage, version checkpoints, portable backups, and lossless SVG roundtrip metadata.
+- **Dual-engine AI synthesis:** Deterministic local rules, in-browser WebGPU Qwen, Ollama, native Gemini, and OpenAI-compatible endpoints with one-round parser error repair.
 
 Start with the [interactive examples](https://muhamadzolfaghari.github.io/node-flow/) or browse the [desktop and phone screenshots](screenshots/enterprise).
 
