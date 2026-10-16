@@ -49,7 +49,8 @@ export function analyzeDiagramThreats(source = "") {
 
   const findings = [];
 
-  const addFinding = (categoryKey, target, severity, title, impact, mitigation) => {
+  const addFinding = (finding) => {
+    const { categoryKey, target, severity, title, impact, mitigation } = finding;
     findings.push({
       id: `${categoryKey}-${target}-${findings.length}`,
       categoryKey,
@@ -73,23 +74,23 @@ export function analyzeDiagramThreats(source = "") {
   const gatewayNodes = nodes.filter((n) => isMatch(n, /gateway|api|ingress|proxy|alb|nlb|envoy|nginx/i));
 
   if (publicNodes.length > 0 && gatewayNodes.length === 0) {
-    addFinding(
-      "S",
-      publicNodes[0],
-      "High",
-      "Public Client Direct Access without API Gateway",
-      "Attackers can spoof client identities and bypass unified authentication / rate-limiting barriers.",
-      "Place an API Gateway or Ingress Controller enforcing mTLS, OAuth 2.1 PKCE, or OIDC tokens between public clients and services."
-    );
+    addFinding({
+      categoryKey: "S",
+      target: publicNodes[0],
+      severity: "High",
+      title: "Public Client Direct Access without API Gateway",
+      impact: "Attackers can spoof client identities and bypass unified authentication / rate-limiting barriers.",
+      mitigation: "Place an API Gateway or Ingress Controller enforcing mTLS, OAuth 2.1 PKCE, or OIDC tokens between public clients and services.",
+    });
   } else if (gatewayNodes.length > 0) {
-    addFinding(
-      "S",
-      gatewayNodes[0],
-      "Low",
-      "Gateway Token Validation & Signature Verification",
-      "Compromised or expired JWT tokens might be accepted if cryptographic signatures and revocation lists are not checked.",
-      "Enforce strict RS256/ES256 asymmetric signature verification, check issuer/audience, and maintain short token lifespans (15 min)."
-    );
+    addFinding({
+      categoryKey: "S",
+      target: gatewayNodes[0],
+      severity: "Low",
+      title: "Gateway Token Validation & Signature Verification",
+      impact: "Compromised or expired JWT tokens might be accepted if cryptographic signatures and revocation lists are not checked.",
+      mitigation: "Enforce strict RS256/ES256 asymmetric signature verification, check issuer/audience, and maintain short token lifespans (15 min).",
+    });
   }
 
   // Rule 2: Database Direct Access & Information Disclosure
@@ -99,93 +100,93 @@ export function analyzeDiagramThreats(source = "") {
       (e) => (publicNodes.includes(e.from) || publicNodes.includes(e.to)) && (e.from === db || e.to === db)
     );
     if (directPublicAccess) {
-      addFinding(
-        "I",
-        db,
-        "Critical",
-        `Direct Public Access to Data Store (${db})`,
-        "Direct connection from public internet / client layers to database risks mass data exfiltration and credential stuffing.",
-        `Isolate ${db} within an isolated private VPC subnet with strict security groups allowing inbound traffic only from trusted backend services.`
-      );
+      addFinding({
+        categoryKey: "I",
+        target: db,
+        severity: "Critical",
+        title: `Direct Public Access to Data Store (${db})`,
+        impact: "Direct connection from public internet / client layers to database risks mass data exfiltration and credential stuffing.",
+        mitigation: `Isolate ${db} within an isolated private VPC subnet with strict security groups allowing inbound traffic only from trusted backend services.`,
+      });
     } else {
-      addFinding(
-        "I",
-        db,
-        "Low",
-        `Data-at-Rest & In-Transit Encryption for ${db}`,
-        "Unencrypted storage volumes or plaintext TLS database connections can expose customer PII to snooping.",
-        `Enable AES-256 transparent data encryption (TDE) at rest with customer-managed keys (KMS) and enforce TLS 1.3 for all database sessions.`
-      );
+      addFinding({
+        categoryKey: "I",
+        target: db,
+        severity: "Low",
+        title: `Data-at-Rest & In-Transit Encryption for ${db}`,
+        impact: "Unencrypted storage volumes or plaintext TLS database connections can expose customer PII to snooping.",
+        mitigation: `Enable AES-256 transparent data encryption (TDE) at rest with customer-managed keys (KMS) and enforce TLS 1.3 for all database sessions.`,
+      });
     }
   }
 
   // Rule 3: Message Queues & Repudiation
   const queueNodes = nodes.filter((n) => isMatch(n, /queue|kafka|rabbitmq|sqs|pubsub|event|stream/i));
   if (queueNodes.length > 0) {
-    addFinding(
-      "R",
-      queueNodes[0],
-      "Low",
-      "Event Sourcing Audit Trail & Non-Repudiation",
-      "Message tampering or unacknowledged message loss can prevent forensic audits in financial or healthcare compliance.",
-      "Store immutable event ledgers with cryptographic message signatures and configure dead-letter queues (DLQ) with alert monitoring."
-    );
+    addFinding({
+      categoryKey: "R",
+      target: queueNodes[0],
+      severity: "Low",
+      title: "Event Sourcing Audit Trail & Non-Repudiation",
+      impact: "Message tampering or unacknowledged message loss can prevent forensic audits in financial or healthcare compliance.",
+      mitigation: "Store immutable event ledgers with cryptographic message signatures and configure dead-letter queues (DLQ) with alert monitoring.",
+    });
   } else if (nodes.length > 6) {
-    addFinding(
-      "R",
-      "Architecture Core",
-      "Low",
-      "Centralized Audit Logging & Observability",
-      "Absence of distributed tracing makes detecting unauthorized access or identifying compromised sessions difficult.",
-      "Implement OpenTelemetry distributed tracing across all microservices with tamper-evident centralized log aggregation (SOC2 CC7.2)."
-    );
+    addFinding({
+      categoryKey: "R",
+      target: "Architecture Core",
+      severity: "Low",
+      title: "Centralized Audit Logging & Observability",
+      impact: "Absence of distributed tracing makes detecting unauthorized access or identifying compromised sessions difficult.",
+      mitigation: "Implement OpenTelemetry distributed tracing across all microservices with tamper-evident centralized log aggregation (SOC2 CC7.2).",
+    });
   }
 
   // Rule 4: Denial of Service (DoS) on Ingress Points
   if (publicNodes.length > 0 && gatewayNodes.length === 0) {
-    addFinding(
-      "D",
-      publicNodes[0],
-      "High",
-      "Denial of Service (DoS) Vulnerability on Entrypoint",
-      "Layer 7 HTTP floods or volumetric SYN attacks can exhaust system memory, compute, and thread pools.",
-      "Deploy DDoS mitigation (AWS Shield / Cloudflare) and enforce sliding-window IP rate limiting (e.g. 100 req/min per IP)."
-    );
+    addFinding({
+      categoryKey: "D",
+      target: publicNodes[0],
+      severity: "High",
+      title: "Denial of Service (DoS) Vulnerability on Entrypoint",
+      impact: "Layer 7 HTTP floods or volumetric SYN attacks can exhaust system memory, compute, and thread pools.",
+      mitigation: "Deploy DDoS mitigation (AWS Shield / Cloudflare) and enforce sliding-window IP rate limiting (e.g. 100 req/min per IP).",
+    });
   }
 
   // Rule 5: Tampering on In-Transit Connections
   const unencryptedEdges = edges.filter((e) => !/https|tls|grpc|secure|mTLS/i.test(e.label || ""));
   if (unencryptedEdges.length > 3) {
-    addFinding(
-      "T",
-      "Service Mesh",
-      "Low",
-      "Inter-Service Cleartext Communication",
-      "Internal network traffic between microservices without mutual authentication is susceptible to Man-In-The-Middle (MITM) attacks.",
-      "Implement a service mesh (Istio, Linkerd, or Envoy) with automatic mTLS encryption and SPIFFE/SPIRE workload identities."
-    );
+    addFinding({
+      categoryKey: "T",
+      target: "Service Mesh",
+      severity: "Low",
+      title: "Inter-Service Cleartext Communication",
+      impact: "Internal network traffic between microservices without mutual authentication is susceptible to Man-In-The-Middle (MITM) attacks.",
+      mitigation: "Implement a service mesh (Istio, Linkerd, or Envoy) with automatic mTLS encryption and SPIFFE/SPIRE workload identities.",
+    });
   }
 
   // Rule 6: Elevation of Privilege
   const authNodes = nodes.filter((n) => isMatch(n, /auth|oauth|iam|vault|keycloak|cognito/i));
   if (authNodes.length === 0 && nodes.length > 4) {
-    addFinding(
-      "E",
-      "Access Control",
-      "Medium",
-      "Missing Centralized Identity & Authorization Layer",
-      "Services operating without centralized Role-Based Access Control (RBAC) risk horizontal or vertical privilege escalation.",
-      "Integrate an OAuth 2.1 / OIDC identity provider and enforce granular Attribute-Based Access Control (ABAC) on all administrative actions."
-    );
+    addFinding({
+      categoryKey: "E",
+      target: "Access Control",
+      severity: "Medium",
+      title: "Missing Centralized Identity & Authorization Layer",
+      impact: "Services operating without centralized Role-Based Access Control (RBAC) risk horizontal or vertical privilege escalation.",
+      mitigation: "Integrate an OAuth 2.1 / OIDC identity provider and enforce granular Attribute-Based Access Control (ABAC) on all administrative actions.",
+    });
   } else if (authNodes.length > 0) {
-    addFinding(
-      "E",
-      authNodes[0],
-      "Low",
-      "Least-Privilege IAM & Scope Enforcement",
-      "Overly permissive API scopes may allow compromised sub-tokens to perform unauthorized modifications.",
-      "Adhere to the principle of least privilege: issue short-lived scopes specifically constrained to the required operation."
-    );
+    addFinding({
+      categoryKey: "E",
+      target: authNodes[0],
+      severity: "Low",
+      title: "Least-Privilege IAM & Scope Enforcement",
+      impact: "Overly permissive API scopes may allow compromised sub-tokens to perform unauthorized modifications.",
+      mitigation: "Adhere to the principle of least privilege: issue short-lived scopes specifically constrained to the required operation.",
+    });
   }
 
   // Calculate compliance score

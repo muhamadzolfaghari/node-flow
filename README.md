@@ -234,8 +234,8 @@ npm run dev
 
 ```sh
 npm run build
-npm test              # 115 syntax, exporter, and WebAssembly checks
-npm run test:unit     # 158 unit tests with Node native test runner (100% pass)
+npm test              # 114 syntax, exporter, and WebAssembly checks
+npm run test:unit     # 166 unit tests with Node native test runner (100% pass)
 npm run test:coverage # per-module line/branch/function coverage metrics
 npm run test:browser  # headless browser e2e workflow audit
 ```

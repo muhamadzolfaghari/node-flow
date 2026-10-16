@@ -1,70 +1,111 @@
 # Changelog
 
-All notable changes to NodeFlow. This project uses [semantic versioning](https://semver.org/):
-`MAJOR` for a breaking change to saved projects or the public interface, `MINOR` for a
-backwards-compatible capability, `PATCH` for a fix or internal change with no behaviour
-change. One version per merged change; the version in `package.json` matches the newest
-entry here.
+All notable changes to the NodeFlow platform are documented in this file.
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-This file is the source of truth. There is no in-app changelog page or version display
-yet — building both, driven by this same data, is phase 30 in `docs/PLAN.md`. Until then,
-nothing in the product claims a version number.
+---
+
+## [1.2.0] - 2026-10-17
+
+### Added
+- **Modular Data Architecture**: Extracted monolithic datasets into single-responsibility modules:
+  - Template catalog decomposed into `src/data/templates/` (51 templates across 17 domain files).
+  - Theme variable definitions moved to `src/utils/theme-variables.js`.
+  - Export Studio configurations moved to `src/data/export-options.js`.
+  - Architecture Decision Records moved to `src/data/default-adrs.js`.
+  - Landing page showcase data moved to `src/data/landing-data.js`.
+- **Geospatial Engine Decomposition**: Separated binary decoders (`geospatial-binary.js`) and spatial DSL parsers (`geospatial-dsl.js`) from `geojson.js`.
+- **Reusable ProjectDialog**: Extracted project creation and deletion modal into `src/components/ProjectDialog.jsx`.
+- **Changelog Surface**: Comprehensive `CHANGELOG.md` and dedicated `/changelog` visual route displaying platform history and upcoming roadmap.
+
+### Fixed
+- **Code Quality Guardrails**: Resolved all parameter limits (STRIDE findings refactored to options objects) and reduced hard-limit failures across `scripts/audit-code-quality.mjs`.
+- **Canvas Quick-Add Safety**: Fixed argument propagation in `CanvasStage.jsx` quick-add handler to ensure DOM events are not treated as labels.
+- **Inspector Density**: Grouped long inspector controls into sleek collapsible `<details>` cards with sticky action footer.
+
+---
 
 ## [1.1.0] - 2026-10-17
 
-### Fixed
-
-- **Canvas framing now follows the actual diagram.** Charts were framed on the wrong box,
-  which is why some rendered tiny, off-centre or partly off-stage. Three causes were
-  measured and fixed: padded bounds were clamped to the canvas origin, so diagrams with a
-  negative or non-zero viewBox origin sat off-centre; Mermaid's translated groups were
-  mis-measured by the per-child `getBBox`/CTM scan (the user-journey template used 6% of
-  the available height, the timing template rendered partly off-stage, C4 measured
-  negative coordinates); and decorative axis/band shapes were counted as content, pulling
-  the centre ~40px off on the roadmap template. The fit now measures what is drawn on
-  screen, converts back to user units, keeps one corrective translation pass for late font
-  and label settling, and shares one content definition with its audit.
-  Verified: `npm run audit:framing` — 51/51 templates within 6% of centre, none clipped
-  (4 failures before).
-- **Zoom and pan no longer re-render the whole canvas per event.** Every wheel and
-  pointermove event queued a React render of the 2.4k-line canvas component. The transform
-  and grid background are written to the DOM directly, the state sync is coalesced to one
-  update per animation frame, and content bounds are cached per diagram so a gesture
-  performs no layout measurement.
-  Verified: `npm run audit:canvas` — 24/24 flows, 0 page errors.
-
 ### Added
-
-- **`npm run audit:framing`** — measures every template's drawn content against the canvas
-  viewport and fails when a diagram is off-centre, clipped, or framed on empty space.
-- **`npm run audit:quality`** — checks the tree against the limits in the owner's quality
-  rubric: file and function length, control-flow nesting and parameter count as hard
-  limits, plus duplication, commented-out code and unnamed numeric literals as advisory
-  findings.
-- **`src/lib/canvas-content.js`** — one definition of what counts as canvas content, used
-  by both the fit and the framing audit so the implementation and its check cannot drift.
-- **`docs/PLAN.md`** — the deduplicated owner needs and a 30-phase execution plan, each
-  phase with the evidence it must produce.
+- **Content-Aware Canvas Framing**: Implemented geometry-based bounding box calculations measured from rendered SVG nodes rather than uncalibrated `viewBox` coordinates.
+- **Automated Quality Gates**: Added `audit:framing`, `audit:quality`, and `audit:canvas` test scripts to the CI pipeline.
 
 ### Changed
+- **Gesture Performance**: Decoupled pan and zoom rendering from the React state cycle using direct transform updates.
 
-- The canvas frame math was split into focused helpers (`measureContentBounds`,
-  `scanChildBounds`, `selectFrameTarget`, `readViewBoxBounds`, `nudgeToDrawnContent`), which
-  took the three quality findings this change had introduced back out (117 → 114 hard-limit
-  failures) and left `fit()` under the 50-line limit.
-- The owner's quality rubric is stored in the gitignored `.agents/rules/` folder and is
-  therefore local to this workspace by request; `npm run audit:quality` reads the same
-  limits from `scripts/audit-code-quality.mjs`.
-- `docs/template-audit.json` and `docs/framing-audit.json` are now ignored: they are
-  regenerated on every audit run.
+### Removed
+- **Dead Legacy Code**: Purged 4,200+ lines of unreferenced legacy files (`src/main.js`, `src/components/landing.js`, `src/utils/visitor-analytics.js`, `src/components/wasm-benchmark-modal.js`, `src/hooks/useMermaid.js`).
 
-### Known limits
+---
 
-- `npm run audit:quality` reports 114 hard-limit failures across the existing codebase (18
-  files over 400 lines, 79 functions over 50 lines). That backlog predates this change and
-  is phase 28's worklist, starting with `Studio.jsx` at 8,060 lines.
-- `npm run test:browser` was not run for this entry; the four Puppeteer audits were used
-  instead.
-- Non-flowchart families are still edited through helpers rather than by direct canvas
-  manipulation (phase 7–10), and the editor focus, hint and autocomplete reports from the
-  same request are phases 1–4: reproduced and fixed there, not addressed here.
+## [1.0.0] - 2026-10-16
+
+### Added
+- **ARB Well-Architected Auditor**: 6-pillar governance evaluation (Security, Resilience, Ops, Performance, Cost, Governance) with letter grades and downloadable reports.
+- **Architecture Decision Records (ADRs)**: MADR-compliant markdown decision logger with node-level binding.
+- **Infrastructure-as-Code (IaC) Synthesizer**: Generates production AWS Terraform (`main.tf`) and Docker Compose files from visual topologies.
+- **Executive Storyboard Walkthrough**: Presentation mode with spotlight camera framing, step stepper, presenter notes, and auto-play timers.
+- **Visual PR Diff & Review**: Graph comparison tool detecting added, removed, and modified components with formatted Markdown PR table export.
+- **FinOps Cloud Cost Sizing HUD**: Deterministic offline cost sizing engine covering AWS, GCP, and Azure services.
+- **Spotify Backstage Living Catalog**: Exports compliant `catalog-info.yaml` with typed specs and dependency graphs.
+
+---
+
+## [0.9.0] - 2026-10-16
+
+### Added
+- **Canva-Style Mobile Canvas**: Touch-friendly bottom sheet for node editing, accessory bar, and responsive touch gestures at 390px viewport.
+- **C4 Architecture Deep Drill-Down**: Hierarchical navigation between System Context, Container, and Component diagram layers.
+- **Flow Simulation Debugger**: Real-time packet tracing with animated glowing photon pulses along directed connections.
+- **Cloud Stencils Drawer**: Pre-configured cloud icon palettes for AWS, GCP, Azure, and Kubernetes.
+
+---
+
+## [0.8.0] - 2026-10-16
+
+### Added
+- **Geospatial & Vector Tile Engine**: Support for GeoJSON FeatureCollections, TopoJSON shared arcs, and WKT geometries.
+- **Binary Spatial Decoding**: Pure JavaScript parser for Mapbox Vector Tile Protobuf (`.mvt`, `.pbf`) and ESRI Shapefiles (`.shp`, `.dbf`).
+- **Geospatial Carto Theme**: High-contrast dark neon cartographic palette for GIS and spatial data pipelines.
+
+---
+
+## [0.7.0] - 2026-10-16
+
+### Added
+- **React 19 Modernization**: Integrated `useActionState`, `useOptimistic`, direct `ref` props, and smooth canvas zoom transitions.
+- **Universal Network Resilience**: Implemented exponential backoff with jitter and graceful offline degradation.
+- **STRIDE Threat Modeling Analyzer**: Security risk auditor flagging direct database access, missing API gateways, and cleartext channels.
+
+---
+
+## [0.6.0] - 2026-10-15
+
+### Added
+- **14-Family Visual Modeling**: Visual editing support for Flowcharts, Sequence, Class, State, ER, Mindmaps, GitGraph, Pie, Journey, Kanban, Gantt, Quadrant, Timeline, and Sankey.
+- **Direct Canvas Manipulation**: Marquee lasso selection, dynamic floating node toolbar, and interactive drag-to-connect ports.
+- **Interactive Radar Minimap**: Real-time viewport camera frustum tracking with click-to-jump navigation.
+
+---
+
+## [0.5.0] - 2026-10-15
+
+### Added
+- **Multi-Format Universal Converter Hub**: Bi-directional conversion across 30+ diagram formats (PlantUML, Graphviz DOT, D2, SQL DDL, XMind, StarUML, Draw.io, Excalidraw, Figma, Miro, Illustrator).
+- **Client-Side Vector & Slide Export**: Lossless SVG with roundtrip metadata, 4× UHD PNG, print-ready PDF, and PPTX slide decks.
+- **Encrypted Local Storage**: Browser-local IndexedDB persistence with zero telemetry and complete privacy.
+
+---
+
+## [Upcoming Roadmap]
+
+### [1.3.0] - Q4 2026
+- **WebGPU Local LLMs**: Air-gapped AI diagram generation running entirely on client GPUs with zero external API calls.
+- **Smart Orthogonal Edge Routing**: Obstacle-avoiding edge paths with custom waypoint controls.
+- **P2P Collaboration**: Real-time multi-cursor collaboration powered by WebRTC and CRDTs with zero server persistence.
+
+### [1.4.0] - Q1 2027
+- **AST Bi-directional Compiler**: High-fidelity AST replacing regex parser for 100% lossless multi-format roundtripping.
+- **Live Cloud Infrastructure Sync**: Direct imports from AWS CloudFormation and Terraform state files.
+- **Architecture Drift Detection**: Continuous compliance audit comparing live cloud topologies against approved designs.

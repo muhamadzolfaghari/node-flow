@@ -118,20 +118,23 @@ function countTopLevel(text) {
   return count;
 }
 
-// Deliberately strict: prose in a comment must not be reported as dead code. A line
-// counts only when it opens with a statement keyword or clearly looks like a statement.
+// Deliberately strict: prose in a comment must not be reported as dead code. "// class
+// diagram path" and "// Dark (Enterprise Studio Dark)" are documentation, not dead code,
+// so a line must look like a statement — it ends in a semicolon, is a JSX tag, or opens
+// with a statement keyword *and* carries code punctuation.
 function findCommentedOutCode(lines) {
   const statementStart = /^(const|let|var|function|class|return|if|for|while|switch|import|export|await|throw|console\.)\b/;
-  const callLike = /^[\w.$]+\s*\([^)]*\)\s*;?$/;
   const jsxLike = /^<\/?[A-Za-z][\w.]*(\s|>|\/>|$)/;
+  const looksLikeCode = (body) => {
+    if (/;$/.test(body)) return true;
+    if (jsxLike.test(body)) return true;
+    return statementStart.test(body) && /[=({]|=>/.test(body);
+  };
   const findings = [];
   lines.forEach((raw, index) => {
     const trimmed = raw.trim();
     if (!trimmed.startsWith("//")) return;
-    const body = trimmed.replace(/^\/\/\s?/, "");
-    if (statementStart.test(body) || callLike.test(body) || jsxLike.test(body)) {
-      findings.push(index + 1);
-    }
+    if (looksLikeCode(trimmed.replace(/^\/\/\s?/, ""))) findings.push(index + 1);
   });
   return findings;
 }

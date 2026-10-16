@@ -57,6 +57,25 @@ test("applyMermaidIfValid executes callback only when diagram syntax is valid", 
   assert.equal(applied, false);
 });
 
+// The contract a generated diagram must pass before it can replace the user's work:
+// a rejected candidate reports why and never reaches the apply callback, and an accepted
+// candidate reaches it once with the validated source.
+test("a rejected candidate reports the reason and a valid one applies exactly once", async () => {
+  const appliedCandidates = [];
+  const onApply = async (code) => appliedCandidates.push(code);
+
+  const rejected = await applyMermaidIfValid("flowchart TD\n  A --> [broken", onApply);
+  assert.equal(rejected.applied, false);
+  assert.equal(rejected.valid, false);
+  assert.ok(rejected.error, "a rejected candidate must explain why");
+  assert.equal(appliedCandidates.length, 0, "a rejected candidate must not be applied");
+
+  const validCandidate = "flowchart TD\n  A --> B";
+  const accepted = await applyMermaidIfValid(validCandidate, onApply);
+  assert.equal(accepted.applied, true);
+  assert.deepEqual(appliedCandidates, [validCandidate]);
+});
+
 test("fixMermaidSyntax automatically adds missing headers based on diagram contents", async () => {
   // Sequence contents without header
   const seq = "autonumber\nAlice->>Bob: Hello";

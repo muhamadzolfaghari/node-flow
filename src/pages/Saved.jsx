@@ -41,6 +41,7 @@ import {
 } from "../lib/workspace.js";
 import { StorageManager } from "../components/storage.js";
 import { Exporter } from "../components/exporter.js";
+import { ProjectDialog } from "../components/ProjectDialog.jsx";
 export default function Saved() {
   const { workspace, setWorkspace, addProject } = useWorkspace(),
     nav = useNavigate(),
@@ -317,93 +318,33 @@ export default function Saved() {
           </div>
         </section>
       )}
-      <Dialog
-        open={!!dialog}
-        onOpenChange={(open) => {
-          if (!open) setDialog(null);
+      <ProjectDialog
+        dialog={dialog}
+        onClose={() => setDialog(null)}
+        selected={selected}
+        name={name}
+        setName={setName}
+        isPendingAction={isPendingAction}
+        projectFormAction={projectFormAction}
+        onBackup={backup}
+        onDelete={() => {
+          setOptimisticProjects({ type: "delete", id: selected.id });
+          setWorkspace((w) => {
+            const projects = w.projects.filter(
+              (p) => p.id !== selected.id,
+            );
+            return {
+              ...w,
+              projects,
+              activeProjectId:
+                w.activeProjectId === selected.id
+                  ? projects[0]?.id || null
+                  : w.activeProjectId,
+            };
+          });
+          setDialog(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {dialog === "create"
-                ? "Create a project"
-                : dialog === "rename"
-                  ? "Rename project"
-                  : "Delete project?"}
-            </DialogTitle>
-            <DialogDescription>
-              {dialog === "delete"
-                ? `This removes ${selected?.name} and its files from this browser. Download a backup first if you need to keep it.`
-                : "Give this collection of source files a clear, recognizable name."}
-            </DialogDescription>
-          </DialogHeader>
-          {dialog === "delete" ? (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => backup(selected)}>
-                Download backup
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setOptimisticProjects({ type: "delete", id: selected.id });
-                  setWorkspace((w) => {
-                    const projects = w.projects.filter(
-                      (p) => p.id !== selected.id,
-                    );
-                    return {
-                      ...w,
-                      projects,
-                      activeProjectId:
-                        w.activeProjectId === selected.id
-                          ? projects[0]?.id || null
-                          : w.activeProjectId,
-                    };
-                  });
-                  setDialog(null);
-                }}
-              >
-                Delete project
-              </Button>
-            </DialogFooter>
-          ) : (
-            <form action={projectFormAction}>
-              <label
-                htmlFor="project-name"
-                className="mb-2 block text-xs text-muted-foreground"
-              >
-                Project name
-              </label>
-              <Input
-                id="project-name"
-                name="projectName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoFocus
-                disabled={isPendingAction}
-              />
-              <DialogFooter className="mt-5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialog(null)}
-                  disabled={isPendingAction}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPendingAction}>
-                  {isPendingAction
-                    ? "Saving…"
-                    : dialog === "create"
-                      ? "Create and open"
-                      : "Rename"}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   );
 }

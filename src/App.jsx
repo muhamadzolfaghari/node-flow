@@ -14,6 +14,7 @@ const Studio = lazy(() => import("./pages/Studio.jsx"));
 const Templates = lazy(() => import("./pages/Templates.jsx"));
 const Saved = lazy(() => import("./pages/Saved.jsx"));
 const Compare = lazy(() => import("./pages/Compare.jsx"));
+const Changelog = lazy(() => import("./pages/Changelog.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 const PAGE_TITLES = {
@@ -22,6 +23,7 @@ const PAGE_TITLES = {
   "/templates": "Templates",
   "/saved": "Projects",
   "/formats": "Formats & features",
+  "/changelog": "Changelog & release history",
 };
 
 function AppLayout() {
@@ -63,6 +65,7 @@ export default function App() {
           <Route path="templates" element={<Templates />} />
           <Route path="saved" element={<Saved />} />
           <Route path="formats" element={<Compare />} />
+          <Route path="changelog" element={<Changelog />} />
           <Route path="compare" element={<Navigate to="/formats" replace />} />
           <Route path="404" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />

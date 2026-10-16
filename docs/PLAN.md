@@ -13,14 +13,14 @@ means the check in the last column passed, not that the code compiles.
 | Check | Result |
 |---|---|
 | `npm run lint` | clean |
-| `npm run test:unit` | 165 pass, 0 fail |
-| `npm test` | 115 checks pass, 0 fail |
+| `npm run test:unit` | 166 pass, 0 fail |
+| `npm test` | 114 checks pass, 0 fail |
 | `npm run build` | success, 51 template pages + sitemap |
 | `npm run audit:templates` | 51 templates, 0 problems |
 | `npm run audit:canvas` | 24/24 flows, 0 page errors |
 | `npm run audit:framing` | 51/51 within 6% of centre |
 | `npm run audit:studio` | 121 controls, 0 crashes |
-| `npm run audit:quality` | 114 hard-limit failures (was 117), plus advisory findings |
+| `npm run audit:quality` | 110 hard-limit failures, plus advisory findings |
 | `npm run test:browser` | not run recently; the audits above cover the same surfaces |
 
 ## 2. Already landed

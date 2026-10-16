@@ -5,10 +5,10 @@ Verified locally on October 16, 2026, with the production build served under `/n
 ## Automated checks
 
 - `npm run build`: successful production build. Mermaid grammar and renderer chunks load on demand. The initial JavaScript payload is about 169 KB gzip (app entry, React, and UI), compared with about 4.1 MB gzip of Mermaid-containing shared code preloaded before the change. This is a bundle measurement, not a device startup benchmark.
-- `npm test`: 115 checks pass, including starter templates, reference diagrams, syntax validation, import/export engines, AI validation, design primitives, WebAssembly, and production output inspection.
+- `npm test`: 114 checks pass, including starter templates, reference diagrams, syntax validation, import/export engines, AI validation, design primitives, WebAssembly, and production output inspection.
 - `npm run test:unit`: 102 tests pass. Covers all registered format samples, source preservation, content detection, conversions, syntax fixes, project persistence, and visual modeling across diagram families.
 - `npm run test:browser`: passes 39 format previews in the live browser workspace, source and image/document exports, project and ZIP backup restoration, tabs and reload persistence, visual editing, snapshots, errors, search, routes, keyboard commands, and phone layouts and panels.
-- `Total automated checks`: 102 unit tests + 115 integration checks + 39 browser format previews (256 passed checks).
+- `Total automated checks`: 166 unit tests + 114 integration checks + 39 browser format previews (319 passed checks).
 
 The browser suite also ran against the production build under `/node-flow/`. It passed all 39 format previews, exports, persistence, invalid-source retention, and backup restoration, then stalled on the “Find in file” editor command. The full development-server suite passes; production-only command behavior or test targeting remains open.
 

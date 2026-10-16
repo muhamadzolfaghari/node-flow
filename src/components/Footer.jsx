@@ -31,6 +31,9 @@ export default function Footer() {
           <Link className="hover:text-foreground" to="/formats">
             Format support
           </Link>
+          <Link className="hover:text-foreground" to="/changelog">
+            Changelog
+          </Link>
           <a
             className="hover:text-foreground"
             href="https://github.com/muhamadzolfaghari/node-flow"

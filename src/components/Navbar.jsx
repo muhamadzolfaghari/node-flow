@@ -9,6 +9,7 @@ const links = [
   { to: "/templates", label: "Templates" },
   { to: "/saved", label: "Projects" },
   { to: "/formats", label: "Formats & features" },
+  { to: "/changelog", label: "Changelog" },
 ];
 
 export default function Navbar() {

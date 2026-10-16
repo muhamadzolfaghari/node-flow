@@ -98,7 +98,6 @@ try {
 console.log('\n--- Test Group 3b: Shared Syntax Validator & Safe Apply ---');
 try {
   const { testMermaidSyntax, applyMermaidIfValid, fixMermaidSyntax } = await import('./src/utils/ai-syntax-fixer.js');
-  const { AIAssistant } = await import('./src/components/ai-assistant.js');
   const validCandidate = 'flowchart TD\n  A --> B';
   const invalidCandidate = 'flowchart TD\n  A --> [broken';
   const validResult = await testMermaidSyntax(validCandidate);
@@ -125,26 +124,10 @@ try {
     failed++;
   }
 
-  const aiAssistant = Object.create(AIAssistant.prototype);
-  const appliedCandidates = [];
-  aiAssistant.onApplyCode = async (code, title) => appliedCandidates.push({ code, title });
-  const invalidStatus = document.createElement('div');
-  await aiAssistant.applyCandidate(invalidCandidate, 'Invalid candidate', invalidStatus, document.createElement('button'));
-  const validStatus = document.createElement('div');
-  await aiAssistant.applyCandidate(validCandidate, 'Valid candidate', validStatus, document.createElement('button'));
-
-  if (
-    appliedCandidates.length === 1 &&
-    appliedCandidates[0].code === validCandidate &&
-    invalidStatus.dataset.state === 'error' &&
-    validStatus.dataset.state === 'success'
-  ) {
-    console.log('✅ AI assistant apply flow rejects invalid output and reports validation status.');
-    passed++;
-  } else {
-    console.error('❌ AI assistant apply flow did not enforce candidate validation:', { appliedCandidates, invalidStatus: invalidStatus.textContent, validStatus: validStatus.textContent });
-    failed++;
-  }
+  // The candidate-apply contract (reject invalid output, report the reason, apply a
+  // valid candidate exactly once) is asserted against the shared gate in
+  // tests/ai-syntax-fixer.test.mjs. The legacy vanilla component that used to hold this
+  // check was unreachable from the app and has been removed.
 
   const repair = await fixMermaidSyntax('graph TD\n  A -> B');
   if (

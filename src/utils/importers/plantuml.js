@@ -121,8 +121,8 @@ function convertPlantUmlClassToMermaid(lines) {
     if (!line || line.startsWith('\'')) continue;
     // enum/interface/object declarations pass through
     if (/<\|--|\*--|o--|\.\.>|-->|<\|..|..\|>/.test(line)) { output.push(`  ${line.replace(/</g, '<').replace(/~/g, '~')}`); continue; }
-    // class Foo { -> class Foo {
-    // hide/show lines skipped already
+    // Class bodies convert generics to Mermaid's tilde form; hide/show directives are
+    // dropped entirely since Mermaid has no equivalent.
     if (/^(hide|show)\b/i.test(line)) continue;
     output.push(`  ${line.replace(/<(\w+)>/g, '~$1~')}`);
   }
