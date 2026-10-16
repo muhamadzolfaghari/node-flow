@@ -158,6 +158,13 @@ export default function CanvasStage({
     let viewBoxBounds = null;
     if (vb && vb.width > 5 && vb.height > 5) {
       viewBoxBounds = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
+      // Ensure SVG element has explicit pixel dimensions matching viewBox so 1 user unit === 1 screen px
+      if (!svg.style.width || svg.style.width.includes("%")) {
+        svg.style.width = `${vb.width}px`;
+      }
+      if (!svg.style.height || svg.style.height.includes("%")) {
+        svg.style.height = `${vb.height}px`;
+      }
     }
 
     // 2. Try svg.getBBox() on root SVG element
@@ -213,8 +220,8 @@ export default function CanvasStage({
     // container's pixel space, so remove the viewBox origin and apply the
     // svg's rendered scale (clientWidth is unaffected by the camera transform).
     if (bbox) {
-      const originX = vb && vb.width > 0 ? vb.x : 0;
-      const originY = vb && vb.height > 0 ? vb.y : 0;
+      const originX = vb && Number.isFinite(vb.x) ? vb.x : 0;
+      const originY = vb && Number.isFinite(vb.y) ? vb.y : 0;
       const scaleX = vb && vb.width > 0 && svg.clientWidth > 0 ? svg.clientWidth / vb.width : 1;
       const scaleY = vb && vb.height > 0 && svg.clientHeight > 0 ? svg.clientHeight / vb.height : scaleX;
       return {
@@ -258,9 +265,10 @@ export default function CanvasStage({
     const b = getContentBounds();
     setSize({ w: b.w, h: b.h });
     const paddingX = Math.min(96, Math.max(36, s.clientWidth * 0.08));
-    const paddingY = Math.min(100, Math.max(48, s.clientHeight * 0.1));
+    const topInset = 54;
+    const bottomInset = 64;
     const availW = Math.max(50, s.clientWidth - paddingX);
-    const availH = Math.max(50, s.clientHeight - paddingY);
+    const availH = Math.max(50, s.clientHeight - topInset - bottomInset);
     const z = Math.max(
       0.04,
       Math.min(
@@ -273,7 +281,7 @@ export default function CanvasStage({
     const cy = b.y + b.h / 2;
     camera.current = {
       x: s.clientWidth / 2 - cx * z,
-      y: s.clientHeight / 2 - cy * z,
+      y: topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * z,
       z,
     };
     apply();
@@ -286,8 +294,10 @@ export default function CanvasStage({
     const b = getContentBounds();
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
+    const topInset = 54;
+    const bottomInset = 64;
     camera.current.x = s.clientWidth / 2 - cx * camera.current.z;
-    camera.current.y = s.clientHeight / 2 - cy * camera.current.z;
+    camera.current.y = topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * camera.current.z;
     apply();
   };
   const zoomBy = (factor, cx, cy) => {

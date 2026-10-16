@@ -75,7 +75,7 @@ export function useDocumentPreview(document, theme, view) {
           });
         });
       }
-    }, 300);
+    }, 90);
     return () => {
       clearTimeout(timer);
       seq.current++;

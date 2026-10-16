@@ -381,10 +381,10 @@ const keywordCompletions = keywords.map((label) => ({
   type: "keyword",
 }));
 
-export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
+export default function CodeEditor({ ref, document, previewError, onChange, onContextMenu }) {
   const host = useRef(null);
   const editor = useRef(null);
-  const latest = useRef({ document, onChange });
+  const latest = useRef({ document, onChange, previewError });
   const states = useRef(new Map());
   const currentId = useRef(null);
   const compartment = useRef(new Compartment());
@@ -398,7 +398,22 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
   syntaxStatusRef.current = syntaxStatus;
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  latest.current = { document, onChange };
+  latest.current = { document, onChange, previewError };
+
+  // Synchronize live preview render errors to editor syntax status & suggestions
+  useEffect(() => {
+    if (previewError) {
+      const details = parseErrorDetails(previewError, document?.source || "");
+      setSyntaxStatus({
+        valid: false,
+        error: details.message || previewError,
+        line: details.line || 1,
+        raw: details.raw || previewError,
+      });
+    } else if (!previewError && !syntaxStatus.valid && syntaxStatus.raw === latest.current.previewError) {
+      setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+    }
+  }, [previewError, document?.source]);
 
   // Explanations from the syntax error database when errors occur
   const explanations = useMemo(() => {
@@ -417,7 +432,8 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
     try {
       const status = syntaxStatusRef.current;
       setFixFailMsg(null);
-      const result = await fixAnySyntax(docText, docFmt, status.raw || status.error || "");
+      const reportedError = status.raw || status.error || latest.current.previewError || "";
+      const result = await fixAnySyntax(docText, docFmt, reportedError);
       if (result.success && result.fixedCode && result.fixedCode !== docText) {
         // Dispatch atomic transaction preserving history
         view.dispatch({

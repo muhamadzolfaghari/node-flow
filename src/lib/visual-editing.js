@@ -99,14 +99,21 @@ export const FLOWCHART_DIRECTIONS = {
  * "flowchart-Client-0") back to the source id ("Client"). Non-flowchart ids
  * are returned unchanged.
  */
-export const flowchartNodeId = (id) =>
-  typeof id === "string"
-    ? id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] || id
-    : id;
+export const flowchartNodeId = (id) => {
+  if (typeof id !== "string") return id;
+  // Strip temporary mermaid render prefix like "mermaid-render-1-" or "dmermaid-render-4-"
+  const clean = id.replace(/^(?:d?mermaid-render-\d+-)+/, "");
+  // Strip flowchart prefix and trailing index: "flowchart-MyNode-0" -> "MyNode"
+  const match = clean.match(/(?:^|-)flowchart-(.+?)(?:-\d+)?$/) || clean.match(/^(.+?)-\d+$/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return clean;
+};
 
 export const isFlowchart = (doc) =>
   doc?.format === "mermaid" &&
-  /^\s*(flowchart|graph)\s+(TD|TB|BT|LR|RL)\b/m.test(doc.source);
+  /^\s*(flowchart|graph)(\s+(TD|TB|BT|LR|RL))?\b/im.test(doc.source);
 
 export function getFlowchartDirection(source) {
   const match = source.match(/^\s*(?:flowchart|graph)\s+(TD|TB|BT|LR|RL)\b/m);

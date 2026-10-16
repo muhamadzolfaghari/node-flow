@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * VSCode-inspired floating context menu.
@@ -13,24 +13,34 @@ export function ContextMenu({
   title,
 }) {
   const menuRef = useRef(null);
-  const [coords, setCoords] = useState(position);
+  const [coords, setCoords] = useState(() => {
+    const pad = 12;
+    const estW = 240;
+    const estH = 320;
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+    return {
+      x: Math.max(pad, Math.min(position?.x ?? 0, winW - estW - pad)),
+      y: Math.max(pad, Math.min(position?.y ?? 0, winH - estH - pad)),
+    };
+  });
   const [activeIndex, setActiveIndex] = useState(-1);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !menuRef.current) return;
+    const rect = menuRef.current.getBoundingClientRect();
+    const pad = 12;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const x = Math.max(pad, Math.min(position.x, winW - (rect.width || 240) - pad));
+    const y = Math.max(pad, Math.min(position.y, winH - (rect.height || 300) - pad));
+    setCoords({ x, y });
+  }, [isOpen, position.x, position.y, items.length]);
 
   useEffect(() => {
     if (!isOpen) {
       setActiveIndex(-1);
       return;
-    }
-
-    // Measure and clamp exactly to viewport boundaries
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect();
-      const pad = 8;
-      const x = Math.max(pad, Math.min(position.x, window.innerWidth - rect.width - pad));
-      const y = Math.max(pad, Math.min(position.y, window.innerHeight - rect.height - pad));
-      setCoords({ x, y });
-    } else {
-      setCoords(position);
     }
 
     const actionable = items.filter((it) => !it.divider && !it.disabled);
@@ -71,7 +81,7 @@ export function ContextMenu({
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen, position, onClose, items]);
+  }, [isOpen, onClose, items]);
 
   if (!isOpen || !items || items.length === 0) return null;
 
@@ -80,7 +90,7 @@ export function ContextMenu({
       ref={menuRef}
       role="menu"
       aria-label={title || "Context Menu"}
-      className="fixed z-50 min-w-[210px] max-w-[320px] rounded-lg border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-2xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 select-none"
+      className="fixed z-[9999] min-w-[220px] max-w-[340px] max-h-[calc(100vh-28px)] overflow-y-auto rounded-xl border border-border/80 bg-popover/95 p-1.5 text-popover-foreground shadow-2xl backdrop-blur-xl animate-in fade-in-50 zoom-in-95 select-none"
       style={{
         left: coords.x,
         top: coords.y,

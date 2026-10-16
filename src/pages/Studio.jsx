@@ -6092,6 +6092,7 @@ export default function Studio() {
                   <CodeEditor
                     ref={editorRef}
                     document={document}
+                    previewError={preview.error}
                     onChange={updateSource}
                     onContextMenu={(e) => {
                       setContextMenu({
