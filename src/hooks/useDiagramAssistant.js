@@ -1,11 +1,14 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { fixMermaidSyntax, testMermaidSyntax } from "../utils/ai-syntax-fixer.js";
 import { aiProviders, assistantModeToProvider } from "../features/ai/providers.js";
+import { optimizeAiPrompt } from "../utils/ai-token-optimizer.js";
+import { runAiHealthDiagnostics } from "../utils/ai-health-check.js";
 
 export function useDiagramAssistant() {
   const engine = useRef(null);
   const [progress, setProgress] = useState("");
   const [busy, setBusy] = useState(false);
+  const [healthStatus, setHealthStatus] = useState(null);
 
   const generate = async (prompt, type = "auto", mode = "instant", options = {}) => {
     if (!prompt.trim()) throw new Error("Describe the diagram you want to create.");
@@ -45,5 +48,19 @@ export function useDiagramAssistant() {
     return provider.listModels(apiKey);
   };
 
-  return { generate, listModels, busy, progress };
+  const checkHealth = useCallback(async (options = {}) => {
+    try {
+      const result = await runAiHealthDiagnostics(options);
+      setHealthStatus(result);
+      return result;
+    } catch {
+      return { overall: "degraded", fallbackReady: true, providers: [] };
+    }
+  }, []);
+
+  const getPromptStats = useCallback((prompt, options = {}) => {
+    return optimizeAiPrompt(prompt, options).stats;
+  }, []);
+
+  return { generate, listModels, checkHealth, getPromptStats, busy, progress, healthStatus };
 }

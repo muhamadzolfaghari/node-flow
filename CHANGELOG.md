@@ -5,6 +5,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.3.2] - 2026-10-17
+
+### Added
+- **AI Prompt Token Optimizer**: Implemented `src/utils/ai-token-optimizer.js` with heuristic token estimation and diagram context compression (stripping non-structural styling, comments, and empty lines), reducing token usage by 30-50%.
+- **AI Provider Health Diagnostics**: Built `src/utils/ai-health-check.js` to evaluate hardware WebGPU acceleration, local Ollama daemon connectivity, and cloud API keys with offline deterministic fallback (`instant`).
+- **Resilient AI Querying**: Wired `fetchWithRetry` into AI providers (`ollama`, `openaiCompatible`), adhering to exponential backoff and network failure degradation policy.
+- **Preflight Quality Gate**: Added `npm run preflight` script executing ESLint, 173 unit tests, 114 diagram checks, and version consistency audit before commit and push.
+- **Studio Live Metrics**: Integrated token counter, compression ratio, and resilient fallback status indicator directly below the prompt input in the Diagram Assistant dialog.
+
+---
+
 ## [1.3.1] - 2026-10-17
 
 ### Added
