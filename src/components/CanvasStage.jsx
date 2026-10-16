@@ -43,6 +43,9 @@ import {
   Database,
   Zap,
   Eye,
+  Terminal,
+  Award,
+  Compass,
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
@@ -52,6 +55,9 @@ import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";
 import MobileNodeSheet from "./MobileNodeSheet.jsx";
 import AdrManagerModal from "./AdrManagerModal.jsx";
 import ArchitectureDiffModal from "./ArchitectureDiffModal.jsx";
+import IacExportModal from "./IacExportModal.jsx";
+import ArbAuditModal from "./ArbAuditModal.jsx";
+import StoryboardPresentationModal from "./StoryboardPresentationModal.jsx";
 import { calculateArchitectureCost } from "../lib/finops-pricing.js";
 
 export default function CanvasStage({
@@ -132,7 +138,10 @@ export default function CanvasStage({
     [showDiffModal, setShowDiffModal] = useState(false),
     [showFinOps, setShowFinOps] = useState(false),
     [activeLens, setActiveLens] = useState("standard"),
-    [selectedAdrId, setSelectedAdrId] = useState(null);
+    [selectedAdrId, setSelectedAdrId] = useState(null),
+    [showIacModal, setShowIacModal] = useState(false),
+    [showArbModal, setShowArbModal] = useState(false),
+    [showStoryboard, setShowStoryboard] = useState(false);
 
   const [mobileViewport, setMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -2083,16 +2092,22 @@ export default function CanvasStage({
           <DollarSign className="text-emerald-400" />
         </Tool>
         <Tool
-          title="Architecture Decision Records (ADRs)"
-          onClick={() => setShowAdrModal(true)}
+          title="Architecture Review Board (ARB) Well-Architected Auditor"
+          onClick={() => setShowArbModal(true)}
         >
-          <FileText className="text-indigo-400" />
+          <Award className="text-emerald-400" />
         </Tool>
         <Tool
-          title="Visual architecture diff & PR review"
-          onClick={() => setShowDiffModal(true)}
+          title="Infrastructure-as-Code (Terraform / Compose)"
+          onClick={() => setShowIacModal(true)}
         >
-          <GitCompare className="text-amber-400" />
+          <Terminal className="text-purple-400" />
+        </Tool>
+        <Tool
+          title="Executive Storyboard Walkthrough"
+          onClick={() => setShowStoryboard(true)}
+        >
+          <Compass className="text-cyan-400" />
         </Tool>
         <span className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Find a node (⌘/Ctrl+P)" onClick={() => setSearchOpen(true)}>
@@ -2186,6 +2201,31 @@ export default function CanvasStage({
         isOpen={showDiffModal}
         onClose={() => setShowDiffModal(false)}
         currentSource={documentSource}
+      />
+
+      {/* Infrastructure-as-Code (IaC) Synthesis Modal */}
+      <IacExportModal
+        isOpen={showIacModal}
+        onClose={() => setShowIacModal(false)}
+        source={documentSource}
+        projectName={currentDocName || "Architecture"}
+      />
+
+      {/* Architecture Review Board (ARB) Auditor Modal */}
+      <ArbAuditModal
+        isOpen={showArbModal}
+        onClose={() => setShowArbModal(false)}
+        source={documentSource}
+        projectName={currentDocName || "Architecture"}
+      />
+
+      {/* Executive Storyboard & Presentation Walkthrough Modal */}
+      <StoryboardPresentationModal
+        isOpen={showStoryboard}
+        onClose={() => setShowStoryboard(false)}
+        containerRef={containerRef}
+        source={documentSource}
+        projectName={currentDocName || "Architecture"}
       />
     </div>
   );

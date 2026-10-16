@@ -6,6 +6,8 @@ import {
   CLOUD_PRICING_CATALOG,
 } from "../src/lib/finops-pricing.js";
 import { generateBackstageCatalog } from "../src/utils/backstage-exporter.js";
+import { generateTerraform, generateDockerCompose } from "../src/utils/iac-synthesizer.js";
+import { runArbAudit } from "../src/utils/arb-auditor.js";
 
 test("FinOps: matchNodePricing recognizes cloud compute, database, and storage", () => {
   const eksPrice = matchNodePricing("eks_cluster", "Production EKS");
@@ -60,3 +62,47 @@ test("Backstage Generator: produces valid catalog-info.yaml with components and 
   assert.ok(yaml.includes("dependsOn:"));
   assert.ok(yaml.includes("component:default/"));
 });
+
+test("IaC Synthesizer: generates compliant AWS Terraform and Docker Compose", () => {
+  const sampleMermaid = `flowchart TD
+    gateway["API Gateway"] --> auth["Auth Service"]
+    auth --> sessionCache["Redis Cache"]
+    auth --> userDb[("PostgreSQL Database")]
+    auth --> storage["S3 Bucket"]
+  `;
+
+  const tf = generateTerraform(sampleMermaid, "auth_system");
+  assert.ok(tf.includes("terraform {"));
+  assert.ok(tf.includes("resource \"aws_vpc\" \"main\""));
+  assert.ok(tf.includes("resource \"aws_db_instance\""));
+  assert.ok(tf.includes("resource \"aws_elasticache_cluster\""));
+  assert.ok(tf.includes("resource \"aws_s3_bucket\""));
+
+  const compose = generateDockerCompose(sampleMermaid, "auth_system");
+  assert.ok(compose.includes("version: \"3.8\""));
+  assert.ok(compose.includes("services:"));
+  assert.ok(compose.includes("image: postgres:16-alpine"));
+  assert.ok(compose.includes("image: redis:7-alpine"));
+  assert.ok(compose.includes("volumes:"));
+});
+
+test("ARB Auditor: evaluates architecture against Well-Architected governance pillars", () => {
+  const badTopology = `flowchart TD
+    client["Public Web Client"] --> db[("Production PostgreSQL DB")]
+  `;
+  const badAudit = runArbAudit(badTopology);
+  assert.ok(badAudit.score < 90);
+  assert.ok(badAudit.findings.some((f) => f.title.includes("Direct Client Database Ingress")));
+
+  const goodTopology = `flowchart TD
+    client["Public Web Client"] --> gateway["Cloudflare WAF / API Gateway"]
+    gateway --> auth["Auth Service"]
+    auth --> db[("Aurora PostgreSQL Multi-AZ")]
+    auth --> prometheus["Prometheus Metrics"]
+    auth --> queue["Kafka Event Bus"]
+  `;
+  const goodAudit = runArbAudit(goodTopology);
+  assert.ok(goodAudit.score >= 80);
+  assert.ok(goodAudit.grade.includes("Grade A"));
+});
+
