@@ -17,7 +17,9 @@
     "build:app": "vite build",
     "audit:canvas": "node scripts/audit-canvas-flows.mjs",
     "audit:framing": "node scripts/audit-canvas-framing.mjs",
-    "audit:quality": "node scripts/audit-code-quality.mjs"
+    "audit:quality": "node scripts/audit-code-quality.mjs",
+    "audit:version": "node scripts/release-version.mjs",
+    "release": "node scripts/release-version.mjs"
   },
   "repository": {
     "type": "git",
