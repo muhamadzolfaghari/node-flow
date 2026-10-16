@@ -38,6 +38,53 @@ function parseEdges(source = "") {
   return edges;
 }
 
+function diffNodes(currentNodes, baselineNodes) {
+  const currentMap = new Map(currentNodes.map((n) => [n.id, n]));
+  const baselineMap = new Map(baselineNodes.map((n) => [n.id, n]));
+  const added = [];
+  const removed = [];
+  const modified = [];
+  const unchanged = [];
+
+  for (const [id, node] of currentMap.entries()) {
+    if (!baselineMap.has(id)) {
+      added.push(node);
+    } else {
+      const base = baselineMap.get(id);
+      if (base.label !== node.label || base.kind !== node.kind) {
+        modified.push({ id, oldLabel: base.label, newLabel: node.label, oldKind: base.kind, newKind: node.kind });
+      } else {
+        unchanged.push(node);
+      }
+    }
+  }
+
+  for (const [id, node] of baselineMap.entries()) {
+    if (!currentMap.has(id)) removed.push(node);
+  }
+
+  return { added, removed, modified, unchanged };
+}
+
+function diffEdges(currentSource, baselineSource) {
+  const currentEdges = parseEdges(currentSource);
+  const baselineEdges = parseEdges(baselineSource);
+  const edgeKey = (e) => `${e.from}->${e.to}`;
+  const baseEdgeKeys = new Set(baselineEdges.map(edgeKey));
+  const currEdgeKeys = new Set(currentEdges.map(edgeKey));
+  return {
+    addedEdges: currentEdges.filter((e) => !baseEdgeKeys.has(edgeKey(e))),
+    removedEdges: baselineEdges.filter((e) => !currEdgeKeys.has(edgeKey(e))),
+  };
+}
+
+function computeArchitectureDiff(currentSource, baselineSource) {
+  const { added: addedNodes, removed: removedNodes, modified: modifiedNodes, unchanged: unchangedNodes } =
+    diffNodes(scanNodeDeclarations(currentSource), scanNodeDeclarations(baselineSource));
+  const { addedEdges, removedEdges } = diffEdges(currentSource, baselineSource);
+  return { addedNodes, removedNodes, modifiedNodes, unchangedNodes, addedEdges, removedEdges };
+}
+
 export default function ArchitectureDiffModal({
   isOpen,
   onClose,
@@ -49,65 +96,10 @@ export default function ArchitectureDiffModal({
   );
   const [copied, setCopied] = useState(false);
 
-  const diffResult = useMemo(() => {
-    const currentNodes = scanNodeDeclarations(currentSource);
-    const baselineNodes = scanNodeDeclarations(baselineSource);
-
-    const currentMap = new Map(currentNodes.map((n) => [n.id, n]));
-    const baselineMap = new Map(baselineNodes.map((n) => [n.id, n]));
-
-    const addedNodes = [];
-    const removedNodes = [];
-    const modifiedNodes = [];
-    const unchangedNodes = [];
-
-    // Check current vs baseline
-    for (const [id, node] of currentMap.entries()) {
-      if (!baselineMap.has(id)) {
-        addedNodes.push(node);
-      } else {
-        const base = baselineMap.get(id);
-        if (base.label !== node.label || base.kind !== node.kind) {
-          modifiedNodes.push({
-            id,
-            oldLabel: base.label,
-            newLabel: node.label,
-            oldKind: base.kind,
-            newKind: node.kind,
-          });
-        } else {
-          unchangedNodes.push(node);
-        }
-      }
-    }
-
-    // Check for removed nodes
-    for (const [id, node] of baselineMap.entries()) {
-      if (!currentMap.has(id)) {
-        removedNodes.push(node);
-      }
-    }
-
-    // Edges diff
-    const currentEdges = parseEdges(currentSource);
-    const baselineEdges = parseEdges(baselineSource);
-
-    const edgeKey = (e) => `${e.from}->${e.to}`;
-    const baseEdgeKeys = new Set(baselineEdges.map(edgeKey));
-    const currEdgeKeys = new Set(currentEdges.map(edgeKey));
-
-    const addedEdges = currentEdges.filter((e) => !baseEdgeKeys.has(edgeKey(e)));
-    const removedEdges = baselineEdges.filter((e) => !currEdgeKeys.has(edgeKey(e)));
-
-    return {
-      addedNodes,
-      removedNodes,
-      modifiedNodes,
-      unchangedNodes,
-      addedEdges,
-      removedEdges,
-    };
-  }, [currentSource, baselineSource]);
+  const diffResult = useMemo(
+    () => computeArchitectureDiff(currentSource, baselineSource),
+    [currentSource, baselineSource]
+  );
 
   if (!isOpen) return null;
 

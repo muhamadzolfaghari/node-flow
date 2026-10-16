@@ -14,67 +14,52 @@ import {
 } from "lucide-react";
 import { scanNodeDeclarations } from "../lib/visual-editing.js";
 
+const STORYBOARD_CATEGORIES = [
+  {
+    keywords: ["client", "browser", "user", "gateway", "alb", "ingress", "cloudflare"],
+    title: "Edge Ingress & Perimeter Routing",
+    description: "Public client requests terminate at the edge API gateway or ALB with TLS 1.3 encryption and WAF rate limiting.",
+    takeaway: "High availability edge with DDoS mitigation.",
+  },
+  {
+    keywords: ["auth", "service", "api", "order", "payment"],
+    title: "Core Domain Logic & Microservices",
+    description: "Decoupled microservices execute domain logic, process business transactions, and validate identity.",
+    takeaway: "Horizontal auto-scaling with isolated fault domains.",
+  },
+  {
+    keywords: ["kafka", "sqs", "queue", "event", "pubsub"],
+    title: "Asynchronous Event Streaming",
+    description: "High-throughput event bus buffers peak bursts and broadcasts state changes asynchronously.",
+    takeaway: "Guaranteed at-least-once delivery with partition durability.",
+  },
+  {
+    keywords: ["db", "database", "postgres", "mysql", "redis", "s3", "mongo"],
+    title: "Persistence & Low-Latency Cache Tier",
+    description: "Multi-AZ relational database ensures ACID durability while in-memory cache accelerates sub-millisecond reads.",
+    takeaway: "RPO = 0 with automated cross-AZ failover.",
+  },
+];
+
 function generateStoryboardSteps(source = "") {
   const nodes = scanNodeDeclarations(source);
   const steps = [];
 
-  // Group 1: Edge & Ingress
-  const ingressNodes = nodes.filter((n) => {
-    const t = `${n.id} ${n.label || ""}`.toLowerCase();
-    return t.includes("client") || t.includes("browser") || t.includes("user") || t.includes("gateway") || t.includes("alb") || t.includes("ingress") || t.includes("cloudflare");
-  });
-  if (ingressNodes.length > 0) {
-    steps.push({
-      title: "Edge Ingress & Perimeter Routing",
-      description: "Public client requests terminate at the edge API gateway or ALB with TLS 1.3 encryption and WAF rate limiting.",
-      takeaway: "High availability edge with DDoS mitigation.",
-      nodeIds: ingressNodes.map((n) => n.id),
+  for (const cat of STORYBOARD_CATEGORIES) {
+    const matched = nodes.filter((n) => {
+      const text = `${n.id} ${n.label || ""}`.toLowerCase();
+      return cat.keywords.some((kw) => text.includes(kw));
     });
+    if (matched.length > 0) {
+      steps.push({
+        title: cat.title,
+        description: cat.description,
+        takeaway: cat.takeaway,
+        nodeIds: matched.map((n) => n.id),
+      });
+    }
   }
 
-  // Group 2: Authentication & Core Microservices
-  const serviceNodes = nodes.filter((n) => {
-    const t = `${n.id} ${n.label || ""}`.toLowerCase();
-    return t.includes("auth") || t.includes("service") || t.includes("api") || t.includes("order") || t.includes("payment");
-  });
-  if (serviceNodes.length > 0) {
-    steps.push({
-      title: "Core Domain Logic & Microservices",
-      description: "Decoupled microservices execute domain logic, process business transactions, and validate identity.",
-      takeaway: "Horizontal auto-scaling with isolated fault domains.",
-      nodeIds: serviceNodes.map((n) => n.id),
-    });
-  }
-
-  // Group 3: Event Bus & Asynchronous Queues
-  const queueNodes = nodes.filter((n) => {
-    const t = `${n.id} ${n.label || ""}`.toLowerCase();
-    return t.includes("kafka") || t.includes("sqs") || t.includes("queue") || t.includes("event") || t.includes("pubsub");
-  });
-  if (queueNodes.length > 0) {
-    steps.push({
-      title: "Asynchronous Event Streaming",
-      description: "High-throughput event bus buffers peak bursts and broadcasts state changes asynchronously.",
-      takeaway: "Guaranteed at-least-once delivery with partition durability.",
-      nodeIds: queueNodes.map((n) => n.id),
-    });
-  }
-
-  // Group 4: Storage & Caching Layer
-  const dataNodes = nodes.filter((n) => {
-    const t = `${n.id} ${n.label || ""}`.toLowerCase();
-    return t.includes("db") || t.includes("database") || t.includes("postgres") || t.includes("mysql") || t.includes("redis") || t.includes("s3") || t.includes("mongo");
-  });
-  if (dataNodes.length > 0) {
-    steps.push({
-      title: "Persistence & Low-Latency Cache Tier",
-      description: "Multi-AZ relational database ensures ACID durability while in-memory cache accelerates sub-millisecond reads.",
-      takeaway: "RPO = 0 with automated cross-AZ failover.",
-      nodeIds: dataNodes.map((n) => n.id),
-    });
-  }
-
-  // Default fallback if no specific keywords matched
   if (steps.length === 0) {
     steps.push({
       title: "Architecture System Topology",
