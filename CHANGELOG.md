@@ -32,6 +32,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.2.1] - 2026-10-17
+
+### Added
+- **Canvas Framing Audit Runner**: Engineered automated `audit:framing` test runner validating bounding boxes across all 51 gallery templates with headless browser verification.
+- **Geometry-Based Viewport Calculations**: Measured true bounding box directly from rendered SVG elements with 6% padding tolerance.
+
+---
+
 ## [1.2.0] - 2026-10-17
 
 ### Added
@@ -52,30 +60,41 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [1.1.0] - 2026-10-17
-
-### Added
-- **Content-Aware Canvas Framing**: Implemented geometry-based bounding box calculations measured from rendered SVG nodes rather than uncalibrated `viewBox` coordinates.
-- **Automated Quality Gates**: Added `audit:framing`, `audit:quality`, and `audit:canvas` test scripts to the CI pipeline.
-
-### Changed
-- **Gesture Performance**: Decoupled pan and zoom rendering from the React state cycle using direct transform updates.
+## [1.1.1] - 2026-10-16
 
 ### Removed
-- **Dead Legacy Code**: Purged 4,200+ lines of unreferenced legacy files (`src/main.js`, `src/components/landing.js`, `src/utils/visitor-analytics.js`, `src/components/wasm-benchmark-modal.js`, `src/hooks/useMermaid.js`).
+- **Dead Legacy Code**: Purged over 4,200 lines of obsolete, unreferenced legacy code files (`src/main.js`, `src/components/landing.js`, `src/utils/visitor-analytics.js`, `src/components/wasm-benchmark-modal.js`, `src/hooks/useMermaid.js`).
+
+### Added
+- **Enterprise Suite Top Navigation**: Added enterprise suite menu to studio top navigation bar for 1-click access to Threat Modeling, ADRs, and IaC Synthesizer.
+
+---
+
+## [1.1.0] - 2026-10-16
+
+### Added
+- **Executive Storyboard Walkthrough**: Presentation mode with spotlight camera framing, step stepper, presenter notes, and auto-play timers.
+- **Infrastructure-as-Code (IaC) Synthesizer**: Generates production AWS Terraform (`main.tf`) and Docker Compose files from visual topologies.
+- **ARB Well-Architected Auditor**: 6-pillar governance evaluation (Security, Resilience, Ops, Performance, Cost, Governance) with letter grades and downloadable reports.
 
 ---
 
 ## [1.0.0] - 2026-10-16
 
 ### Added
-- **ARB Well-Architected Auditor**: 6-pillar governance evaluation (Security, Resilience, Ops, Performance, Cost, Governance) with letter grades and downloadable reports.
+- **Enterprise Architecture Studio Release**: Official 1.0.0 milestone.
 - **Architecture Decision Records (ADRs)**: MADR-compliant markdown decision logger with node-level binding.
-- **Infrastructure-as-Code (IaC) Synthesizer**: Generates production AWS Terraform (`main.tf`) and Docker Compose files from visual topologies.
-- **Executive Storyboard Walkthrough**: Presentation mode with spotlight camera framing, step stepper, presenter notes, and auto-play timers.
 - **Visual PR Diff & Review**: Graph comparison tool detecting added, removed, and modified components with formatted Markdown PR table export.
 - **FinOps Cloud Cost Sizing HUD**: Deterministic offline cost sizing engine covering AWS, GCP, and Azure services.
 - **Spotify Backstage Living Catalog**: Exports compliant `catalog-info.yaml` with typed specs and dependency graphs.
+
+---
+
+## [0.9.1] - 2026-10-16
+
+### Fixed
+- **Editor Keystroke Synchronization**: Resolved editor typing interception loops and synchronized editor state with external source updates.
+- **Mobile Touch Layout**: Fixed responsive layout visibility bugs on narrow touch screens and clamped toolbar popovers.
 
 ---
 
@@ -86,6 +105,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **C4 Architecture Deep Drill-Down**: Hierarchical navigation between System Context, Container, and Component diagram layers.
 - **Flow Simulation Debugger**: Real-time packet tracing with animated glowing photon pulses along directed connections.
 - **Cloud Stencils Drawer**: Pre-configured cloud icon palettes for AWS, GCP, Azure, and Kubernetes.
+- **Role Starters**: Role starters and filters tailored for Product Managers, QA Engineers, Developers, and Students.
+
+---
+
+## [0.8.1] - 2026-10-16
+
+### Fixed
+- **Context Menu Viewport Clamping**: Clamped canvas right-click context menus within viewport bounds to eliminate overflow clipping.
+- **Canvas Vertical Centering**: Fixed canvas vertical centering alignment when opening diagrams with unequal aspect ratios.
+- **Compiler Error Sync**: Synchronized preview compilation errors directly to editor gutter markers.
 
 ---
 
@@ -98,12 +127,30 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [0.7.1] - 2026-10-16
+
+### Fixed
+- **Defensive Event Teardown**: Enforced strict DOM and pointer event listener teardown across all interactive canvas controllers.
+- **Private Browsing Fallback**: Added fault-tolerant fallbacks for private browsing modes where IndexedDB storage is restricted.
+
+---
+
 ## [0.7.0] - 2026-10-16
 
 ### Added
 - **React 19 Modernization**: Integrated `useActionState`, `useOptimistic`, direct `ref` props, and smooth canvas zoom transitions.
 - **Universal Network Resilience**: Implemented exponential backoff with jitter and graceful offline degradation.
 - **STRIDE Threat Modeling Analyzer**: Security risk auditor flagging direct database access, missing API gateways, and cleartext channels.
+- **Real-Time Error Linter**: 160ms linter with error squiggles and contextual arrow autocomplete.
+
+---
+
+## [0.6.1] - 2026-10-15
+
+### Fixed
+- **Modal Escape Listener**: Fixed global keyboard listener leaks on modal dismissals.
+- **Canvas Gradient Export**: Resolved canvas gradient clipping artifacts during multi-format image export.
+- **Pointer Cancel Cleanup**: Cleaned pointer cancel event propagation in edge drawing routines.
 
 ---
 
@@ -117,12 +164,27 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [0.5.1] - 2026-10-15
+
+### Fixed
+- **GitHub Pages Routing**: Fixed GitHub Pages sub-path asset loading and SPA history fallback routing.
+- **Test Server Base Path**: Ensured Vite dev server base path is / during local test execution and /node-flow/ for production deployment.
+
+---
+
 ## [0.5.0] - 2026-10-15
 
 ### Added
 - **Multi-Format Universal Converter Hub**: Bi-directional conversion across 30+ diagram formats (PlantUML, Graphviz DOT, D2, SQL DDL, XMind, StarUML, Draw.io, Excalidraw, Figma, Miro, Illustrator).
 - **Client-Side Vector & Slide Export**: Lossless SVG with roundtrip metadata, 4× UHD PNG, print-ready PDF, and PPTX slide decks.
 - **Encrypted Local Storage**: Browser-local IndexedDB persistence with zero telemetry and complete privacy.
+
+---
+
+## [0.4.1] - 2026-09-28
+
+### Added
+- **Ergonomic Desktop Menu Bar**: Replaced crowded mobile-first header with desktop menu bar and captured high-res UI screenshots.
 
 ---
 
@@ -135,12 +197,27 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [0.3.1] - 2026-09-27
+
+### Fixed
+- **Deployment Automation**: Configured automated GitHub Pages deployment workflow named NodeFlow.
+- **Format Sniffing**: Hardened content sniffing for multi-format imports.
+
+---
+
 ## [0.3.0] - 2026-09-27
 
 ### Added
 - **Universal Importer Expansion**: Added GraphQL, BPMN 2.0, C4 DSL, Terraform HCL, AsyncAPI, FreeMind (`.mm`), and OPML (`.opml`) conversion.
 - **WebAssembly Acceleration Suite**: High-performance Graphviz Wasm C engine, inline fast kernel, and interactive benchmark suite.
 - **Enterprise Landing & Brand**: Rebranded platform to NodeFlow with interactive competitive comparison matrix and SEO metadata.
+
+---
+
+## [0.2.1] - 2026-09-26
+
+### Fixed
+- **AI Drawer Responsiveness**: Resolved layout and positioning glitches in the collapsible AI Assistant drawer on tablet viewports.
 
 ---
 
@@ -151,6 +228,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **In-Browser LLM Execution**: Integrated local Qwen2.5-Coder model via WebAssembly / WebGPU.
 - **Pro Export Studio**: Vector PDF rendering, standalone self-contained HTML generation, and presentation mode.
 - **Design Tokens**: Full Tailwind CSS v4 support with shadcn tokens and CVA components.
+
+---
+
+## [0.1.1] - 2026-09-24
+
+### Fixed
+- **CI Dist Verification**: Fixed CI pipeline to build production assets before executing dist verification tests.
 
 ---
 

@@ -1,21 +1,51 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   GitCommit,
-  Sparkles,
   Calendar,
   CheckCircle2,
   Rocket,
   ArrowRight,
-  ShieldCheck,
-  Tag,
   Clock,
   Zap,
+  Search,
+  ExternalLink,
+  Layers,
+  Filter,
 } from "lucide-react";
-import { Badge, Button, Card, CardContent } from "../components/ui.jsx";
+import { Badge, Button, Card, CardContent, Input } from "../components/ui.jsx";
 import { CHANGELOG_ENTRIES, UPCOMING_ROADMAP } from "../data/changelog-data.js";
 
 export default function Changelog() {
+  const [filterType, setFilterType] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const counts = useMemo(() => {
+    return {
+      all: CHANGELOG_ENTRIES.length,
+      major: CHANGELOG_ENTRIES.filter((e) => e.type === "major").length,
+      minor: CHANGELOG_ENTRIES.filter((e) => e.type === "minor").length,
+      patch: CHANGELOG_ENTRIES.filter((e) => e.type === "patch").length,
+    };
+  }, []);
+
+  const filteredEntries = useMemo(() => {
+    return CHANGELOG_ENTRIES.filter((entry) => {
+      const matchesType = filterType === "all" || entry.type === filterType;
+      if (!matchesType) return false;
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      const inVersion = entry.version.toLowerCase().includes(q);
+      const inTitle = entry.title.toLowerCase().includes(q);
+      const inHighlights = entry.highlights.some((h) => h.toLowerCase().includes(q));
+      const inCommits = entry.commits?.some(
+        (c) => c.hash.toLowerCase().includes(q) || c.message.toLowerCase().includes(q)
+      );
+      return inVersion || inTitle || inHighlights || inCommits;
+    });
+  }, [filterType, searchQuery]);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
@@ -24,92 +54,194 @@ export default function Changelog() {
           <Clock className="size-3.5" /> Platform Release History
         </div>
         <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl text-foreground">
-          Changelog & Roadmap
+          Changelog & Version History
         </h1>
         <p className="mt-2 text-base text-muted-foreground max-w-2xl">
-          Track continuous enhancements, enterprise architecture features, performance
-          optimizations, and upcoming platform milestones in NodeFlow.
+          Complete chronological record of all releases, features, optimizations, and hotfixes
+          from initial commit to current production milestone.
         </p>
+
+        {/* Release Metrics Overview */}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border/80 bg-card/60 p-3.5 backdrop-blur-sm">
+            <div className="text-xs font-medium text-muted-foreground">Total Releases</div>
+            <div className="mt-1 text-2xl font-black tracking-tight text-foreground">{counts.all}</div>
+          </div>
+          <div className="rounded-xl border border-primary/40 bg-primary/5 p-3.5 backdrop-blur-sm">
+            <div className="text-xs font-medium text-primary">Major Milestones</div>
+            <div className="mt-1 text-2xl font-black tracking-tight text-primary">{counts.major}</div>
+          </div>
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3.5 backdrop-blur-sm">
+            <div className="text-xs font-medium text-emerald-400">Feature Releases</div>
+            <div className="mt-1 text-2xl font-black tracking-tight text-emerald-400">{counts.minor}</div>
+          </div>
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3.5 backdrop-blur-sm">
+            <div className="text-xs font-medium text-amber-400">Patches & Fixes</div>
+            <div className="mt-1 text-2xl font-black tracking-tight text-amber-400">{counts.patch}</div>
+          </div>
+        </div>
+
+        {/* Interactive Filter & Search Dock */}
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-lg border border-border/70 bg-card/40">
+            <button
+              type="button"
+              onClick={() => setFilterType("all")}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                filterType === "all"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All ({counts.all})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType("major")}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                filterType === "major"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Major ({counts.major})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType("minor")}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                filterType === "minor"
+                  ? "bg-emerald-500 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Minor ({counts.minor})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType("patch")}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                filterType === "patch"
+                  ? "bg-amber-500 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Patch ({counts.patch})
+            </button>
+          </div>
+
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search release, keyword, hash..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-xs bg-card/60 border-border/80"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Main Release Timeline */}
-      <div className="mt-12 space-y-12">
+      <div className="mt-10 space-y-12">
         <section aria-label="Version history">
-          <div className="relative border-l border-border/80 ml-3 sm:ml-4 pl-6 sm:pl-8 space-y-12">
-            {CHANGELOG_ENTRIES.map((entry) => {
-              const isMajor = entry.type === "major";
-              const isMinor = entry.type === "minor";
-              const tone = isMajor ? "indigo" : isMinor ? "green" : "amber";
-              return (
-                <article key={entry.version} className="relative group">
-                  {/* Timeline dot */}
-                  <div
-                    className={`absolute -left-[31px] sm:-left-[39px] top-1 size-5 rounded-full border-2 transition ${
-                      isMajor
-                        ? "border-primary bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-                        : isMinor
-                        ? "border-emerald-500/80 bg-emerald-500/20 group-hover:border-emerald-400"
-                        : "border-amber-500/80 bg-amber-500/20 group-hover:border-amber-400"
-                    }`}
-                  />
+          {filteredEntries.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/80 p-12 text-center text-sm text-muted-foreground">
+              No releases found matching "{searchQuery}".
+              <div className="mt-3">
+                <Button size="sm" variant="outline" onClick={() => { setSearchQuery(""); setFilterType("all"); }}>
+                  Reset Filters
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative border-l border-border/80 ml-3 sm:ml-4 pl-6 sm:pl-8 space-y-12">
+              {filteredEntries.map((entry) => {
+                const isMajor = entry.type === "major";
+                const isMinor = entry.type === "minor";
+                const tone = isMajor ? "indigo" : isMinor ? "green" : "amber";
+                return (
+                  <article key={entry.version} className="relative group">
+                    {/* Timeline dot */}
+                    <div
+                      className={`absolute -left-[31px] sm:-left-[39px] top-1 size-5 rounded-full border-2 transition ${
+                        isMajor
+                          ? "border-primary bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+                          : isMinor
+                          ? "border-emerald-500/80 bg-emerald-500/20 group-hover:border-emerald-400"
+                          : "border-amber-500/80 bg-amber-500/20 group-hover:border-amber-400"
+                      }`}
+                    />
 
-                  {/* Version header */}
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="text-xl font-bold tracking-tight text-foreground">
-                      v{entry.version}
-                    </span>
-                    <Badge
-                      tone={tone}
-                      className="uppercase font-mono text-[10px]"
-                    >
-                      {entry.type}
-                    </Badge>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-                      <Calendar className="size-3" /> {entry.date}
-                    </span>
-                  </div>
+                    {/* Version header */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xl font-bold tracking-tight text-foreground font-mono">
+                        v{entry.version}
+                      </span>
+                      <Badge
+                        tone={tone}
+                        className="uppercase font-mono text-[10px]"
+                      >
+                        {entry.type}
+                      </Badge>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
+                        <Calendar className="size-3" /> {entry.date}
+                      </span>
+                    </div>
 
-                  <h2 className="mt-2 text-lg font-semibold text-foreground/90">
-                    {entry.title}
-                  </h2>
+                    <h2 className="mt-2 text-lg font-semibold text-foreground/90">
+                      {entry.title}
+                    </h2>
 
-                  {/* Highlights list */}
-                  <Card className="mt-4 border-border/70 bg-card/60 backdrop-blur-sm">
-                    <CardContent className="p-5">
-                      <ul className="space-y-2.5">
-                        {entry.highlights.map((item, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-start gap-2.5 text-sm text-foreground/85 leading-relaxed"
-                          >
-                            <CheckCircle2 className="size-4 text-emerald-400 mt-0.5 shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {entry.commits && entry.commits.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap items-center gap-2">
-                          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-                            <GitCommit className="size-3 text-primary" /> Key commits:
-                          </span>
-                          {entry.commits.map((c, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px] font-mono text-muted-foreground"
+                    {/* Highlights list */}
+                    <Card className="mt-4 border-border/70 bg-card/60 backdrop-blur-sm">
+                      <CardContent className="p-5">
+                        <ul className="space-y-2.5">
+                          {entry.highlights.map((item, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-2.5 text-sm text-foreground/85 leading-relaxed"
                             >
-                              <span className="text-primary font-bold">{c.hash}</span>
-                              <span className="truncate max-w-[280px]">{c.message}</span>
-                            </span>
+                              <CheckCircle2 className="size-4 text-emerald-400 mt-0.5 shrink-0" />
+                              <span>{item}</span>
+                            </li>
                           ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </article>
-              );
-            })}
-          </div>
+                        </ul>
+
+                        {entry.commits && entry.commits.length > 0 && (
+                          <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap items-center gap-2">
+                            <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                              <GitCommit className="size-3 text-primary" /> Key commits:
+                            </span>
+                            {entry.commits.map((c, i) => {
+                              const isHash = /^[0-9a-f]{7,40}$/i.test(c.hash);
+                              return (
+                                <a
+                                  key={i}
+                                  href={isHash ? `https://github.com/muhamadzolfaghari/node-flow/commit/${c.hash}` : "#"}
+                                  target={isHash ? "_blank" : undefined}
+                                  rel={isHash ? "noopener noreferrer" : undefined}
+                                  className="inline-flex items-center gap-1 rounded bg-muted/60 hover:bg-muted/90 px-2 py-0.5 text-[11px] font-mono text-muted-foreground transition group/commit"
+                                  title={c.message}
+                                >
+                                  <span className="text-primary font-bold group-hover/commit:underline">
+                                    {c.hash}
+                                  </span>
+                                  <span className="truncate max-w-[280px]">{c.message}</span>
+                                  {isHash && <ExternalLink className="size-2.5 opacity-60 ml-0.5" />}
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Upcoming Roadmap Section */}
