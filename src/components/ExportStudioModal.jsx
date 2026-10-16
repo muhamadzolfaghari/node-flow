@@ -1,26 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  X,
-  Download,
-  Copy,
-  Check,
-  Sparkles,
-  Maximize2,
-  FileImage,
-  FileCode,
-  FileText,
-  Sliders,
-  Palette,
-  Layers,
-  ZoomIn,
-} from "lucide-react";
-import { Exporter } from "./exporter.js";
-import { generateBackstageCatalog } from "../utils/backstage-exporter.js";
-import {
-  BACKGROUND_OPTIONS,
-  PADDING_OPTIONS,
-  SCALE_OPTIONS,
-} from "../data/export-options.js";
+import React from "react";
+import { X, Sparkles } from "lucide-react";
+import { useExportStudio } from "../hooks/useExportStudio.js";
+import { ExportPreviewPane } from "./export/ExportPreviewPane.jsx";
+import { ExportControlsPane } from "./export/ExportControlsPane.jsx";
 
 export default function ExportStudioModal({
   isOpen,
@@ -29,145 +11,17 @@ export default function ExportStudioModal({
   title = "diagram",
   source = "",
   format = "mermaid",
-  currentTheme = "dark",
 }) {
-  const [background, setBackground] = useState("transparent");
-  const [padding, setPadding] = useState(32);
-  const [scale, setScale] = useState(2);
-  const [embedSource, setEmbedSource] = useState(true);
-  const [copiedKind, setCopiedKind] = useState(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [previewSvg, setPreviewSvg] = useState("");
-  const previewRef = useRef(null);
-
-  // Generate real-time preview SVG
-  useEffect(() => {
-    if (!isOpen || !containerRef?.current) return;
-    try {
-      const svgEl = containerRef.current.querySelector("svg");
-      if (!svgEl) return;
-      const cleanSvg = Exporter.getCleanSvgString(svgEl, {
-        background: background === "transparent" ? "transparent" : background.startsWith("radial") ? "#080c14" : background,
-        padding,
-        source: embedSource ? source : null,
-        format,
-      });
-      setPreviewSvg(cleanSvg);
-    } catch (err) {
-      console.warn("Failed to generate preview SVG:", err);
-    }
-  }, [isOpen, background, padding, embedSource, source, format, containerRef]);
-
-  // Close modal on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  const exportStudio = useExportStudio({
+    isOpen,
+    onClose,
+    containerRef,
+    title,
+    source,
+    format,
+  });
 
   if (!isOpen) return null;
-
-  const handleCopyPng = async () => {
-    if (!containerRef?.current) return;
-    try {
-      setIsExporting(true);
-      await Exporter.copyImageToClipboard(containerRef.current, {
-        scale,
-        background: background === "transparent" ? "transparent" : background.startsWith("radial") ? "#080c14" : background,
-        padding,
-      });
-      setCopiedKind("png");
-      setTimeout(() => setCopiedKind(null), 2000);
-    } catch (e) {
-      alert(e.message || "Failed to copy image to clipboard");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleCopySvg = async () => {
-    if (!containerRef?.current) return;
-    try {
-      setIsExporting(true);
-      const svgEl = containerRef.current.querySelector("svg");
-      if (!svgEl) throw new Error("No diagram SVG found");
-      const cleanSvg = Exporter.getCleanSvgString(svgEl, {
-        background: background === "transparent" ? "transparent" : background.startsWith("radial") ? "#080c14" : background,
-        padding,
-        source: embedSource ? source : null,
-        format,
-      });
-      await navigator.clipboard.writeText(cleanSvg);
-      setCopiedKind("svg");
-      setTimeout(() => setCopiedKind(null), 2000);
-    } catch (e) {
-      alert(e.message || "Failed to copy SVG to clipboard");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleDownloadPng = async () => {
-    if (!containerRef?.current) return;
-    try {
-      setIsExporting(true);
-      await Exporter.downloadPng(containerRef.current, title, {
-        scale,
-        background: background === "transparent" ? "transparent" : background.startsWith("radial") ? "#080c14" : background,
-        padding,
-      });
-    } catch (e) {
-      alert(e.message || "Failed to export PNG");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleDownloadSvg = () => {
-    if (!containerRef?.current) return;
-    try {
-      Exporter.downloadSvg(containerRef.current, title, {
-        background: background === "transparent" ? "transparent" : background.startsWith("radial") ? "#080c14" : background,
-        padding,
-        source: embedSource ? source : null,
-        format,
-      });
-    } catch (e) {
-      alert(e.message || "Failed to export SVG");
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    if (!containerRef?.current) return;
-    try {
-      setIsExporting(true);
-      await Exporter.downloadPdf(containerRef.current, title, {
-        background: background === "transparent" ? "#ffffff" : background.startsWith("radial") ? "#080c14" : background,
-      });
-    } catch (e) {
-      alert(e.message || "Failed to export PDF");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleDownloadBackstage = () => {
-    try {
-      const yaml = generateBackstageCatalog(source, title);
-      const blob = new Blob([yaml], { type: "text/yaml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "catalog-info.yaml";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      alert(e.message || "Failed to export Backstage catalog");
-    }
-  };
 
   return (
     <div
@@ -196,193 +50,43 @@ export default function ExportStudioModal({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition cursor-pointer"
             title="Close (Esc)"
           >
             <X className="size-5" />
           </button>
         </div>
 
-        {/* Content Body */}
+        {/* Content Body: Composed Presentational Panes */}
         <div className="grid flex-1 grid-cols-1 md:grid-cols-12 overflow-y-auto min-h-0">
-          {/* Live Preview Column */}
-          <div className="md:col-span-7 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-border/60 bg-muted/20 p-6 min-h-[300px]">
-            <div
-              className="relative flex size-full max-h-[460px] items-center justify-center overflow-hidden rounded-xl border border-border/50 shadow-inner"
-              style={{
-                background:
-                  background === "transparent"
-                    ? "radial-gradient(#94a3b8 1px, transparent 1px) 0 0 / 16px 16px, #0b0f17"
-                    : background,
-              }}
-            >
-              {previewSvg ? (
-                <div
-                  ref={previewRef}
-                  className="flex size-full items-center justify-center p-4 [&>svg]:max-h-full [&>svg]:max-w-full [&>svg]:object-contain"
-                  dangerouslySetInnerHTML={{ __html: previewSvg }}
-                />
-              ) : (
-                <span className="text-xs text-muted-foreground">No active diagram preview</span>
-              )}
-            </div>
-            <div className="mt-3 flex items-center justify-between w-full px-1 text-[11px] text-muted-foreground font-mono">
-              <span>{title}</span>
-              <span>Scale: {scale}× • Pad: {padding}px</span>
-            </div>
-          </div>
-
-          {/* Settings Column */}
-          <div className="md:col-span-5 flex flex-col justify-between p-6 space-y-6">
-            <div className="space-y-5">
-              {/* Background Picker */}
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2.5">
-                  <Palette className="size-3.5 text-primary" /> Canvas Background
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {BACKGROUND_OPTIONS.map((bg) => (
-                    <button
-                      key={bg.id}
-                      onClick={() => setBackground(bg.value)}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition ${
-                        background === bg.value
-                          ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary"
-                          : "border-border/60 hover:bg-muted/40"
-                      }`}
-                    >
-                      <div className={`size-5 rounded-full border shadow-sm ${bg.color}`} />
-                      <span className="text-[11px] font-medium leading-tight">{bg.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Padding Selector */}
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
-                  <Sliders className="size-3.5 text-primary" /> Canvas Margins / Padding
-                </label>
-                <div className="grid grid-cols-4 gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1">
-                  {PADDING_OPTIONS.map((pad) => (
-                    <button
-                      key={pad.value}
-                      onClick={() => setPadding(pad.value)}
-                      className={`rounded-md py-1 text-xs font-medium transition ${
-                        padding === pad.value
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {pad.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Resolution Scale */}
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
-                  <ZoomIn className="size-3.5 text-primary" /> Resolution & Scale
-                </label>
-                <div className="grid grid-cols-3 gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1">
-                  {SCALE_OPTIONS.map((sc) => (
-                    <button
-                      key={sc.value}
-                      onClick={() => setScale(sc.value)}
-                      className={`rounded-md py-1 text-xs font-medium transition ${
-                        scale === sc.value
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {sc.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Embed Source Switch */}
-              <label className="flex items-center gap-2.5 rounded-xl border border-border/60 p-3 hover:bg-muted/30 cursor-pointer transition">
-                <input
-                  type="checkbox"
-                  checked={embedSource}
-                  onChange={(e) => setEmbedSource(e.target.checked)}
-                  className="rounded border-border text-primary focus:ring-primary size-4"
-                />
-                <div className="text-xs">
-                  <div className="font-medium text-foreground">Embed Diagram Source into SVG</div>
-                  <div className="text-muted-foreground text-[11px]">
-                    Allows exported .svg files to be dropped back in to resume editing.
-                  </div>
-                </div>
-              </label>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-2.5 pt-2 border-t border-border/60">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={handleCopyPng}
-                  disabled={isExporting}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition"
-                >
-                  {copiedKind === "png" ? (
-                    <Check className="size-4 text-emerald-500" />
-                  ) : (
-                    <Copy className="size-4 text-primary" />
-                  )}
-                  {copiedKind === "png" ? "Copied PNG!" : "Copy PNG"}
-                </button>
-                <button
-                  onClick={handleCopySvg}
-                  disabled={isExporting}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition"
-                >
-                  {copiedKind === "svg" ? (
-                    <Check className="size-4 text-emerald-500" />
-                  ) : (
-                    <FileCode className="size-4 text-cyan-400" />
-                  )}
-                  {copiedKind === "svg" ? "Copied SVG!" : "Copy SVG"}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={handleDownloadSvg}
-                  disabled={isExporting}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary/90 transition"
-                >
-                  <Download className="size-3.5" /> SVG
-                </button>
-                <button
-                  onClick={handleDownloadPng}
-                  disabled={isExporting}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 px-3 py-2 text-xs font-semibold text-white shadow-md hover:bg-cyan-500 transition"
-                >
-                  <Download className="size-3.5" /> PNG ({scale}×)
-                </button>
-                <button
-                  onClick={handleDownloadPdf}
-                  disabled={isExporting}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition"
-                >
-                  <FileText className="size-3.5 text-rose-400" /> PDF
-                </button>
-              </div>
-
-              <button
-                onClick={handleDownloadBackstage}
-                disabled={isExporting}
-                className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition w-full shadow-xs"
-              >
-                <Layers className="size-4" />
-                <span>Export Backstage (catalog-info.yaml)</span>
-              </button>
-            </div>
-          </div>
+          <ExportPreviewPane
+            background={exportStudio.background}
+            previewSvg={exportStudio.previewSvg}
+            previewRef={exportStudio.previewRef}
+            title={title}
+            scale={exportStudio.scale}
+            padding={exportStudio.padding}
+          />
+          <ExportControlsPane
+            background={exportStudio.background}
+            setBackground={exportStudio.setBackground}
+            padding={exportStudio.padding}
+            setPadding={exportStudio.setPadding}
+            scale={exportStudio.scale}
+            setScale={exportStudio.setScale}
+            embedSource={exportStudio.embedSource}
+            setEmbedSource={exportStudio.setEmbedSource}
+            copiedKind={exportStudio.copiedKind}
+            isExporting={exportStudio.isExporting}
+            handleCopyPng={exportStudio.handleCopyPng}
+            handleCopySvg={exportStudio.handleCopySvg}
+            handleDownloadSvg={exportStudio.handleDownloadSvg}
+            handleDownloadPng={exportStudio.handleDownloadPng}
+            handleDownloadPdf={exportStudio.handleDownloadPdf}
+            handleDownloadBackstage={exportStudio.handleDownloadBackstage}
+          />
         </div>
       </div>
     </div>

@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - **Context-Aware Autocomplete**: Scoped keyword completions per diagram family (flowchart, sequence, class, state, er), added 8 node shape snippet templates after arrow operators, and suppressed keyword popups inside string literals or bracket labels.
 - **Enhanced Canvas Content Selectors**: Added pie chart, quadrant point, git graph commit, block element, and legend selectors to `CANVAS_CONTENT_SELECTOR` for comprehensive, multi-diagram framing accuracy.
+- **Logic / UI Separation & React Patterns**:
+  - Extracted `useExportStudio` hook (`src/hooks/useExportStudio.js`) and decomposed `ExportStudioModal.jsx` into `ExportPreviewPane` and `ExportControlsPane` (reduced from 391 lines to 82 lines).
+  - Extracted `useEditorDiagnostics` hook (`src/hooks/useEditorDiagnostics.js`) and `EditorDiagnosticsBanner` component (`src/components/editor/EditorDiagnosticsBanner.jsx`), decoupling CodeMirror view rendering from diagnostic state and repair side-effects.
 
 ### Fixed
 - **Editor Focus Retention**: Prevented CodeMirror instance destruction on parent re-renders and keystrokes, preserving cursor position, selection, and active input state.
