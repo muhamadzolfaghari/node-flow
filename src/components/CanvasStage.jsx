@@ -36,6 +36,13 @@ import {
   Cloud,
   BarChart2,
   Layers,
+  FileText,
+  GitCompare,
+  DollarSign,
+  Shield,
+  Database,
+  Zap,
+  Eye,
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
@@ -43,6 +50,9 @@ import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
 import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";
 import MobileNodeSheet from "./MobileNodeSheet.jsx";
+import AdrManagerModal from "./AdrManagerModal.jsx";
+import ArchitectureDiffModal from "./ArchitectureDiffModal.jsx";
+import { calculateArchitectureCost } from "../lib/finops-pricing.js";
 
 export default function CanvasStage({
   ref,
@@ -117,7 +127,12 @@ export default function CanvasStage({
     [minimapViewport, setMinimapViewport] = useState(null),
     [isSimulating, setIsSimulating] = useState(false),
     [showStencilsDrawer, setShowStencilsDrawer] = useState(false),
-    [showMetricsModal, setShowMetricsModal] = useState(false);
+    [showMetricsModal, setShowMetricsModal] = useState(false),
+    [showAdrModal, setShowAdrModal] = useState(false),
+    [showDiffModal, setShowDiffModal] = useState(false),
+    [showFinOps, setShowFinOps] = useState(false),
+    [activeLens, setActiveLens] = useState("standard"),
+    [selectedAdrId, setSelectedAdrId] = useState(null);
 
   const [mobileViewport, setMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -128,6 +143,76 @@ export default function CanvasStage({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   const activeIsMobile = isMobile || mobileViewport;
+
+  // Real-time FinOps Cloud Cost Sizing
+  const costEstimate = React.useMemo(() => {
+    if (!showFinOps) return { totalMonthly: 0, breakdown: [] };
+    const svg = containerRef.current?.querySelector("svg");
+    const nodes = [];
+    if (svg) {
+      svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor").forEach((el) => {
+        const l = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim();
+        nodes.push({ id: flowchartNodeId(el.id), label: l || el.id });
+      });
+    }
+    return calculateArchitectureCost(nodes);
+  }, [showFinOps, status, documentId, containerRef]);
+
+  // Apply Multi-Perspective Architectural Lenses to SVG elements
+  useEffect(() => {
+    const svg = containerRef.current?.querySelector("svg");
+    if (!svg) return;
+
+    // Reset previous lens classes
+    svg.querySelectorAll(".lens-dimmed, .lens-highlight-security, .lens-highlight-data, .lens-highlight-resilience").forEach((el) => {
+      el.classList.remove("lens-dimmed", "lens-highlight-security", "lens-highlight-data", "lens-highlight-resilience");
+    });
+
+    if (activeLens === "standard") return;
+
+    const allNodes = Array.from(svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor"));
+    const allEdges = Array.from(svg.querySelectorAll("g.edgePath, path.flowchart-link"));
+
+    if (activeLens === "security") {
+      const secKeywords = ["auth", "gateway", "firewall", "ingress", "vault", "token", "waf", "security", "perimeter", "iam"];
+      for (const n of allNodes) {
+        const text = `${n.id} ${n.textContent || ""}`.toLowerCase();
+        const isMatch = secKeywords.some((k) => text.includes(k));
+        if (isMatch) {
+          n.classList.add("lens-highlight-security");
+        } else {
+          n.classList.add("lens-dimmed");
+        }
+      }
+      for (const e of allEdges) {
+        e.classList.add("lens-dimmed");
+      }
+    } else if (activeLens === "data") {
+      const dataKeywords = ["db", "database", "postgres", "mysql", "redis", "s3", "bucket", "kafka", "queue", "mongo", "storage", "cache", "elastic"];
+      for (const n of allNodes) {
+        const text = `${n.id} ${n.textContent || ""}`.toLowerCase();
+        const isMatch = dataKeywords.some((k) => text.includes(k));
+        if (isMatch) {
+          n.classList.add("lens-highlight-data");
+        } else {
+          n.classList.add("lens-dimmed");
+        }
+      }
+      for (const e of allEdges) {
+        e.classList.add("lens-dimmed");
+      }
+    } else if (activeLens === "resilience") {
+      for (const n of allNodes) {
+        const text = `${n.id} ${n.textContent || ""}`.toLowerCase();
+        const isSpof = text.includes("gateway") || text.includes("auth") || text.includes("db") || text.includes("database") || text.includes("kafka");
+        if (isSpof) {
+          n.classList.add("lens-highlight-resilience");
+        } else {
+          n.classList.add("lens-dimmed");
+        }
+      }
+    }
+  }, [activeLens, status, documentId, containerRef]);
 
   const callbacks = useRef({
     onSelect,
@@ -1180,6 +1265,69 @@ export default function CanvasStage({
         </div>
       )}
 
+      {/* Multi-Perspective Architectural Lens Switcher */}
+      {!breadcrumbs?.length && !isGeospatial && (
+        <div className="absolute top-4 left-4 z-20 hidden md:flex items-center gap-1 rounded-full border border-border/80 bg-card/95 p-1 text-xs shadow-2xl backdrop-blur-xl ring-1 ring-white/10 select-none animate-in fade-in slide-in-from-top-1">
+          {[
+            { id: "standard", label: "Standard", icon: Eye, title: "Standard unfiltered view" },
+            { id: "security", label: "Security", icon: Shield, title: "Highlight perimeter, auth, and trust boundaries" },
+            { id: "data", label: "Data Stores", icon: Database, title: "Highlight databases, queues, and caches" },
+            { id: "resilience", label: "Resilience", icon: Zap, title: "Highlight single points of failure" },
+          ].map((l) => {
+            const Icon = l.icon;
+            const isActive = activeLens === l.id;
+            return (
+              <button
+                key={l.id}
+                onClick={() => setActiveLens(l.id)}
+                title={l.title}
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="size-3" />
+                <span>{l.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FinOps Cloud Architecture Cost HUD */}
+      {showFinOps && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-1 select-none animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-card/95 px-3 py-1.5 text-xs shadow-2xl backdrop-blur-xl ring-1 ring-emerald-400/20">
+            <DollarSign className="size-3.5 text-emerald-400" />
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Est. Monthly Cloud:</span>
+            <span className="font-mono font-bold text-emerald-400 text-xs">
+              ~${costEstimate.totalMonthly.toFixed(2)}/mo
+            </span>
+            <button
+              onClick={() => setShowFinOps(false)}
+              className="rounded-full p-0.5 text-muted-foreground hover:text-foreground ml-1"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+          {costEstimate.breakdown.length > 0 && (
+            <div className="rounded-xl border border-border/80 bg-card/95 p-2.5 shadow-2xl backdrop-blur-xl text-[11px] max-w-[260px] space-y-1">
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/60 flex items-center justify-between">
+                <span>Infrastructure Footprint</span>
+                <span className="text-emerald-400 font-mono">{costEstimate.breakdown.length} items</span>
+              </div>
+              {costEstimate.breakdown.slice(0, 5).map((b, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 text-muted-foreground">
+                  <span className="truncate">{b.serviceName}</span>
+                  <span className="font-mono font-medium text-foreground shrink-0">${b.cost}/mo</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Direct Drag-to-Connect Handles around selected node */}
       {selected && nodeAnchor?.elWidth && !isEditing && (
         <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
@@ -1926,6 +2074,27 @@ export default function CanvasStage({
           <Cloud className="text-sky-400" />
         </Tool>
         <span className="mx-1 h-4 border-l border-border/80" />
+        <Tool
+          title="FinOps cloud architecture cost sizing"
+          aria-pressed={showFinOps}
+          className={showFinOps ? "bg-accent" : ""}
+          onClick={() => setShowFinOps(!showFinOps)}
+        >
+          <DollarSign className="text-emerald-400" />
+        </Tool>
+        <Tool
+          title="Architecture Decision Records (ADRs)"
+          onClick={() => setShowAdrModal(true)}
+        >
+          <FileText className="text-indigo-400" />
+        </Tool>
+        <Tool
+          title="Visual architecture diff & PR review"
+          onClick={() => setShowDiffModal(true)}
+        >
+          <GitCompare className="text-amber-400" />
+        </Tool>
+        <span className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Find a node (⌘/Ctrl+P)" onClick={() => setSearchOpen(true)}>
           <Search />
         </Tool>
@@ -1997,6 +2166,27 @@ export default function CanvasStage({
           isFlowchart={documentFormat === "mermaid"}
         />
       )}
+
+      {/* Architecture Decision Records (ADR) Suite Modal */}
+      <AdrManagerModal
+        isOpen={showAdrModal}
+        onClose={() => setShowAdrModal(false)}
+        documentSource={documentSource}
+        initialSelectedId={selectedAdrId}
+        onLinkAdrToNode={(adrId, nodeId) => {
+          if (nodeId && callbacks.current.onRenameNode) {
+            // Document linked ADR
+            setShowAdrModal(false);
+          }
+        }}
+      />
+
+      {/* Visual Architecture Diff & PR Review Modal */}
+      <ArchitectureDiffModal
+        isOpen={showDiffModal}
+        onClose={() => setShowDiffModal(false)}
+        currentSource={documentSource}
+      />
     </div>
   );
 }

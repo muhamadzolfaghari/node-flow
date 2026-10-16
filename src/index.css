@@ -382,6 +382,45 @@
   filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.95)) drop-shadow(0 0 8px #06b6d4) !important;
 }
 
+/* Multi-Perspective Architectural Lenses */
+.mermaid-stage g.node.lens-dimmed,
+.mermaid-stage g.edgePath.lens-dimmed {
+  opacity: 0.18 !important;
+  filter: grayscale(85%) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.mermaid-stage g.node.lens-highlight-security rect,
+.mermaid-stage g.node.lens-highlight-security polygon,
+.mermaid-stage g.node.lens-highlight-security circle,
+.mermaid-stage g.node.lens-highlight-security path:not(.flowchart-link) {
+  stroke: #10b981 !important;
+  stroke-width: 2.8px !important;
+  filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.85)) !important;
+  transition: all 0.3s ease;
+}
+
+.mermaid-stage g.node.lens-highlight-data rect,
+.mermaid-stage g.node.lens-highlight-data polygon,
+.mermaid-stage g.node.lens-highlight-data circle,
+.mermaid-stage g.node.lens-highlight-data path:not(.flowchart-link) {
+  stroke: #a855f7 !important;
+  stroke-width: 2.8px !important;
+  filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.85)) !important;
+  transition: all 0.3s ease;
+}
+
+.mermaid-stage g.node.lens-highlight-resilience rect,
+.mermaid-stage g.node.lens-highlight-resilience polygon,
+.mermaid-stage g.node.lens-highlight-resilience circle,
+.mermaid-stage g.node.lens-highlight-resilience path:not(.flowchart-link) {
+  stroke: #f59e0b !important;
+  stroke-width: 2.8px !important;
+  stroke-dasharray: 6 3 !important;
+  filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.85)) !important;
+  transition: all 0.3s ease;
+}
+
 /* Canvas Tool Mode Cursors */
 .studio-canvas.tool-pointer {
   cursor: default;

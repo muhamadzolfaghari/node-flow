@@ -15,6 +15,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { Exporter } from "./exporter.js";
+import { generateBackstageCatalog } from "../utils/backstage-exporter.js";
 
 const BACKGROUND_OPTIONS = [
   { id: "transparent", label: "Transparent", value: "transparent", color: "border-dashed border-muted-foreground/40 bg-transparent" },
@@ -167,6 +168,21 @@ export default function ExportStudioModal({
       alert(e.message || "Failed to export PDF");
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleDownloadBackstage = () => {
+    try {
+      const yaml = generateBackstageCatalog(source, title);
+      const blob = new Blob([yaml], { type: "text/yaml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "catalog-info.yaml";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e.message || "Failed to export Backstage catalog");
     }
   };
 
@@ -373,6 +389,15 @@ export default function ExportStudioModal({
                   <FileText className="size-3.5 text-rose-400" /> PDF
                 </button>
               </div>
+
+              <button
+                onClick={handleDownloadBackstage}
+                disabled={isExporting}
+                className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition w-full shadow-xs"
+              >
+                <Layers className="size-4" />
+                <span>Export Backstage (catalog-info.yaml)</span>
+              </button>
             </div>
           </div>
         </div>
