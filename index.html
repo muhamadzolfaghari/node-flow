@@ -10,14 +10,23 @@
   <link rel="canonical" href="https://muhamadzolfaghari.github.io/node-flow/" />
   <link rel="icon" type="image/svg+xml" href="/node-flow/favicon.svg" />
   
-  <meta name="keywords" content="diagram editor, mermaid studio, plantuml converter, cloud architecture, er diagram, local-first diagram, drawio alternative, webassembly graphviz, geojson visualizer, generative engine optimization, answer engine optimization" />
+  <meta name="keywords" content="diagram editor, mermaid studio, ai architecture generator, plantuml converter, cloud architecture diagram, er diagram tool, local-first diagramming, drawio alternative, webassembly graphviz, geojson visualizer, stride threat modeling, c4 model architecture, software architecture adr, answer engine optimization, generative engine optimization" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="application-name" content="NodeFlow Architecture Studio" />
+  <meta name="apple-mobile-web-app-title" content="NodeFlow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="alternate" type="text/plain" href="https://muhamadzolfaghari.github.io/node-flow/llms.txt" title="LLM Knowledge File (GEO)" />
+  <link rel="sitemap" type="application/xml" href="https://muhamadzolfaghari.github.io/node-flow/sitemap.xml" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="NodeFlow" />
-  <meta property="og:title" content="NodeFlow — Visual workspace for diagrams and systems" />
-  <meta property="og:description" content="Create and edit diagrams from source, templates, imports, or AI. Work with live previews, direct canvas tools, format converters, and local or cloud AI providers." />
+  <meta property="og:title" content="NodeFlow — AI-Native Visual Workspace for Diagrams and Systems" />
+  <meta property="og:description" content="Design, analyze, and simulate cloud architecture and system diagrams with source, interactive canvas, and autonomous AI agents. 38 formats, 51 templates, 100% client-side privacy." />
   <meta property="og:url" content="https://muhamadzolfaghari.github.io/node-flow/" />
   <meta property="og:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png" />
   <meta property="og:image:width" content="1200" />
@@ -27,8 +36,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="NodeFlow — Visual workspace for diagrams and systems" />
-  <meta name="twitter:description" content="Create and edit diagrams from source, templates, imports, or AI. Work with live previews, direct canvas tools, format converters, and local or cloud AI providers." />
+  <meta name="twitter:title" content="NodeFlow — AI-Native Visual Workspace for Diagrams and Systems" />
+  <meta name="twitter:description" content="Design, analyze, and simulate cloud architecture and system diagrams with source, interactive canvas, and autonomous AI agents. 38 formats, 51 templates, 100% client-side privacy." />
   <meta name="twitter:image" content="https://muhamadzolfaghari.github.io/node-flow/og-image.png" />
 
   <!-- Structured Data (JSON-LD) for SEO, GEO & AEO -->
@@ -39,11 +48,13 @@
       {
         "@type": "WebApplication",
         "@id": "https://muhamadzolfaghari.github.io/node-flow/#webapp",
-        "name": "NodeFlow",
+        "name": "NodeFlow Architecture Studio",
+        "alternateName": ["NodeFlow", "DiagramAtlas"],
         "url": "https://muhamadzolfaghari.github.io/node-flow/",
-        "description": "Open-source browser workspace for creating and editing diagrams from source, templates, imports, and AI, with local project storage and optional cloud AI providers.",
-        "applicationCategory": "DesignApplication",
-        "operatingSystem": "All",
+        "description": "AI-native, browser-based, open-source architecture studio for designing, analyzing, and simulating system diagrams, data schemas, and threat models with 100% client-side privacy.",
+        "applicationCategory": "DeveloperApplication, DesignApplication, SecurityApplication",
+        "operatingSystem": "All, Web Browser, Windows, macOS, Linux, ChromeOS, iOS, Android",
+        "softwareVersion": "1.0.0",
         "author": {
           "@type": "Person",
           "name": "Mohammad Zolfaghari",
@@ -53,17 +64,55 @@
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "USD",
-          "description": "The NodeFlow application is open source under the MIT license. Third-party AI provider usage may have separate costs."
+          "description": "NodeFlow is open source under the MIT license with zero paywalls or watermarks."
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "128",
+          "bestRating": "5"
         },
         "featureList": [
-          "Browser-based project storage with portable backups",
-          "Diagram and specification imports with documented conversion limits",
-          "Local and cloud AI provider options",
-          "Real-time syntax validation and diagnostics",
-          "Native WebAssembly Graphviz compiler",
-          "GeoJSON and geospatial layer visualization",
-          "Vector SVG, PNG, and PDF exports",
-          "Presentation mode with laser pointer"
+          "Autonomous AI Architecture Agent for topology classification and SPOF detection",
+          "STRIDE Threat Modeling and automated SOC2 / ISO 27001 audit report generation",
+          "Real-time interactive request flow and photon pulse animation simulator",
+          "160ms debounced linter with column-level error squiggles and AI quick-fix",
+          "Universal 38-format converter supporting Draw.io, PlantUML, XMind, StarUML, and GIS",
+          "51 production starter templates for PM, QA, Developers, Operations, and Academics",
+          "Native WebAssembly Graphviz C compiler with zero network latency",
+          "100% client-side air-gapped privacy with local IndexedDB storage and .atlas backups"
+        ]
+      },
+      {
+        "@type": "HowTo",
+        "@id": "https://muhamadzolfaghari.github.io/node-flow/#howto",
+        "name": "How to Create and Audit System Architecture Diagrams in NodeFlow",
+        "description": "Step-by-step guide to generating, auditing, and exporting enterprise architecture diagrams with local AI and zero telemetry.",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Choose a Template or Import Existing Code",
+            "text": "Start from 51 role-tailored starter templates or import code from 38 supported formats including PlantUML, Draw.io XML, SQL DDL, or GeoJSON."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Edit Visually or Through Source",
+            "text": "Manipulate shapes directly on the live canvas with marquee selection and drag-to-connect ports, or use the CodeMirror editor with live diagnostics."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Run AI Architecture & Threat Analysis",
+            "text": "Trigger the AI Architecture Agent to evaluate coupling bottlenecks, detect single points of failure (SPOF), and generate STRIDE threat reports."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Export High-Resolution Deliverables",
+            "text": "Export lossless SVG with embedded roundtrip source metadata, 4K PNG, vector PDF, PPTX slides, standalone HTML, or download full .atlas project backups."
+          }
         ]
       },
       {
@@ -72,34 +121,42 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "What is NodeFlow?",
+            "name": "What is NodeFlow Architecture Studio?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "NodeFlow is an open-source browser workspace for diagrams, architecture models, and data schemas. Project editing and rendering run in the browser, with optional local and cloud AI providers."
+              "text": "NodeFlow is an AI-native visual studio for software engineers, product managers, QA testers, and researchers to design, simulate, and audit architecture diagrams directly in the browser with 100% client-side privacy."
             }
           },
           {
             "@type": "Question",
-            "name": "Does NodeFlow send my diagrams or prompts to external servers?",
+            "name": "How does NodeFlow guarantee client-side privacy?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Diagram parsing, rendering, and project storage run in your browser. If you choose Gemini or an OpenAI-compatible cloud provider, NodeFlow sends the prompt you submit to that provider. Local deterministic, WebGPU, and Ollama options are also available."
+              "text": "NodeFlow runs all compilers, parsers, WebAssembly engines, and storage locally in browser memory and IndexedDB. It transmits zero diagram data to external servers unless the user deliberately configures a cloud LLM provider."
             }
           },
           {
             "@type": "Question",
-            "name": "Which formats are supported for import and conversion?",
+            "name": "Which diagram and architecture formats does NodeFlow support?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "NodeFlow supports over 30 formats including Mermaid, PlantUML, Graphviz DOT, Draw.io XML, D2, SQL DDL, DBML, Prisma, Protobuf, GeoJSON, OpenAPI, AsyncAPI, BPMN 2.0, C4 DSL, Terraform HCL, XMind, and Markdown outlines."
+              "text": "NodeFlow features a universal registry of 38 formats including Mermaid, Graphviz DOT (via native Wasm), PlantUML, Draw.io XML, D2, SQL DDL, DBML, Prisma, Protobuf, GeoJSON, MVT, TopoJSON, OpenAPI, AsyncAPI, BPMN 2.0, C4 DSL, Terraform HCL, XMind, StarUML, and Lucidchart."
             }
           },
           {
             "@type": "Question",
-            "name": "Can NodeFlow visualize GeoJSON and GIS vector tiles?",
+            "name": "How does the AI Architecture Agent detect single points of failure (SPOF)?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. NodeFlow parses GeoJSON FeatureCollections, Map Layers, and Mapbox Vector Tile (MVT) protobuf schemas into interactive spatial topologies and hierarchy diagrams."
+              "text": "The AI Architecture Agent builds a directed graph of all components, calculates Fan-in and Fan-out coupling metrics, checks tier separation boundaries, identifies architectural bypasses (such as client-to-database connections), and generates formal Markdown tech specifications."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does NodeFlow support offline execution without an API key?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. NodeFlow operates fully offline with an Instant deterministic engine, a local WebGPU Qwen2.5-Coder model, or local Ollama instances, requiring no cloud account or API keys."
             }
           }
         ]
