@@ -262,11 +262,12 @@ export class AnalyticsModal {
       if (e.target === this.modalEl) this.close();
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.modalEl.style.display === 'flex') {
+    this.onKeyDown = (e) => {
+      if (e.key === 'Escape' && this.modalEl && this.modalEl.style.display === 'flex') {
         this.close();
       }
-    });
+    };
+    document.addEventListener('keydown', this.onKeyDown);
 
     // Tab buttons
     const tabBtns = this.modalEl.querySelectorAll('.analytics-tab-btn');
@@ -312,9 +313,9 @@ export class AnalyticsModal {
 
   initLiveHeaderBadges() {
     // Update header badges whenever analytics changes
-    visitorAnalytics.subscribe((data) => {
+    this.unsubscribe = visitorAnalytics.subscribe((data) => {
       this.updateHeaderBadge(data);
-      if (this.modalEl.style.display === 'flex') {
+      if (this.modalEl && this.modalEl.style.display === 'flex') {
         this.renderData(data);
       }
     });
@@ -463,5 +464,17 @@ export class AnalyticsModal {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  destroy() {
+    if (this.onKeyDown) {
+      document.removeEventListener('keydown', this.onKeyDown);
+    }
+    if (typeof this.unsubscribe === 'function') {
+      this.unsubscribe();
+    }
+    if (this.modalEl && this.modalEl.parentNode) {
+      this.modalEl.parentNode.removeChild(this.modalEl);
+    }
   }
 }

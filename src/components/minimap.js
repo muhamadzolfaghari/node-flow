@@ -53,7 +53,7 @@ export class MiniMapController {
     let startX = 0;
     let startY = 0;
 
-    const onPointerDown = (e) => {
+    this._onPointerDown = (e) => {
       e.stopPropagation();
       e.preventDefault();
       this.isDragging = true;
@@ -75,7 +75,7 @@ export class MiniMapController {
       window.removeEventListener('pointerup', onPointerUp);
     };
 
-    this.viewportEl.addEventListener('pointerdown', onPointerDown);
+    this.viewportEl.addEventListener('pointerdown', this._onPointerDown);
   }
 
   panFromMinimap(e) {
@@ -152,5 +152,12 @@ export class MiniMapController {
     this.viewRect.style.top = `${ry}px`;
     this.viewRect.style.width = `${rw}px`;
     this.viewRect.style.height = `${rh}px`;
+  }
+
+  destroy() {
+    this.isVisible = false;
+    if (this._onPointerDown && this.viewportEl) {
+      this.viewportEl.removeEventListener('pointerdown', this._onPointerDown);
+    }
   }
 }

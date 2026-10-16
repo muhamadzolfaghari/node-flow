@@ -219,85 +219,125 @@ class IndexedDbStorage {
 
   getDb() {
     if (!this.dbPromise) {
-      this.dbPromise = new Promise((resolve, reject) => {
-        if (typeof window === "undefined" || !window.indexedDB) {
+      this.dbPromise = new Promise((resolve) => {
+        try {
+          if (typeof window === "undefined" || !window.indexedDB) {
+            resolve(null);
+            return;
+          }
+          const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = (e) => {
+            try {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains("showcases")) {
+                db.createObjectStore("showcases", { keyPath: "id" });
+              }
+              if (!db.objectStoreNames.contains("projects")) {
+                db.createObjectStore("projects", { keyPath: "id" });
+              }
+              if (!db.objectStoreNames.contains("github_cache")) {
+                db.createObjectStore("github_cache", { keyPath: "key" });
+              }
+            } catch {
+              // Safe fallback for restricted permissions
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+        } catch {
           resolve(null);
-          return;
         }
-        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains("showcases")) {
-            db.createObjectStore("showcases", { keyPath: "id" });
-          }
-          if (!db.objectStoreNames.contains("projects")) {
-            db.createObjectStore("projects", { keyPath: "id" });
-          }
-          if (!db.objectStoreNames.contains("github_cache")) {
-            db.createObjectStore("github_cache", { keyPath: "key" });
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
       });
     }
     return this.dbPromise;
   }
 
   async initShowcases() {
-    const db = await this.getDb();
-    if (!db) return SHOWCASE_CATALOG;
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction("showcases", "readwrite");
-      const store = tx.objectStore("showcases");
-      for (const item of SHOWCASE_CATALOG) {
-        store.put(item);
-      }
-      tx.oncomplete = () => resolve(SHOWCASE_CATALOG);
-      tx.onerror = () => reject(tx.error);
-    });
+    try {
+      const db = await this.getDb();
+      if (!db) return SHOWCASE_CATALOG;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction("showcases", "readwrite");
+          const store = tx.objectStore("showcases");
+          for (const item of SHOWCASE_CATALOG) {
+            store.put(item);
+          }
+          tx.oncomplete = () => resolve(SHOWCASE_CATALOG);
+          tx.onerror = () => resolve(SHOWCASE_CATALOG);
+        } catch {
+          resolve(SHOWCASE_CATALOG);
+        }
+      });
+    } catch {
+      return SHOWCASE_CATALOG;
+    }
   }
 
   async getShowcases() {
-    const db = await this.getDb();
-    if (!db) return SHOWCASE_CATALOG;
-    return new Promise((resolve) => {
-      const tx = db.transaction("showcases", "readonly");
-      const store = tx.objectStore("showcases");
-      const req = store.getAll();
-      req.onsuccess = () => {
-        if (!req.result || req.result.length === 0) {
-          this.initShowcases().then(resolve);
-        } else {
-          resolve(req.result);
+    try {
+      const db = await this.getDb();
+      if (!db) return SHOWCASE_CATALOG;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction("showcases", "readonly");
+          const store = tx.objectStore("showcases");
+          const req = store.getAll();
+          req.onsuccess = () => {
+            if (!req.result || req.result.length === 0) {
+              this.initShowcases().then(resolve);
+            } else {
+              resolve(req.result);
+            }
+          };
+          req.onerror = () => resolve(SHOWCASE_CATALOG);
+        } catch {
+          resolve(SHOWCASE_CATALOG);
         }
-      };
-      req.onerror = () => resolve(SHOWCASE_CATALOG);
-    });
+      });
+    } catch {
+      return SHOWCASE_CATALOG;
+    }
   }
 
   async saveProjectBackup(project) {
-    const db = await this.getDb();
-    if (!db || !project?.id) return;
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction("projects", "readwrite");
-      const store = tx.objectStore("projects");
-      store.put({ ...project, savedAt: new Date().toISOString() });
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
+    try {
+      const db = await this.getDb();
+      if (!db || !project?.id) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction("projects", "readwrite");
+          const store = tx.objectStore("projects");
+          store.put({ ...project, savedAt: new Date().toISOString() });
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve();
+        } catch {
+          resolve();
+        }
+      });
+    } catch {
+      return;
+    }
   }
 
   async getProjectBackups() {
-    const db = await this.getDb();
-    if (!db) return [];
-    return new Promise((resolve) => {
-      const tx = db.transaction("projects", "readonly");
-      const store = tx.objectStore("projects");
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);
-    });
+    try {
+      const db = await this.getDb();
+      if (!db) return [];
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction("projects", "readonly");
+          const store = tx.objectStore("projects");
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        } catch {
+          resolve([]);
+        }
+      });
+    } catch {
+      return [];
+    }
   }
 }
 

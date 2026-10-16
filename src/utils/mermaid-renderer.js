@@ -507,6 +507,11 @@ export async function renderMermaid(container, code) {
     };
   } catch (renderErr) {
     const errorMsg = renderErr?.message || renderErr?.str || String(renderErr);
+    // Defensive cleanup: remove temporary element left behind by Mermaid in document on error
+    const tempEl = typeof document !== 'undefined' ? (document.getElementById(`dmermaid-render-${seq}`) || document.getElementById(`mermaid-render-${seq}`)) : null;
+    if (tempEl && tempEl.parentNode) {
+      tempEl.parentNode.removeChild(tempEl);
+    }
     return { success: false, error: cleanErrorMessage(errorMsg) };
   }
 }

@@ -422,7 +422,7 @@ export class CanvasController {
   }
 
   bindKeyboardEvents() {
-    window.addEventListener('keydown', (event) => {
+    this.onKeyDown = (event) => {
       if (event.target.matches('input,textarea,select')) return;
       const step = event.shiftKey ? 180 : 60;
       switch (event.key) {
@@ -484,16 +484,37 @@ export class CanvasController {
           this.center(true);
           break;
       }
-    });
+    };
+    window.addEventListener('keydown', this.onKeyDown);
   }
 
   bindWindowEvents() {
-    window.addEventListener('resize', () => {
+    this.onResize = () => {
       this.applyTransform();
-    });
+    };
+    window.addEventListener('resize', this.onResize);
 
+    this.onFullscreenChange = () => this.updateFullscreenUI();
     ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(
-      (evt) => document.addEventListener(evt, () => this.updateFullscreenUI())
+      (evt) => document.addEventListener(evt, this.onFullscreenChange)
     );
+  }
+
+  destroy() {
+    this.stopInertia();
+    if (this.onKeyDown) {
+      window.removeEventListener('keydown', this.onKeyDown);
+    }
+    if (this.onResize) {
+      window.removeEventListener('resize', this.onResize);
+    }
+    if (this.onFullscreenChange) {
+      ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(
+        (evt) => document.removeEventListener(evt, this.onFullscreenChange)
+      );
+    }
+    if (this.minimap && typeof this.minimap.destroy === 'function') {
+      this.minimap.destroy();
+    }
   }
 }
