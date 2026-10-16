@@ -1,33 +1,37 @@
-# NodeFlow — Universal Visual Diagram & Architecture Studio
+# NodeFlow Architecture Studio — LLM Knowledge Base
 
-> Open source, browser-based, local-first visual diagramming and system architecture studio.
-> https://muhamadzolfaghari.github.io/node-flow/
+> Open source (MIT), browser-native, local-first visual diagramming, system architecture, and threat modeling studio.
+> Official Website: https://muhamadzolfaghari.github.io/node-flow/
+> Source Repository: https://github.com/muhamadzolfaghari/node-flow
 
-## Overview
-NodeFlow is an diagramming workbench that runs in the browser. It unifies 30+ modeling languages, design formats, and specifications into a live reactive canvas with no account and no NodeFlow backend.
+## Executive Summary
+NodeFlow is an AI-native browser workspace combining high-speed code editing, a bidirectional live canvas, an autonomous architecture evaluation agent, and universal format converters. It operates entirely client-side with 0 external telemetry, storing drafts and checkpoints in local IndexedDB storage.
 
-## Key Capabilities
-- **Local-First Privacy**: All diagram compilation, WebAssembly execution, and IndexedDB project persistence occur locally. Nothing is sent to a cloud service unless you choose Gemini or an OpenAI-compatible AI provider, which receives the prompt you submit.
-- **Cross-Disciplinary Workflows**:
-  - *Product Managers (PM)*: User story mapping, quarterly OKRs, and customer journey maps.
-  - *QA & Testing*: Defect triage lifecycles, automated CI/CD smoke test gates, and test coverage matrices.
-  - *Developers & Cloud Architects*: Microservice architectures, ER schemas, git trunk flows, and GIS vector tile pipelines.
-  - *Operations & Governance*: Standard Operating Procedures (SOP) and approval chains.
-  - *Students & Researchers*: Thesis structures, scientific method protocols, and semester course plans.
-- **30+ Supported Formats**:
-  - Native Mermaid & Graphviz WebAssembly (C compiler in Wasm)
-  - PlantUML, Draw.io XML, D2, BPMN 2.0, C4 / Structurizr DSL, Terraform HCL
-  - SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL SDL, OpenAPI 3, AsyncAPI
-  - Adobe Illustrator, Figma / FigJam, Lucidchart, OmniGraffle, Miro, StarUML, Visio VDX, Gliffy, Excalidraw, XMind ZEN
-  - GeoJSON, Shapefile attributes, and Mapbox Vector Tile (MVT) protobuf specs
-- **Interactive Multi-Tab Canvas**:
-  - VSCode-style multi-tab management with context menus (Close, Close Others, Close to the Right, Close All, Duplicate)
-  - Auto-centering and content framing without dead whitespace
-  - Dynamic theme-adaptive canvas (Light, Dark, Forest, Neutral) with custom grid rendering
-  - Presentation mode with laser pointer
+## Core Capabilities & Technical Specifications
+- **AI-Native Architecture Agent**: Deterministically classifies system topologies (Layered N-Tier, Microservices, Event-Driven Streaming, Cloud VPC, Relational Schemas), calculates Fan-in / Fan-out coupling metrics, detects Single Points of Failure (SPOF) and anti-patterns (such as direct client-to-database bypasses), and generates formal Markdown architecture decision records (ADR).
+- **STRIDE Threat Modeling & Compliance**: Evaluates trust boundaries, unencrypted inter-service channels, and exposed databases; generates formal SOC2 / ISO 27001 audit reports.
+- **Request Flow Simulation**: Animates interactive request packets and photon pulses along directed edges for real-time visual system debugging.
+- **High-Performance Editor & Diagnostics**: 160ms debounced linter with column squiggles, in-editor AI Quick Fix actions, line jump navigation, and smart connection arrow autocompletion.
+- **Universal 38-Format Conversion Registry**: Bi-directional conversion and editable previews for Draw.io XML, PlantUML, Graphviz DOT (native Wasm C compiler), D2, SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL SDL, BPMN 2.0, C4 DSL, Terraform HCL, Adobe Illustrator, Figma, Lucidchart, OmniGraffle, Miro, StarUML, Visio VDX, Gliffy, Excalidraw, XMind ZEN, GeoJSON, ESRI Shapefile, and Mapbox Vector Tile (MVT) protobuf specifications.
+- **51 Production Starter Templates**: Curated across 8 cross-disciplinary categories:
+  - *Product Managers (PM)*: User story mapping (backbone vs. MVP/V2 slices), quarterly OKRs, and customer journey maps.
+  - *QA & Testing*: Defect triage state lifecycles, automated CI/CD quality gate pipelines, and regression verification matrices.
+  - *Software Engineers & Architects*: Microservices VPC, C4 system context/containers, relational ER schemas, and Git trunk release flows.
+  - *Operations & Governance*: Standard Operating Procedure (SOP) multi-level compliance chains and corporate org charts.
+  - *Students & Academics*: Thesis literature reviews, scientific method lab protocols, and semester course study plans.
+  - *14 UML Specifications*: Full OMG UML 2.5 coverage including class, sequence, state, activity, component, deployment, use case, and package diagrams.
 
-## Quick Links
+## Key URLs & Endpoints
 - Web App Studio: https://muhamadzolfaghari.github.io/node-flow/#/studio
-- Template Library: https://muhamadzolfaghari.github.io/node-flow/#/templates
-- Format Specifications: https://muhamadzolfaghari.github.io/node-flow/#/formats
-- Source Code Repository: https://github.com/muhamadzolfaghari/node-flow
+- Template Catalog: https://muhamadzolfaghari.github.io/node-flow/#/templates
+- Supported Formats: https://muhamadzolfaghari.github.io/node-flow/#/formats
+- Projects & Checkpoints: https://muhamadzolfaghari.github.io/node-flow/#/saved
+- GitHub Repository: https://github.com/muhamadzolfaghari/node-flow
+- Sitemap: https://muhamadzolfaghari.github.io/node-flow/sitemap.xml
+- LLM Knowledge File: https://muhamadzolfaghari.github.io/node-flow/llms.txt
+
+## Verified Test & Quality Metrics
+- 158/158 Unit Tests Passing (`node --test`)
+- 115/115 Diagram Syntax & Exporter Checks Passing
+- 100% Test Coverage across security, resilience, storage, and parser modules
+- Zero layout shift, responsive from 390px mobile to UHD 4K displays

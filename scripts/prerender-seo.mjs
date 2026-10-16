@@ -101,7 +101,7 @@ async function write(urlPath, html) {
   await writeFile(path.join(dir, "index.html"), html);
 }
 
-const urls = [{ loc: `${SITE}/`, priority: "1.0" }];
+const urls = [{ loc: `${SITE}/`, priority: "1.0", changefreq: "weekly" }];
 
 // ---- template pages
 const byCategory = new Map();
@@ -127,7 +127,11 @@ for (const t of DIAGRAM_TEMPLATES) {
 <p>This is the exact source the template starts from. Edit it in the studio and the canvas updates as you type.</p>
 <pre><code>${esc(t.code.trim())}</code></pre>
 <h2>How to use it</h2>
-<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Export as SVG, PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<ol><li>Open the template in the studio.</li><li>Change the source or select shapes on the canvas to rename, restyle, and connect them.</li><li>Run the autonomous AI Architecture Agent to verify coupling and single points of failure.</li><li>Export as SVG, 4K PNG, PDF, PPTX, or standalone HTML, or keep it as a project in your browser.</li></ol>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:20px;">
+<strong>Direct Answer (AEO / GEO Summary):</strong>
+<p style="margin:4px 0 0;font-size:14px;color:var(--muted)">The <em>${esc(name)}</em> diagram in NodeFlow provides an editable, production-grade Mermaid specification for ${esc(t.description.toLowerCase())} It runs entirely in-browser with zero telemetry and supports bidirectional visual editing, STRIDE threat auditing, and instant SVG/PNG exports.</p>
+</div>
 ${related.length ? `<h2>Related templates in ${esc(t.category)}</h2><ul class="grid">${related.map((r) => `<li><a href="${SITE}/templates/${r.id}/">${esc(cleanTitle(r.title))}</a><p>${esc(clip(r.description, 110))}</p></li>`).join("")}</ul>` : ""}`;
   await write(
     urlPath,
@@ -149,10 +153,41 @@ ${related.length ? `<h2>Related templates in ${esc(t.category)}</h2><ul class="g
           isPartOf: { "@type": "WebApplication", name: "NodeFlow", url: `${SITE}/` },
           license: "https://opensource.org/licenses/MIT",
         },
+        {
+          "@type": "HowTo",
+          name: `How to edit and export the ${name} diagram`,
+          description: `Step-by-step instructions for customizing and exporting the ${name} diagram in NodeFlow.`,
+          step: [
+            {
+              "@type": "HowToStep",
+              position: 1,
+              name: "Open Template",
+              text: `Launch the ${name} template in NodeFlow Studio with live code and canvas view.`,
+            },
+            {
+              "@type": "HowToStep",
+              position: 2,
+              name: "Edit Nodes & Connections",
+              text: "Modify Mermaid source code or select shapes on canvas to rename labels and change node styles.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 3,
+              name: "Audit & Simulate",
+              text: "Run STRIDE threat modeling and request flow simulator to verify architectural integrity.",
+            },
+            {
+              "@type": "HowToStep",
+              position: 4,
+              name: "Export Deliverable",
+              text: "Download vector SVG with embedded metadata, high-resolution PNG, or standalone HTML.",
+            },
+          ],
+        },
       ],
     }),
   );
-  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.7" });
+  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.7", changefreq: "monthly" });
 }
 
 // ---- templates hub
@@ -188,7 +223,7 @@ ${related.length ? `<h2>Related templates in ${esc(t.category)}</h2><ul class="g
       ],
     }),
   );
-  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.9" });
+  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.9", changefreq: "weekly" });
 }
 
 // ---- formats hub
@@ -207,7 +242,7 @@ ${related.length ? `<h2>Related templates in ${esc(t.category)}</h2><ul class="g
       jsonld: [crumbs([["Home", "/"], ["Formats", urlPath]])],
     }),
   );
-  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.8" });
+  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.8", changefreq: "weekly" });
 }
 
 // ---- studio page (+ FAQ answers, mirrored from the landing page FAQ)
@@ -230,7 +265,7 @@ ${related.length ? `<h2>Related templates in ${esc(t.category)}</h2><ul class="g
       ],
     }),
   );
-  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.9" });
+  urls.push({ loc: `${SITE}${urlPath}`, priority: "0.9", changefreq: "weekly" });
 }
 
 // ---- sitemap.xml
@@ -238,15 +273,13 @@ await writeFile(
   path.join(DIST, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u.loc}</loc><lastmod>${TODAY}</lastmod><priority>${u.priority}</priority></url>`).join("\n")}
+${urls.map((u) => `  <url><loc>${u.loc}</loc><lastmod>${TODAY}</lastmod><changefreq>${u.changefreq || "weekly"}</changefreq><priority>${u.priority}</priority></url>`).join("\n")}
 </urlset>
 `,
 );
 
 // ---- llms.txt (answer-first, accurate, with every template)
-await writeFile(
-  path.join(DIST, "llms.txt"),
-  `# NodeFlow
+const llmsContent = `# NodeFlow
 
 > NodeFlow is an open-source (MIT) browser workspace for creating and editing diagrams. Source code, a live canvas, and an AI assistant edit the same diagram. Projects are stored in the browser; there is no NodeFlow backend or account.
 
@@ -269,7 +302,48 @@ ${DIAGRAM_TEMPLATES.map((t) => `- [${cleanTitle(t.title)}](${SITE}/templates/${t
 
 ## FAQ
 ${FAQS.map((f) => `**${f.q}** ${f.a}`).join("\n\n")}
-`,
-);
+`;
 
-console.log(`SEO pages written: ${urls.length} URLs (${DIAGRAM_TEMPLATES.length} template pages) -> dist/sitemap.xml, dist/llms.txt`);
+await writeFile(path.join(DIST, "llms.txt"), llmsContent);
+
+// ---- llms-full.txt (complete corpus for LLM deep crawlers and RAG indexing)
+const llmsFullContent = `# NodeFlow — Full Technical Documentation & Template Corpus
+
+> NodeFlow is an open-source, local-first browser architecture and diagram studio. It unites code-based diagramming (Mermaid, Graphviz, PlantUML), bidirectional canvas manipulation, AI-assisted architectural analysis (STRIDE threat modeling, single-point-of-failure audits), and multi-format exports.
+
+## Core Principles & Privacy Guarantee
+1. **100% Client-Side Privacy**: All parsing, rendering, and AST manipulation occurs inside the client browser. No telemetry or server-side document storage.
+2. **Offline-First Resilience**: Built with service worker offline caching, local IndexedDB storage, and WebGPU local LLM capabilities.
+3. **Multi-Engine AI Architecture**: Supports local offline rule-based generators, in-browser WebGPU transformers, local Ollama endpoints, and user-supplied API keys for Gemini/OpenAI.
+
+## Supported Formats (${FORMATS.length})
+| Format | Extensions | Mode | Capabilities |
+|---|---|---|---|
+${FORMATS.map((f) => `| ${f.name} | ${(f.extensions || [f.ext]).join(", ")} | ${f.mode} | ${f.description} |`).join("\n")}
+
+## Complete Diagram Template Specifications (${DIAGRAM_TEMPLATES.length})
+${DIAGRAM_TEMPLATES.map(
+  (t) => `### ${cleanTitle(t.title)} (${t.category})
+- **Template ID**: \`${t.id}\`
+- **Description**: ${t.description}
+- **URL**: ${SITE}/templates/${t.id}/
+
+\`\`\`mermaid
+${t.code.trim()}
+\`\`\`
+`,
+).join("\n")}
+
+## Frequently Asked Questions (AEO & GEO Direct Answers)
+${FAQS.map(
+  (f) => `### ${f.q}
+${f.a}
+`,
+).join("\n")}
+`;
+
+await writeFile(path.join(DIST, "llms-full.txt"), llmsFullContent);
+await writeFile(path.join(process.cwd(), "public", "llms-full.txt"), llmsFullContent);
+
+console.log(`SEO pages written: ${urls.length} URLs (${DIAGRAM_TEMPLATES.length} template pages) -> dist/sitemap.xml, dist/llms.txt, dist/llms-full.txt`);
+

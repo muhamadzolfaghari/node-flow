@@ -1,0 +1,1612 @@
+# NodeFlow — Full Technical Documentation & Template Corpus
+
+> NodeFlow is an open-source, local-first browser architecture and diagram studio. It unites code-based diagramming (Mermaid, Graphviz, PlantUML), bidirectional canvas manipulation, AI-assisted architectural analysis (STRIDE threat modeling, single-point-of-failure audits), and multi-format exports.
+
+## Core Principles & Privacy Guarantee
+1. **100% Client-Side Privacy**: All parsing, rendering, and AST manipulation occurs inside the client browser. No telemetry or server-side document storage.
+2. **Offline-First Resilience**: Built with service worker offline caching, local IndexedDB storage, and WebGPU local LLM capabilities.
+3. **Multi-Engine AI Architecture**: Supports local offline rule-based generators, in-browser WebGPU transformers, local Ollama endpoints, and user-supplied API keys for Gemini/OpenAI.
+
+## Supported Formats (38)
+| Format | Extensions | Mode | Capabilities |
+|---|---|---|---|
+| Mermaid | mmd, mermaid | Native | Flowcharts, ER, UML, mindmaps, Gantt, charts, and C4. |
+| Graphviz DOT | dot, gv | Native | Native Graphviz layout through WebAssembly. |
+| PlantUML | puml, plantuml | Derived | Sequence, class, state, activity, usecase, deployment subsets; styling and macros are not preserved. |
+| D2 | d2 | Derived | Basic nodes, connections, and containers; layout and styling are approximate. |
+| SQL DDL | sql | Derived | CREATE TABLE columns and foreign keys to ER schemas; dialect-specific syntax may need simplification. |
+| DBML | dbml | Derived | DBML Table blocks and Ref lines to ER schemas. |
+| Prisma schema | prisma | Derived | Prisma model blocks and relations to ER schemas. |
+| Protobuf | proto | Derived | Proto3 message/enum blocks to class diagrams. |
+| JSON Schema | schema.json | Derived | JSON-Schema properties/$defs to class diagrams. Content-detected for *.json. |
+| GraphQL SDL | graphql, gql | Derived | Types, fields, and relationships to a class diagram. |
+| OpenAPI / Swagger |  | Derived | JSON or YAML paths to a request sequence. Preview shows the first 10 paths. |
+| AsyncAPI |  | Derived | JSON or YAML v2/v3 channels to event sequences. Preview shows the first 12 channels. |
+| YAML structure | yaml, yml | Derived | Generic YAML mappings (Kubernetes, Compose) to mindmaps. Spec files auto-detect as OpenAPI/AsyncAPI. |
+| ERD text | erd | Derived | Crow's-foot text (||--o{) and TABLE blocks to ER diagrams. |
+| UML XMI | xmi, uml | Derived | UML2 XMI classes/generalizations/associations and lifelines/messages to class/sequence. |
+| SysML v2 | sysml | Derived | SysML v2 part/requirement/action declarations to block/requirement flowcharts. |
+| ArchiMate Exchange |  | Derived | ArchiMate Open Exchange elements/relationships to flowcharts. Content-detected for *.xml. |
+| DMN | dmn | Derived | DMN decision tables (XML or when/then text) to flowcharts. |
+| Draw.io | drawio | Derived | Compressed or plain XML nodes and edges; first page preview, approximate shapes and layout. |
+| BPMN 2.0 | bpmn | Derived | Tasks, events, gateways, lanes, data objects, message flows; no BPMN execution semantics. |
+| C4 / Structurizr DSL | dsl, c4 | Derived | People, systems, containers, components, code and dynamic views to C4 context. |
+| Terraform HCL | tf | Derived | Resources and direct references; modules, dynamic blocks, and evaluated values are not resolved. |
+| Markdown outline | md, markdown, txt | Derived | Indented lists to a mindmap. Embedded Mermaid fences can be rendered. |
+| CSV relationships | csv, tsv | Derived | Source,target rows (CSV/TSV/semicolon/pipe) to a relationship graph. |
+| FreeMind | mm | Derived | Topic hierarchy to a mindmap; styling and metadata remain in the original XML. |
+| OPML | opml | Derived | Outline hierarchy to a mindmap. |
+| XMind | xmind | Mindmap | First sheet of ZEN or legacy workbooks to an editable Mermaid mindmap; original workbook retained, fresh workbook export supported. |
+| Visio VDX | vdx | Derived | Visio VDX Shape/Connect elements to flowcharts. |
+| Gliffy JSON | gliffy | Derived | Gliffy stage objects/constraints to flowcharts. Content-detected for *.json. |
+| Excalidraw JSON | excalidraw | Derived | Excalidraw elements (shapes/arrows) to flowcharts. Content-detected for *.json. |
+| Source code → UML | ts, tsx, js, jsx, py, java, cs, go, rs, kt, kts, swift, php, rb, cpp, c, h | Derived | Best-effort class/struct/enum extraction incl. Kotlin/Swift/PHP/Ruby/C++. Not a code execution environment. |
+| StarUML | mdj | Derived | StarUML model JSON (.mdj) containing UMLClass, UMLAttribute, UMLOperation, and UMLGeneralization. |
+| Lucidchart | lucid, lucidchart | Derived | Lucidchart CSV or JSON export converted to Mermaid flowchart nodes and connections. |
+| Adobe Illustrator | ai, ait | Derived | Adobe Illustrator artboards, vector layers, labeled groups, and path objects converted to structured visual diagrams. |
+| Figma / FigJam | fig, figjam | Derived | Figma frames, component nodes, FigJam sticky notes, shapes, and connector lines converted to Mermaid flowchart. |
+| OmniGraffle | graffle | Derived | OmniGraffle graphics, shape sheets, and line connections converted to Mermaid flowchart. |
+| Miro | miro | Derived | Miro board items, sticky notes, cards, shapes, and connector lines converted to Mermaid flowchart. |
+| GeoJSON / Geospatial (MVT, Shapefile, Protobuf) | geojson, geo.json, mvt, pbf, shp, dbf, kml, topojson | Derived | GeoJSON FeatureCollections, Mapbox Vector Tile (MVT) Protobuf schemas, ESRI Shapefile attributes, and spatial topologies converted to visual diagrams. |
+
+## Complete Diagram Template Specifications (51)
+### Class Diagram (UML Specification)
+- **Template ID**: `class-diagram`
+- **Description**: Object-oriented class hierarchies, private/public attributes, methods, inheritance, and composition.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/class-diagram/
+
+```mermaid
+classDiagram
+    class CanvasController {
+        -Number zoom
+        -Number panX
+        -Number panY
+        -HTMLElement canvas
+        -HTMLElement stage
+        +setZoom(val, anchorX, anchorY)
+        +fit(animate)
+        +reset(animate)
+        +measure()
+        +applyTransform()
+    }
+
+    class EditorController {
+        -HTMLTextAreaElement textarea
+        -HTMLElement lineNumbers
+        -HTMLElement statusDot
+        -HTMLElement stats
+        +getValue() String
+        +setValue(code)
+        +formatCode()
+        +setStatus(type, msg)
+        +updateStats()
+    }
+
+    class Exporter {
+        +exportSvg(container, filename)
+        +exportPng(container, scale, filename)
+        +exportPdf(container, mode, filename)
+        +exportMarkdown(code, filename)
+        -renderToCanvas(container, scale)
+    }
+
+    class StorageManager {
+        +saveDraft(code, templateId)
+        +getDraft() Object
+        +saveNamedDiagram(name, code, templateId)
+        +listSavedDiagrams() Array
+        +deleteDiagram(id)
+    }
+
+    CanvasController <|-- InteractiveStage : inherits
+    CanvasController *-- MiniMapController : owns
+    EditorController ..> StorageManager : autosaves
+    Exporter ..> CanvasController : captures
+```
+
+### Sequence Diagram (UML Specification)
+- **Template ID**: `sequence-auth`
+- **Description**: Interactive message sequence with parallel activations, alt guards, and cryptographic token verification.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sequence-auth/
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Client
+    participant App as DiagramAtlas SPA
+    participant Auth as Auth Gateway (Wasm)
+    participant OAuth as Identity Provider
+    participant API as Backend Services
+
+    User->>App: Click "Authorize via OAuth 2.1"
+    App->>Auth: Generate PKCE code_verifier & challenge
+    Auth-->>App: Hash verified (SHA-256)
+    App->>OAuth: Redirect to /authorize?code_challenge
+    OAuth->>User: Display consent prompt
+    User->>OAuth: Grant permissions
+    OAuth-->>App: Authorization Code redirect
+    App->>Auth: Exchange Code + code_verifier
+    Auth->>OAuth: POST /token (backchannel)
+    OAuth-->>Auth: Access Token + Refresh Token (JWT)
+    Auth-->>App: Secure HttpOnly Cookie session
+    App->>API: GET /api/v1/projects (Bearer JWT)
+    API-->>App: 200 OK (User Workspace Data)
+    App-->>User: Render Canvas Dashboard
+```
+
+### State Machine Diagram (UML Specification)
+- **Template ID**: `state-diagram`
+- **Description**: UML finite state machine with composite states, fork transitions, and error recovery lifecycles.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/state-diagram/
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Application Start
+
+    state EditingSession {
+        [*] --> Clean
+        Clean --> Dirty: Keystroke detected
+        Dirty --> Debouncing: 200ms debounce timer
+        Debouncing --> Rendering: Trigger Parser
+        
+        state Rendering {
+            [*] --> ValidatingSyntax
+            ValidatingSyntax --> CompilingSVG: Syntax Valid
+            ValidatingSyntax --> SyntaxError: Syntax Invalid
+            CompilingSVG --> Clean: Render Success
+        }
+    }
+
+    EditingSession --> PresentationMode: Press 'P' key
+    PresentationMode --> EditingSession: Press 'ESC'
+
+    EditingSession --> Exporting: Select Export (PNG / SVG / PDF)
+    state Exporting {
+        [*] --> HighDPIRasterize
+        HighDPIRasterize --> WasmLinearMemoryComposite
+        WasmLinearMemoryComposite --> BlobDownloadReady
+    }
+    Exporting --> EditingSession: Download complete
+
+    EditingSession --> [*]: Close Tab
+```
+
+### Use Case Diagram (UML Specification)
+- **Template ID**: `uml-usecase`
+- **Description**: Actors, system boundaries, use case ovals, <<include>> dependencies, and <<extend>> extensions.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-usecase/
+
+```mermaid
+flowchart LR
+    Customer((fa:fa-user Customer))
+    Admin((fa:fa-user-shield System Admin))
+    BankSystem[(Core Banking Gateway)]
+
+    subgraph SystemBoundary [Online Banking Portal]
+        UC1([View Account Balances])
+        UC2([Transfer Funds])
+        UC3([2FA Biometric Check])
+        UC4([Export PDF Statement])
+        UC5([Manage Access Roles])
+        UC6([Audit Incident Logs])
+    end
+
+    Customer --> UC1
+    Customer --> UC2
+    Customer --> UC4
+    UC2 -.->|"<<include>>"| UC3
+    UC4 -.->|"<<extend>>"| UC1
+    UC2 --> BankSystem
+
+    Admin --> UC5
+    Admin --> UC6
+    UC6 --> BankSystem
+```
+
+### Activity Diagram (UML Specification)
+- **Template ID**: `uml-activity`
+- **Description**: Initial node, decision diamonds, parallel fork & join synchronization bars, and activity final states.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-activity/
+
+```mermaid
+flowchart TD
+    Start((*)) --> Init[Submit Order Request]
+    Init --> CheckInventory{Inventory Available?}
+
+    CheckInventory -->|No| Backorder[Queue Backorder Notification]
+    Backorder --> NotifyUser[Send Email to Customer]
+    NotifyUser --> CancelOrder((X))
+
+    CheckInventory -->|Yes| Fork1[=================== Fork Parallel ===================]
+    
+    Fork1 --> DeductStock[Deduct Item from Warehouse]
+    Fork1 --> ChargeCard[Charge Customer Credit Card]
+    Fork1 --> GenerateInvoice[Generate PDF Tax Invoice]
+
+    DeductStock --> Join1[=================== Join Synchronization ===================]
+    ChargeCard --> Join1
+    GenerateInvoice --> Join1
+
+    Join1 --> Dispatch[Dispatch Logistics Shipping Label]
+    Dispatch --> CompleteFinal((O))
+```
+
+### Component Diagram (UML Specification)
+- **Template ID**: `uml-component`
+- **Description**: Component stereotypes, provided and required interfaces, ports, and inter-service dependencies.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-component/
+
+```mermaid
+flowchart TD
+    subgraph OrderSubsystem [Order Management Subsystem]
+        OrderGateway[<<component>>\nOrder API Gateway]
+        PaymentEngine[<<component>>\nPayment Processor Engine]
+        StockController[<<component>>\nInventory Stock Controller]
+    end
+
+    WebClient[<<component>>\nNext.js Web Client]
+    MobileApp[<<component>>\nFlutter Mobile App]
+    StripeAPI[(External Stripe Gateway)]
+    WarehouseDB[(Warehouse Postgres DB)]
+
+    WebClient -->|"REST / JSON"| OrderGateway
+    MobileApp -->|"GraphQL"| OrderGateway
+    
+    OrderGateway -->|"gRPC Binary"| PaymentEngine
+    OrderGateway -->|"gRPC Binary"| StockController
+
+    PaymentEngine -->|"HTTPS / TLS 1.3"| StripeAPI
+    StockController -->|"TCP / Port 5432"| WarehouseDB
+```
+
+### Deployment Diagram (UML Specification)
+- **Template ID**: `uml-deployment`
+- **Description**: Hardware nodes, execution environments, artifact packages, communication protocols, and cloud topology.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-deployment/
+
+```mermaid
+flowchart TB
+    subgraph ClientDevice [Client Device: macOS / Linux / Windows]
+        BrowserRuntime[<<execution environment>>\nV8 / WebKit Runtime]
+        SPAArtifact[<<artifact>>\nDiagramAtlas WebAssembly SPA Bundle]
+        BrowserRuntime --- SPAArtifact
+    end
+
+    subgraph AWSCloud [Cloud Infrastructure: AWS us-east-1]
+        subgraph EdgeCluster [Edge Network: Cloudflare CDN]
+            EdgeRouter[<<node>>\nEdge TLS Termination & WAF]
+        end
+
+        subgraph K8sCluster [Kubernetes Production Cluster]
+            IngressEnvoy[<<node>>\nEnvoy Ingress Gateway]
+            subgraph Pod1 [DiagramAtlas Pod: Replica 1]
+                FastAPIServer[<<execution environment>>\nFastAPI Python ASGI]
+                WasmRustKernel[<<artifact>>\nghostwire_core.so]
+                FastAPIServer --- WasmRustKernel
+            end
+        end
+
+        subgraph DataVPC [Isolated Data VPC: Private Subnet]
+            PostgresNode[<<node>>\nAmazon Aurora PostgreSQL Primary]
+            RedisNode[<<node>>\nAmazon ElastiCache Redis Cluster]
+        end
+    end
+
+    SPAArtifact -->|"HTTPS / WSS (TLS 1.3)"| EdgeRouter
+    EdgeRouter -->|"Internal Backplane"| IngressEnvoy
+    IngressEnvoy -->|"Cluster IP"| FastAPIServer
+    FastAPIServer -->|"TCP : 5432"| PostgresNode
+    FastAPIServer -->|"TCP : 6379"| RedisNode
+```
+
+### Package Diagram (UML Specification)
+- **Template ID**: `uml-package`
+- **Description**: Namespace decomposition, layer modularization, import dependencies, and domain-driven design bounds.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-package/
+
+```mermaid
+flowchart TD
+    subgraph PresentationLayer [<<package>> Presentation Layer]
+        Controllers[API Routing Controllers]
+        Presenters[JSON & Protobuf Serializers]
+        Middlewares[Auth & Rate Limit Middlewares]
+    end
+
+    subgraph ApplicationLayer [<<package>> Application Layer]
+        UseCases[Application Use Cases]
+        Commands["Command Handlers (CQRS)"]
+        Queries[Query Handlers]
+    end
+
+    subgraph DomainLayer [<<package>> Core Domain Model]
+        Entities[Domain Entities]
+        ValueObjects[Immutable Value Objects]
+        DomainEvents[Domain Event Subsystem]
+        RepositoryInterfaces[Repository Interfaces]
+    end
+
+    subgraph InfrastructureLayer [<<package>> Infrastructure Layer]
+        PostgresRepos[Postgres Repository Impls]
+        RedisCacheAdapter[Redis Fast-Path Cache]
+        ExternalAPIs[Third-Party Service Clients]
+    end
+
+    PresentationLayer -.->|imports| ApplicationLayer
+    ApplicationLayer -.->|imports| DomainLayer
+    InfrastructureLayer -.->|implements| DomainLayer
+```
+
+### Object Diagram (UML Specification)
+- **Template ID**: `uml-object`
+- **Description**: Concrete runtime instance specifications, assigned state values, and instance link relationships.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-object/
+
+```mermaid
+classDiagram
+    class UserInstance_1042 {
+        :User
+        userId = 1042
+        email = "lead.dev@enterprise.com"
+        role = "OrganizationAdmin"
+        isMfaVerified = true
+    }
+
+    class ProjectInstance_88 {
+        :DiagramProject
+        projectId = 88
+        title = "Cloud Service Mesh Architecture"
+        format = "nodeflow_native"
+        activeVersion = "v2.4"
+    }
+
+    class WasmEngineInstance {
+        :WasmTurboKernel
+        memoryPages = 2
+        simdActive = true
+        hardwareHash = "0x30784cd7"
+    }
+
+    UserInstance_1042 "1" --> "1..*" ProjectInstance_88 : owns
+    ProjectInstance_88 "1" --> "1" WasmEngineInstance : acceleratesWith
+```
+
+### Composite Structure Diagram (UML Specification)
+- **Template ID**: `uml-composite-structure`
+- **Description**: Internal decomposition of complex classifiers, ports, parts, and connector bindings.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-composite-structure/
+
+```mermaid
+flowchart LR
+    subgraph SmartVehicle [Smart Vehicle: Composite Classifier]
+        PortGPS((p1: GPS Port))
+        PortCAN((p2: CAN Bus Port))
+
+        subgraph TelematicsControlUnit [Telematics Control Unit]
+            CellularModem[4G / 5G Modem Part]
+            SecurityCrypto[Hardware Security Module]
+        end
+
+        subgraph AutonomousDrivingSystem [Autonomous Driving Subsystem]
+            SensorFusion[Sensor Fusion Engine]
+            PathPlanner[Path Planning Neural Core]
+            ActuatorInterface[Drive-by-Wire Interface]
+        end
+
+        subgraph PowerTrain [Electric Powertrain]
+            BatteryMgmt[Battery Management System]
+            Inverter[Dual AC Inverter]
+            Motors[Front & Rear Traction Motors]
+        end
+
+        PortGPS --- CellularModem
+        CellularModem --- SecurityCrypto
+        SecurityCrypto -->|"Authenticated Telemetry"| SensorFusion
+        PortCAN --- SensorFusion
+        SensorFusion -->|"Fused Point Cloud"| PathPlanner
+        PathPlanner -->|"Steering & Torque Vector"| ActuatorInterface
+        ActuatorInterface --- Inverter
+        Inverter --- Motors
+        BatteryMgmt --- Inverter
+    end
+```
+
+### Timing Diagram (UML Specification)
+- **Template ID**: `uml-timing`
+- **Description**: Hardware and software state transitions across discrete clock cycles and latency windows.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-timing/
+
+```mermaid
+timeline
+    title Ultra-Low Latency Inference & Cache Timing (Sub-Millisecond Pipeline)
+    0.00ms - 0.05ms : Client : Cryptographic BLAKE2b State Fingerprinting
+    0.05ms - 0.10ms : Rust Wasm Kernel : Tier-0 Fast-Path Memory Cache Probe
+    0.10ms - 0.85ms : Cache HIT (P50) : Return Pre-compiled Binary Protobuf Buffer
+    0.85ms - 1.20ms : Network Wire : Zstandard Dictionary Decompression
+    1.20ms - 2.50ms : Client Browser : Wasm Memory Injection & Instant Vector Display
+```
+
+### Communication Diagram (UML Specification)
+- **Template ID**: `uml-communication`
+- **Description**: Collaboration diagram showing numbered inter-object messages and call dependencies.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-communication/
+
+```mermaid
+flowchart TD
+    User([Actor: Checkout User])
+    Controller["1.0: CheckoutController"]
+    AuthGuard["1.1: AuthenticationGuard"]
+    InventoryService["1.2: InventoryService"]
+    PaymentGateway["1.3: PaymentGateway"]
+    Notifier["1.4: NotificationService"]
+
+    User -->|"1.0: submitOrder()"| Controller
+    Controller -->|"1.1: verifySessionToken()"| AuthGuard
+    Controller -->|"1.2: reserveStockItems()"| InventoryService
+    Controller -->|"1.3: processTransaction()"| PaymentGateway
+    Controller -->|"1.4: dispatchReceiptEmail()"| Notifier
+```
+
+### Interaction Overview Diagram (UML Specification)
+- **Template ID**: `uml-interaction-overview`
+- **Description**: Combines activity control flow with sequence interaction frames and decision guards.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-interaction-overview/
+
+```mermaid
+flowchart TD
+    InitialNode((*)) --> FrameAuth[sd: User Authentication Flow]
+    FrameAuth --> DecisionAuth{Is Authenticated?}
+
+    DecisionAuth -->|Yes| FrameWorkspace[sd: Load Collaborative Workspace Flow]
+    DecisionAuth -->|No| FrameChallenge[sd: Multi-Factor Biometric Challenge Flow]
+
+    FrameChallenge --> DecisionMFA{MFA Verified?}
+    DecisionMFA -->|Success| FrameWorkspace
+    DecisionMFA -->|Failure| FrameLockout[sd: Incident Log & IP Lockout]
+
+    FrameWorkspace --> FrameLiveEdit[sd: Real-Time Vector Canvas Sync]
+    FrameLiveEdit --> TerminalNode((O))
+    FrameLockout --> TerminalNode
+```
+
+### Profile Diagram (UML Specification)
+- **Template ID**: `uml-profile`
+- **Description**: Custom UML profile stereotypes, tagged values, and metaclass extensions for domain modeling.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/uml-profile/
+
+```mermaid
+classDiagram
+    class Metaclass_Class {
+        <<metaclass>>
+        Class
+    }
+    class Metaclass_Property {
+        <<metaclass>>
+        Property
+    }
+
+    class Microservice {
+        <<stereotype>>
+        +String serviceName
+        +String runtimeLanguage
+        +Integer replicas
+        +Boolean isStateless
+    }
+
+    class FastPathCacheable {
+        <<stereotype>>
+        +Integer ttlSeconds
+        +String hashAlgorithm
+        +Boolean invalidateOnWrite
+    }
+
+    class EncryptedField {
+        <<stereotype>>
+        +String cipherAlgorithm
+        +String keyVaultUri
+    }
+
+    Metaclass_Class <|-- Microservice : extends
+    Metaclass_Class <|-- FastPathCacheable : extends
+    Metaclass_Property <|-- EncryptedField : extends
+```
+
+### User Journey Map — Product Experience (Product & Design)
+- **Template ID**: `user-journey-onboarding`
+- **Description**: Customer experience stages, touchpoints, emotional scores (1-5), and cross-functional team actions.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/user-journey-onboarding/
+
+```mermaid
+journey
+    title User Onboarding & Visual Studio Discovery Journey
+    section Discovery & Landing
+      Visit DiagramAtlas GitHub Repo: 5: Developer, Product Manager
+      Read Interactive Pricing Matrix: 5: Product Manager
+      Launch Studio in Web Browser: 5: Developer, Product Manager
+    section Canvas & Editing
+      Browse 30+ Diagram Templates: 5: Product Manager
+      Type Code with Real-Time Debounce: 5: Developer
+      Pan & Inertia Zoom on Infinite Canvas: 5: Product Manager
+    section WebAssembly & Performance
+      Click WASM Hardware Badge: 5: Developer
+      Run Live Benchmark (3x-5x Speedup): 5: Developer
+    section Export & Handoff
+      Export 4K Retina PNG: 5: Product Manager
+      Download Standalone Interactive HTML: 5: Developer
+      Embed SVG in Documentation: 5: Developer
+```
+
+### Agile Kanban Board — Sprint Planning (Product & Design)
+- **Template ID**: `kanban-sprint-board`
+- **Description**: Agile sprint workflow columns with user story estimation badges and priority tags.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/kanban-sprint-board/
+
+```mermaid
+kanban
+  Backlog
+    [User Persona Journey Generator - 5 pts]
+    [Export to Lucidchart XML - 8 pts]
+    [WebAssembly SIMD Vectorizer - 5 pts]
+  In Progress
+    [BPMN 2.0 Business Flow Importer - 5 pts]
+    [Sub-millisecond Rust Cache Engine - 3 pts]
+    [Interactive Node Inspector HUD - 3 pts]
+  Code Review
+    [Native Graphviz WebAssembly Engine - 8 pts]
+    [Dual Deployment GitHub Actions - 2 pts]
+  Done
+    [Rebrand Studio to DiagramAtlas]
+    [Complete 14 UML Diagrams Support]
+    [Multi-Format Import & Export Matrix]
+```
+
+### Feature Prioritization Matrix (Product & Design)
+- **Template ID**: `prioritization-quadrant`
+- **Description**: Eisenhower and product management quadrant chart for strategic feature roadmapping.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/prioritization-quadrant/
+
+```mermaid
+quadrantChart
+    title Feature Prioritization Matrix (Value vs Effort)
+    x-axis Low Engineering Effort --> High Engineering Effort
+    y-axis Low Customer Value --> High Customer Value
+    quadrant-1 Quick Wins
+    quadrant-2 Major Strategic Bets
+    quadrant-3 Fill-ins
+    quadrant-4 Low Priority Deprecations
+    WebAssembly Fast Hashing: [0.22, 0.85]
+    14 UML Specification Templates: [0.30, 0.92]
+    XMind Bi-directional Importer: [0.38, 0.88]
+    Export to Multi-Format ZIP Archive: [0.25, 0.72]
+    Real-Time Multi-User Collaboration: [0.88, 0.85]
+    Native Desktop Tauri App: [0.75, 0.78]
+    Custom Canvas Shader Effects: [0.70, 0.32]
+    Dark Theme Palette Refinement: [0.15, 0.62]
+```
+
+### Gantt Delivery Sequence — Product Roadmap (Product & Design)
+- **Template ID**: `delivery-gantt`
+- **Description**: Cross-functional delivery schedule with workstreams, critical paths, and milestone QA gates.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/delivery-gantt/
+
+```mermaid
+---
+config:
+  gantt:
+    useWidth: 2200
+    barHeight: 28
+    barGap: 10
+    topPadding: 60
+    leftPadding: 200
+    gridLineStartPadding: 45
+  theme: dark
+---
+gantt
+    title DiagramAtlas Enterprise Release Roadmap
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+
+    section Architecture & Wasm
+    Design System & Tailwind v4 Tokens    :done, a1, 2026-09-01, 7d
+    WebAssembly Turbo Kernel & Fast Hash  :done, a2, after a1, 10d
+    Native Graphviz Wasm C Engine         :active, a3, after a2, 8d
+
+    section Format Interop
+    XMind ZEN & Draw.io Importers         :done, f1, 2026-09-12, 6d
+    PlantUML, D2, SQL DDL Transpilers     :done, f2, after f1, 5d
+    BPMN 2.0 & OpenAPI 3.1 Specs          :active, f3, after f2, 6d
+
+    section Verification & Release
+    End-to-End Test Suite (55 Checks)     :crit, v1, after a3, 4d
+    GitHub Pages Automated Deploy         :crit, v2, after v1, 2d
+    Enterprise GA v1.0 Launch             :milestone, m1, after v2, 0d
+```
+
+### Mindmap — Product Strategy & Architecture (Product & Design)
+- **Template ID**: `mindmap-diagram`
+- **Description**: Hierarchical brainstorming mindmap of product capabilities, performance pillars, and formats.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/mindmap-diagram/
+
+```mermaid
+mindmap
+  root((DiagramAtlas Studio))
+    Wasm Acceleration
+      Sub-millisecond FNV-1a Hashing
+      Linear Memory Compositor
+      Native Graphviz C Engine
+      Zero-Cloud Offline Execution
+    Universal Formats
+      Full 14 UML Diagrams
+      XMind ZEN & FreeMind
+      Draw.io XML & Visio
+      PlantUML & D2 Architecture
+      SQL DDL & OpenAPI
+    Visual Canvas Engine
+      Kinetic Drag & Inertia
+      Cursor-centered Zoom
+      Interactive Minimap Radar
+      Presentation & Laser Mode
+    Enterprise Exporters
+      Retina 4K / 8K PNG
+      Crisp Scalable Vector SVG
+      Vector PDF Document
+      Standalone Interactive HTML
+```
+
+### Conversion Funnel — User Acquisition (Product & Design)
+- **Template ID**: `sankey-funnel`
+- **Description**: Sankey flow diagram tracking user acquisition, studio engagement, and export conversions.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sankey-funnel/
+
+```mermaid
+sankey-beta
+    GitHub Repository,Landing Page Showcase,8500
+    Google Organic Search,Landing Page Showcase,4200
+    Developer Community,Landing Page Showcase,2300
+    Landing Page Showcase,Interactive Studio Launch,12400
+    Landing Page Showcase,Read Documentation,1800
+    Landing Page Showcase,Dropoff,800
+    Interactive Studio Launch,Create New Diagram,7800
+    Interactive Studio Launch,Explore 30+ Templates,3600
+    Interactive Studio Launch,Import Existing XMind / Drawio,1000
+    Create New Diagram,Export High-Res PNG,5200
+    Create New Diagram,Export Vector SVG,2100
+    Create New Diagram,Export PDF Pro,500
+```
+
+### Ishikawa Root-Cause Diagram (Product & Design)
+- **Template ID**: `ishikawa-root-cause`
+- **Description**: Quality engineering root-cause analysis across Method, Machine, Material, and People.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/ishikawa-root-cause/
+
+```mermaid
+flowchart LR
+    subgraph ProblemBox [Core Problem Statement]
+        Defect["High API Latency & Payload Bloat\n(p99 > 2,500ms / 50KB JSON)"]
+    end
+
+    subgraph CausesSpine [6M Root Cause Dimensions]
+        direction TB
+        subgraph Machine [Infrastructure & Hardware]
+            M1[CPU Throttling on Shared Pods]
+            M2[Unpooled Database Connections]
+        end
+        subgraph Method [Architecture & Protocol]
+            M3[Missing Tier-0 In-Memory Cache]
+            M4[Verbose Text JSON Protocol]
+        end
+        subgraph Material [Payloads & Inference]
+            M5[Uncompressed 50KB Payloads]
+            M6[LLM Preamble & Polite Filler]
+        end
+    end
+
+    Machine --> Defect
+    Method --> Defect
+    Material --> Defect
+```
+
+### Multi-Quarter Product Roadmap — Timeline (Product & Design)
+- **Template ID**: `product-roadmap-timeline`
+- **Description**: Quarterly product roadmap with strategic milestones, platform expansions, and release targets.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/product-roadmap-timeline/
+
+```mermaid
+timeline
+    title 2026-2027 Engineering & Product Roadmap
+    2026 Q1 : Foundation Release : Dual Mermaid & Wasm Engine : 15 Universal Importers : 30 Templates
+    2026 Q2 : Enterprise Intelligence : Local Qwen LLM Copilot : Sub-millisecond Fast Cache : Live Radar
+    2026 Q3 : Native Desktop App : Electron & Tauri Offline Builds : Zero-Cloud Enterprise Deployment
+    2026 Q4 : Plugin Ecosystem : Custom Wasm Layout Algorithms : Visual Extensions Marketplace
+```
+
+### C4 Model — System Context & Containers (Architecture & Cloud)
+- **Template ID**: `c4-system-context`
+- **Description**: C4 model architecture showing users, core software systems, and external banking mainframe boundaries.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/c4-system-context/
+
+```mermaid
+C4Context
+    title System Context Diagram — Internet Banking System
+    Person(customer, "Personal Banking Customer", "A customer of the bank with personal bank accounts.")
+    System(bankingSystem, "Internet Banking System", "Allows customers to view account balances, make payments, and analyze transactions.")
+    System_Ext(mailSystem, "E-mail Subsystem", "Internal Microsoft Exchange system for customer notifications.")
+    System_Ext(mainframe, "Core Mainframe Banking Tier", "Stores all customer core accounts, ledgers, and transactions.")
+
+    Rel(customer, bankingSystem, "Views account balances & initiates transfers using", "HTTPS / TLS 1.3")
+    Rel_Back(customer, mailSystem, "Receives transaction verification emails from")
+    Rel(bankingSystem, mailSystem, "Sends notifications using", "SMTP")
+    Rel(bankingSystem, mainframe, "Queries balances & executes transactions using", "gRPC / Protobuf")
+```
+
+### Kubernetes Cluster Topology (Architecture & Cloud)
+- **Template ID**: `graphviz-k8s-mesh`
+- **Description**: Cloud native service mesh and ingress clusters rendered directly using WebAssembly Graphviz C engine.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/graphviz-k8s-mesh/
+
+```mermaid
+digraph KubernetesMesh {
+  rankdir=TB;
+  bgcolor="transparent";
+  fontname="Helvetica,Arial,sans-serif";
+  node [fontname="Helvetica,Arial,sans-serif", shape=box, style="filled,rounded", fillcolor="#1e293b", fontcolor="#f8fafc", color="#38bdf8", penwidth=1.5];
+  edge [fontname="Helvetica,Arial,sans-serif", color="#94a3b8", fontcolor="#cbd5e1"];
+
+  subgraph cluster_ingress {
+    label = "Edge Ingress Gateway";
+    style = "filled,dashed";
+    fillcolor = "#0f172a";
+    fontcolor = "#38bdf8";
+    color = "#0284c7";
+
+    CloudFlare [label="Cloudflare CDN\n(Edge TLS 1.3)", fillcolor="#334155", shape=ellipse];
+    EnvoyProxy [label="Envoy Proxy / Traefik\n(Layer 7 Router)", fillcolor="#0369a1"];
+  }
+
+  subgraph cluster_services {
+    label = "Kubernetes Pod Mesh";
+    style = "filled";
+    fillcolor = "#0f172a";
+    fontcolor = "#a855f7";
+    color = "#7e22ce";
+
+    AuthService [label="Auth Service\n(OAuth 2.1 / Wasm Guard)", fillcolor="#4c1d95"];
+    DiagramEngine [label="DiagramAtlas Kernel\n(WebAssembly Runner)", fillcolor="#065f46", color="#10b981"];
+    ExportWorker [label="Rasterizer Worker\n(SIMD Compositor)", fillcolor="#1e3a8a", color="#60a5fa"];
+  }
+
+  subgraph cluster_data {
+    label = "Distributed Storage Tier";
+    style = "filled";
+    fillcolor = "#0f172a";
+    fontcolor = "#f59e0b";
+    color = "#b45309";
+
+    RedisCache [label="Redis Cluster\n(In-Memory State)", shape=cylinder, fillcolor="#7c2d12"];
+    PostgresDB [label="PostgreSQL Primary\n(Vector & Metadata)", shape=cylinder, fillcolor="#1e3a8a"];
+  }
+
+  CloudFlare -> EnvoyProxy [label="HTTPS / HTTP3"];
+  EnvoyProxy -> AuthService [label="gRPC Verify"];
+  EnvoyProxy -> DiagramEngine [label="WebSocket / SSE"];
+  DiagramEngine -> ExportWorker [label="Task Queue"];
+  DiagramEngine -> RedisCache [label="Fast Hash Key"];
+  AuthService -> PostgresDB [label="User Schema"];
+  ExportWorker -> RedisCache [label="Cache Snapshot"];
+}
+```
+
+### Service Architecture & Dependency Graph (Architecture & Cloud)
+- **Template ID**: `service-architecture`
+- **Description**: Distributed microservice graph with shared core services, parallel domain pods, and telemetry monitoring.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/service-architecture/
+
+```mermaid
+flowchart TD
+    subgraph IngressLayer [Edge Ingress Tier]
+        Cloudflare[Cloudflare Edge CDN]
+        Traefik[Traefik v3 API Gateway]
+    end
+
+    subgraph CoreServices [Shared Core Services]
+        AuthService[Auth & Token Service]
+        TenantService[Tenant Organization Service]
+        AuditService[Audit Log Collector]
+    end
+
+    subgraph ProductServices [Parallel Product Microservices]
+        CanvasService[Canvas Collaborative Service]
+        ExportService[High-DPI Rasterize Worker]
+        SearchService[Elastic Search Vector Node]
+    end
+
+    subgraph DataTier [Storage & Persistence Tier]
+        Postgres[(Postgres Cloud Primary)]
+        RedisCache[(Redis In-Memory State)]
+        S3Bucket[(S3 Vector Asset Storage)]
+    end
+
+    Cloudflare --> Traefik
+    Traefik --> AuthService
+    Traefik --> CanvasService
+    Traefik --> ExportService
+
+    CanvasService --> AuthService
+    CanvasService --> TenantService
+    CanvasService --> RedisCache
+    CanvasService --> Postgres
+
+    ExportService --> S3Bucket
+    ExportService --> AuditService
+    TenantService --> Postgres
+```
+
+### Milestone Dependency Progression (Architecture & Cloud)
+- **Template ID**: `dependency-overview`
+- **Description**: High-level milestone progression from infrastructure baseline to project completion with QA gates.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/dependency-overview/
+
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+    curve: basis
+    nodeSpacing: 45
+    rankSpacing: 75
+---
+flowchart LR
+    INFRA[Infrastructure baseline]
+    SPLP[Shared PLP]
+    SPDP[Shared PDP]
+    PASS[Passenger shared]
+    PLP[Parallel service PLPs]
+    PDP[Parallel service PDPs]
+    REVIEW[Parallel service Reviews]
+    TRIPS[My Trips by service]
+    DONE{{All services complete}}
+
+    INFRA --> SPLP --> PLP
+    INFRA --> SPDP --> PDP
+    INFRA --> PASS
+    PLP -->|QA Gate| PDP
+    PDP -->|QA Gate| REVIEW
+    PASS --> REVIEW
+    REVIEW -->|QA Gate| TRIPS -->|QA Gate| DONE
+
+    classDef infra fill:#202a35,stroke:#94a3b8,color:#fff,stroke-width:3px
+    classDef shared fill:#2e2050,stroke:#8b5cf6,color:#fff,stroke-width:2px
+    classDef service fill:#123448,stroke:#0ea5e9,color:#fff,stroke-width:2px
+    classDef milestone fill:#111827,stroke:#f8fafc,color:#fff,stroke-width:2px
+    class INFRA infra
+    class SPLP,SPDP,PASS shared
+    class PLP,PDP,REVIEW,TRIPS service
+    class DONE milestone
+```
+
+### Hardware System Block & Bus Architecture (Architecture & Cloud)
+- **Template ID**: `hardware-system-block`
+- **Description**: High-speed system architecture with CPU, memory bus, neural accelerator, and DMA controllers.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/hardware-system-block/
+
+```mermaid
+block-beta
+    columns 4
+    CPU["High-Performance CPU Core"]:2 RAM["LPDDR5 Unified Memory"]:2
+    block:bus:4
+        SystemBus["256-bit Ultra-High Speed Interconnect Bus"]
+    end
+    NPU["Neural Processing Accelerator"]:2 NVMe["PCIe 5.0 NVMe Storage"]:2
+
+    CPU --> SystemBus
+    RAM --> SystemBus
+    NPU --> SystemBus
+    NVMe --> SystemBus
+```
+
+### Entity Relationship Schema (Engineering & Data)
+- **Template ID**: `er-diagram`
+- **Description**: Relational database schema with Crow’s Foot cardinality notation, primary keys, and foreign keys.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/er-diagram/
+
+```mermaid
+erDiagram
+    ORGANIZATION ||--o{ USER : contains
+    ORGANIZATION ||--o{ PROJECT : owns
+    USER ||--o{ PROJECT_MEMBER : participates
+    PROJECT ||--o{ PROJECT_MEMBER : assigns
+    PROJECT ||--o{ DIAGRAM : stores
+    DIAGRAM ||--o{ DIAGRAM_VERSION : tracks
+    USER ||--o{ AUDIT_LOG : triggers
+
+    ORGANIZATION {
+        uuid id PK
+        string name
+        string plan_tier
+        timestamp created_at
+    }
+
+    USER {
+        uuid id PK
+        string email
+        string full_name
+        string role
+        boolean is_active
+    }
+
+    PROJECT {
+        uuid id PK
+        uuid organization_id FK
+        string title
+        string visibility
+        timestamp updated_at
+    }
+
+    DIAGRAM {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string format
+        text current_source
+        string checksum_hash
+    }
+
+    DIAGRAM_VERSION {
+        uuid id PK
+        uuid diagram_id FK
+        integer version_number
+        text source_snapshot
+        string author_id
+        timestamp snapshot_at
+    }
+```
+
+### Git Trunk-Based Release & Hotfix Flow (Engineering & Data)
+- **Template ID**: `git-graph`
+- **Description**: Trunk-based source control branching strategy with PR merges, release tags, and hotfixes.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/git-graph/
+
+```mermaid
+gitGraph
+    commit id: "Initial Architecture"
+    commit id: "Core Engine Setup"
+    branch feature/wasm-turbo
+    checkout feature/wasm-turbo
+    commit id: "Fast FNV-1a Wasm Kernel"
+    commit id: "Graphviz C Engine Binding"
+    checkout main
+    merge feature/wasm-turbo id: "PR #1: WebAssembly Turbo" tag: "v0.9.0"
+    branch feature/14-uml-templates
+    checkout feature/14-uml-templates
+    commit id: "Add Full UML Specification"
+    commit id: "Product & Architecture Templates"
+    checkout main
+    merge feature/14-uml-templates id: "PR #2: 30 Universal Templates" tag: "v1.0.0"
+    branch hotfix/safari-canvas-retina
+    checkout hotfix/safari-canvas-retina
+    commit id: "Fix High-DPI Canvas Scaling"
+    checkout main
+    merge hotfix/safari-canvas-retina id: "PR #3: Hotfix Safari Scale" tag: "v1.0.1"
+```
+
+### API Latency Percentiles & SLA Uptime (Engineering & Data)
+- **Template ID**: `sla-performance-metrics`
+- **Description**: Performance benchmark comparison comparing DiagramAtlas WebAssembly response times against legacy tools.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sla-performance-metrics/
+
+```mermaid
+xychart-beta
+    title "p99 Execution Latency vs Concurrent Query Load"
+    x-axis ["100 req/s", "500 req/s", "1,000 req/s", "5,000 req/s", "10,000 req/s"]
+    y-axis "Latency (milliseconds)" 0 --> 250
+    bar [12, 18, 26, 45, 68]
+    line [110, 145, 185, 230, 290]
+```
+
+### Systems Engineering Requirements & Traceability (Architecture & Cloud)
+- **Template ID**: `system-requirements-spec`
+- **Description**: System-level requirements specification with functional/performance criteria, risk levels, and traceability verification links.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/system-requirements-spec/
+
+```mermaid
+requirementDiagram
+    requirement req_core_zero_trust {
+        id: 1.1
+        text: All network communications must be mutual TLS encrypted and strictly authenticated.
+        risk: high
+        verifymethod: test
+    }
+    functionalRequirement req_token_rotation {
+        id: 1.2
+        text: Access tokens must rotate automatically every 15 minutes with cryptographic replay protection.
+        risk: medium
+        verifymethod: test
+    }
+    performanceRequirement req_auth_sla {
+        id: 2.1
+        text: Authentication handshakes must complete within 50ms at p99 under 10k RPS load.
+        risk: medium
+        verifymethod: demonstration
+    }
+    interfaceRequirement req_oidc_federation {
+        id: 3.1
+        text: Support standard OIDC and SAML 2.0 identity providers for enterprise SSO.
+        risk: low
+        verifymethod: inspection
+    }
+
+    element identity_gateway {
+        type: service
+    }
+    element vault_kms {
+        type: subsystem
+    }
+    element redis_session_cache {
+        type: storage
+    }
+
+    identity_gateway - satisfies -> req_core_zero_trust
+    identity_gateway - satisfies -> req_token_rotation
+    identity_gateway - traces -> req_oidc_federation
+    vault_kms - satisfies -> req_token_rotation
+    redis_session_cache - satisfies -> req_auth_sla
+```
+
+### TCP/IP Protocol Header (Engineering & Data)
+- **Template ID**: `tcp-packet-bytefield`
+- **Description**: Transmission Control Protocol (TCP) 32-bit word packet structure with port numbers, sequence flags, window size, and checksum fields.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/tcp-packet-bytefield/
+
+```mermaid
+packet-beta
+    0-15: "Source Port"
+    16-31: "Destination Port"
+    32-63: "Sequence Number"
+    64-95: "Acknowledgment Number"
+    96-99: "Data Offset"
+    100-105: "Reserved"
+    106: "URG"
+    107: "ACK"
+    108: "PSH"
+    109: "RST"
+    110: "SYN"
+    111: "FIN"
+    112-127: "Window Size"
+    128-143: "Checksum"
+    144-159: "Urgent Pointer"
+    160-191: "Options & Padding"
+```
+
+### Cloud Microservices & VPC (Software Architecture)
+- **Template ID**: `cloud-service-architecture`
+- **Description**: Cloud microservice topology with VPC network boundaries, API gateway, authentication service, relational database, and distributed cache.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/cloud-service-architecture/
+
+```mermaid
+architecture-beta
+    group vpc(cloud)[Virtual Private Cloud]
+    service client(internet)[Web Client]
+    service gateway(server)[API Gateway] in vpc
+    service auth(key)[Auth Service] in vpc
+    service db(database)[Aurora DB] in vpc
+    service cache(disk)[Redis Cluster] in vpc
+
+    client:R -- L:gateway
+    gateway:B -- T:auth
+    gateway:R -- L:db
+    auth:R -- L:cache
+```
+
+### Company Organizational Hierarchy (Business & Operations)
+- **Template ID**: `company-org-chart`
+- **Description**: Executive leadership, department heads, cross-functional squads, and operational reporting lines for corporate management.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/company-org-chart/
+
+```mermaid
+flowchart TD
+    Board["Board of Directors"]
+    CEO["Chief Executive Officer"]
+    Board --> CEO
+
+    CPO["Chief Product Officer"]
+    CTO["Chief Technology Officer"]
+    CMO["Chief Marketing Officer"]
+    CFO["Chief Financial Officer"]
+
+    CEO --> CPO
+    CEO --> CTO
+    CEO --> CMO
+    CEO --> CFO
+
+    subgraph ProductTeam["Product & Design"]
+        PM["Product Managers"]
+        UX["Product Designers"]
+        UXR["User Researchers"]
+        CPO --> PM
+        CPO --> UX
+        CPO --> UXR
+    end
+
+    subgraph EngineeringTeam["Engineering & Cloud"]
+        FE["Frontend Engineers"]
+        BE["Backend Engineers"]
+        QA["QA Engineers"]
+        CTO --> FE
+        CTO --> BE
+        CTO --> QA
+    end
+
+    subgraph GrowthTeam["Growth & Revenue"]
+        Mktg["Digital Marketing"]
+        Sales["Enterprise Sales"]
+        CustSucc["Customer Success"]
+        CMO --> Mktg
+        CMO --> Sales
+        CMO --> CustSucc
+    end
+```
+
+### SWOT Strategic Business Analysis (Business & Operations)
+- **Template ID**: `swot-strategic-analysis`
+- **Description**: Strategic planning framework evaluating internal strengths/weaknesses and external market opportunities/threats.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/swot-strategic-analysis/
+
+```mermaid
+quadrantChart
+    title SWOT Business Analysis Matrix
+    x-axis "Internal Factors" --> "External Factors"
+    y-axis "Harmful (Negative)" --> "Helpful (Positive)"
+    quadrant-1 "Opportunities (External / Positive)"
+    quadrant-2 "Strengths (Internal / Positive)"
+    quadrant-3 "Weaknesses (Internal / Negative)"
+    quadrant-4 "Threats (External / Negative)"
+    "Proprietary IP": [0.25, 0.85]
+    "Experienced Leadership": [0.35, 0.75]
+    "Agile Culture": [0.20, 0.65]
+    "Legacy Tech Debt": [0.30, 0.25]
+    "Limited Marketing Budget": [0.40, 0.35]
+    "Emerging Asian Market": [0.80, 0.85]
+    "AI Automation Trends": [0.70, 0.75]
+    "Regulatory Compliance Changes": [0.85, 0.20]
+    "New Low-Cost Competitors": [0.75, 0.30]
+```
+
+### Talent Acquisition & Hiring Pipeline (Business & Operations)
+- **Template ID**: `recruitment-pipeline`
+- **Description**: End-to-end recruitment lifecycle from application screening, technical assessments, executive debriefs to formal offer.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/recruitment-pipeline/
+
+```mermaid
+flowchart LR
+    S1["1. Application Received"] --> S2["2. Resume & Portfolio Screen"]
+    S2 --> D1{"Qualified?"}
+    D1 -- "No" --> R1["Polite Rejection Notice"]
+    D1 -- "Yes" --> S3["3. Recruiter Screening Call"]
+    S3 --> S4["4. Skills & Practical Assessment"]
+    S4 --> S5["5. Team Panel & Culture Fit"]
+    S5 --> D2{"Hire Decision?"}
+    D2 -- "No" --> R2["Constructive Feedback"]
+    D2 -- "Yes" --> S6["6. Reference Check & Compensation Offer"]
+    S6 --> S7["7. Onboarding & Day-One Welcome"]
+```
+
+### Customer Retention & Lifecycle Journey (Business & Operations)
+- **Template ID**: `customer-retention-journey`
+- **Description**: Omnichannel customer journey tracking discovery, product activation, value realization, expansion, and advocacy.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/customer-retention-journey/
+
+```mermaid
+journey
+    title Customer Lifecycle & Retention Journey
+    section Discovery & Trial
+      Visit Homepage & Pricing: 5: Prospect
+      Sign Up for Free Trial: 4: User
+      Complete Guided Onboarding: 3: User
+    section Value Realization
+      Create First Project: 5: Active User
+      Invite Team Collaborator: 4: Team Member
+      Experience Aha Moment: 5: Champion
+    section Expansion & Advocacy
+      Upgrade to Enterprise Plan: 5: Customer
+      Request Custom Integrations: 3: Admin
+      Submit 5-Star Review & Referral: 5: Advocate
+```
+
+### Risk Assessment & Mitigation Matrix (Business & Operations)
+- **Template ID**: `risk-assessment-matrix`
+- **Description**: Enterprise risk management matrix plotting likelihood against business impact with severity tiers and mitigation actions.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/risk-assessment-matrix/
+
+```mermaid
+quadrantChart
+    title Enterprise Risk Assessment Matrix
+    x-axis "Low Likelihood" --> "High Likelihood"
+    y-axis "Low Impact" --> "High Impact"
+    quadrant-1 "Critical (Urgent Mitigation)"
+    quadrant-2 "High Severity (Contingency Plan)"
+    quadrant-3 "Low Severity (Routine Monitor)"
+    quadrant-4 "Moderate (Operational Action)"
+    "Server Infrastructure Outage": [0.25, 0.85]
+    "Data Center Fiber Cut": [0.15, 0.90]
+    "Key Staff Turnover": [0.65, 0.70]
+    "Vendor Cloud Price Increase": [0.80, 0.75]
+    "Minor UI Glitch": [0.75, 0.25]
+    "Typo in Release Notes": [0.85, 0.15]
+    "Office Wifi Fluctuation": [0.35, 0.20]
+```
+
+### Customer Refund & Resolution Policy (Business & Operations)
+- **Template ID**: `customer-refund-decision-tree`
+- **Description**: Standard operating procedure decision tree for customer support teams resolving refund requests, replacements, and store credits.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/customer-refund-decision-tree/
+
+```mermaid
+flowchart TD
+    Req["Customer Requests Refund"] --> CheckTime{"Purchase within 30 days?"}
+    CheckTime -- "No" --> Exceed["Policy Window Exceeded"]
+    Exceed --> StoreCredit["Offer 50% Store Credit Coupon"]
+    CheckTime -- "Yes" --> CheckUsage{"Product Used or Damaged?"}
+    CheckUsage -- "Unopened" --> AutoRefund["Approve Full Instant Refund"]
+    CheckUsage -- "Opened/Used" --> Inspect{"Condition Verified by Support?"}
+    Inspect -- "Minor wear" --> Partial["Issue 80% Partial Refund"]
+    Inspect -- "Damaged by customer" --> Deny["Decline with Photographic Proof"]
+    AutoRefund --> Notify["Send Confirmation Email"]
+    Partial --> Notify
+    StoreCredit --> Notify
+    Deny --> Notify
+```
+
+### Strategic Quarterly OKR Roadmap (Business & Operations)
+- **Template ID**: `strategic-okr-roadmap`
+- **Description**: Multi-quarter corporate vision, strategic milestones, key results, and organizational goals across 4 quarters.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/strategic-okr-roadmap/
+
+```mermaid
+timeline
+    title 2026 Corporate Strategic OKR Roadmap
+    section Q1 Foundation & Discovery
+        Customer Discovery : 50 Enterprise Interviews : Target ICP Defined
+        Core Engine Overhaul : WebAssembly Pipeline : 60fps Canvas Render
+    section Q2 Market Launch
+        Public Beta Launch : Product Hunt #1 Milestone : First 10,000 Users
+        Monetization V1 : Stripe Subscription Billing : Team Workspaces
+    section Q3 Scale & Enterprise
+        Security & Trust : SOC2 Type II Audit : SSO SAML Authentication
+        Partner Ecosystem : VS Code Extension : Slack Bot Integration
+    section Q4 Global Expansion
+        Internationalization : 12 Languages Supported : Multi-Currency Billing
+        AI Native Copilot : Natural Language to Architecture : Self-Healing Diagrams
+```
+
+### Marketing & Sales Conversion Funnel (Business & Operations)
+- **Template ID**: `sales-marketing-funnel`
+- **Description**: Conversion flow from initial website visitors through qualified leads, trial activations, paid tiers, and enterprise deals.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sales-marketing-funnel/
+
+```mermaid
+sankey-beta
+Website Visitors, Sign Ups, 3500
+Website Visitors, Direct Bounces, 16500
+Sign Ups, Active Trial Users, 1800
+Sign Ups, Inactive Free, 1700
+Active Trial Users, Paid Pro Subscriptions, 650
+Active Trial Users, Enterprise Contracts, 150
+```
+
+### Agile Team Sprint Retrospective (Business & Operations)
+- **Template ID**: `sprint-retrospective-mindmap`
+- **Description**: Structured retrospective mindmap categorizing what went well, growth areas, constructive action items, and team kudos.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sprint-retrospective-mindmap/
+
+```mermaid
+mindmap
+  root((Sprint 24 Retrospective))
+    What Went Well
+      High Velocity
+        Zero production bugs
+        Completed all 14 user stories
+      Great Collaboration
+        Pair programming on tricky WASM logic
+        Fast PR code review turnaround
+    What Needs Improvement
+      Meeting Fatigue
+        Back-to-back grooming sessions
+      Flaky Integration Tests
+        CI pipeline took 18 minutes
+      Specification Gaps
+        Mobile drawer design unclear until mid-sprint
+    Action Items
+      Automate smoke tests in GitHub Actions
+      Enforce 25-minute meeting caps with 5-minute breathers
+      Require design sign-off 2 days before sprint kickoff
+    Team Kudos
+      Alex for rapid bug turnaround
+      Sarah for the new slide deck exporter
+```
+
+### QA Defect Lifecycle & Bug Triage Workflow (QA & Testing)
+- **Template ID**: `qa-defect-lifecycle`
+- **Description**: Complete defect state machine from discovery and triage prioritization to developer fix, QA verification, and production closure.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/qa-defect-lifecycle/
+
+```mermaid
+flowchart TD
+    NewBug["New Bug Reported"] --> Triage{"Triage Review"}
+    Triage -- "Invalid / Cannot Reproduce" --> Rejected["Rejected / Closed"]
+    Triage -- "Duplicate" --> Dup["Closed as Duplicate"]
+    Triage -- "Confirmed" --> Prioritize{"Severity Assessment"}
+    Prioritize -- "P0 Blocker" --> Hotfix["Immediate Hotfix Squad"]
+    Prioritize -- "P1 / P2" --> Backlog["Sprint Backlog"]
+    Hotfix --> DevFix["Developer Fix & PR"]
+    Backlog --> DevFix
+    DevFix --> CodeReview["Peer Code Review"]
+    CodeReview --> DeployQA["Deployed to QA Test Env"]
+    DeployQA --> ReTest{"QA Verification"}
+    ReTest -- "Failed" --> ReOpen["Reopened with Trace Logs"]
+    ReOpen --> DevFix
+    ReTest -- "Passed" --> PreProd["Staging Regression Pass"]
+    PreProd --> ProdDeploy["Deploy to Production"]
+    ProdDeploy --> Done["Closed & Verified in Prod"]
+```
+
+### Automated CI/CD Quality Gate & Smoke Pipeline (QA & Testing)
+- **Template ID**: `qa-cicd-quality-gate`
+- **Description**: Multi-stage continuous integration and release quality gates: unit tests, DB integration, headless browser E2E, and security scans.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/qa-cicd-quality-gate/
+
+```mermaid
+flowchart LR
+    Commit["Code Commit"] --> Lint["Static Lint & Types"]
+    Lint --> Unit["Unit Tests (100% Pass)"]
+    Unit --> Gate1{"Gate 1: Fast Checks"}
+    Gate1 -- "Pass" --> Integration["Integration & DB Tests"]
+    Integration --> E2E["Headless Browser E2E"]
+    E2E --> Gate2{"Gate 2: Smoke Gate"}
+    Gate2 -- "Pass" --> SecurityScan["SAST & Dependency Audit"]
+    SecurityScan --> StagingDeploy["Deploy to Staging"]
+    StagingDeploy --> Perf["Load & Latency Benchmarks"]
+    Perf --> ReleaseSignoff["QA Release Signoff"]
+```
+
+### Product Feature Backlog & User Story Map (Product & Design)
+- **Template ID**: `pm-story-mapping`
+- **Description**: Visual user story mapping organizing feature epics across user journey milestones and release slices (MVP vs V2).
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/pm-story-mapping/
+
+```mermaid
+flowchart TD
+    subgraph Backbone["User Journey Backbone"]
+        Discover["1. Discover Product"]
+        Eval["2. Evaluate & Sign Up"]
+        Onboard["3. First Diagram Created"]
+        Collab["4. Team Collaboration"]
+        Export["5. Presentation & Export"]
+    end
+
+    subgraph MVP["Release Slice 1: MVP"]
+        S1["Browse Template Library"]
+        S2["One-Click Workspace Launch"]
+        S3["Real-Time Live Preview"]
+        S4["Share Local File / URL"]
+        S5["SVG & PNG Download"]
+    end
+
+    subgraph V2["Release Slice 2: Team Pro"]
+        S6["Custom Theme Frontmatter"]
+        S7["Multi-Tab Workspace"]
+        S8["AI Quick-Fix Diagnostics"]
+        S9["Real-Time P2P WebRTC"]
+        S10["PowerPoint & PDF Export"]
+    end
+
+    Discover --> S1
+    S1 --> S6
+    Eval --> S2
+    S2 --> S7
+    Onboard --> S3
+    S3 --> S8
+    Collab --> S4
+    S4 --> S9
+    Export --> S5
+    S5 --> S10
+```
+
+### Standard Operating Procedure (SOP) & Approval (Business & Operations)
+- **Template ID**: `sop-approval-process`
+- **Description**: Corporate governance and operational workflow for drafting, compliance review, executive sign-off, and staff rollout.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/sop-approval-process/
+
+```mermaid
+flowchart TD
+    Start["Initiate New Operational SOP"] --> Author["Department SME Drafts Document"]
+    Author --> Peer["Cross-Department Peer Review"]
+    Peer --> Changes{"Feedback Received?"}
+    Changes -- "Revisions Needed" --> Revise["Update Clauses & Risk Items"]
+    Revise --> Peer
+    Changes -- "Approved" --> Legal["Legal & Compliance Review"]
+    Legal --> Risk{"Compliance Risks?"}
+    Risk -- "High Risk" --> Mitigate["Remediate Compliance Clauses"]
+    Mitigate --> Legal
+    Risk -- "Compliant" --> VP["Executive / VP Final Sign-Off"]
+    VP --> Publish["Publish to Corporate Knowledge Base"]
+    Publish --> Training["Staff Training & Acknowledgment Log"]
+    Training --> ReviewAnnual["Scheduled Annual Review"]
+```
+
+### Academic Research Thesis & Literature Map (Education & Research)
+- **Template ID**: `academic-research-thesis`
+- **Description**: Comprehensive research structure covering theoretical foundations, empirical methodology, qualitative benchmarks, and limitations.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/academic-research-thesis/
+
+```mermaid
+mindmap
+  root((Doctoral / Master Thesis))
+    Theoretical Foundation
+      Primary Paradigms
+        Distributed Systems Theory
+        Vector Graphics Compilation
+      Key Literature
+        Lamport Time & Orderings
+        Compiler Design Patterns
+    Research Methodology
+      Qualitative Analysis
+        User Interviews (N=40)
+        Observational Usability Labs
+      Quantitative Benchmarks
+        WASM vs JS Hash Speed
+        Frame Rendering Latency (60fps)
+    Empirical Results
+      Zero Cloud Data Leakage
+      3.7x Execution Acceleration
+    Discussion & Limitations
+      Browser Memory Boundaries
+      Mobile Screen Real Estate
+    Future Directions
+      Local Multi-Agent Synthesis
+      Hardware Accelerated WebGPU
+```
+
+### Scientific Method & Lab Experiment Protocol (Education & Research)
+- **Template ID**: `scientific-method-lab`
+- **Description**: Step-by-step scientific method protocol from observation and hypothesis testing to controlled experiment and peer-reviewed publication.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/scientific-method-lab/
+
+```mermaid
+flowchart TD
+    Obs["1. Real-World Observation"] --> Question["2. Formulate Research Question"]
+    Question --> LitReview["3. Literature Review & Prior Art"]
+    LitReview --> Hypo["4. Formulate Testable Hypothesis"]
+    Hypo --> Protocol["5. Design Controlled Experiment"]
+    Protocol --> RunExp["6. Conduct Experiment & Gather Data"]
+    RunExp --> Analyze{"7. Statistical Data Analysis"}
+    Analyze -- "Hypothesis Supported" --> DrawConc["8. Draw Scientific Conclusions"]
+    Analyze -- "Hypothesis Refuted" --> Refine["Refine or Formulate New Hypothesis"]
+    Refine --> Protocol
+    DrawConc --> PeerReview["9. Peer Review & Publication"]
+    PeerReview --> Repeat["10. Independent Replication by Scientific Community"]
+```
+
+### Student Semester Course & Exam Plan (Education & Research)
+- **Template ID**: `student-study-schedule`
+- **Description**: Semester timeline outlining foundation lectures, midterm review sessions, advanced topics, final projects, and exam blitz.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/student-study-schedule/
+
+```mermaid
+timeline
+    title Academic Semester & Exam Preparation Plan
+    section Weeks 1-4 Foundation
+        Orientation & Syllabus Review : Core Readings : Form Study Groups
+        Lecture Modules 1-3 : Weekly Lab Assignments : Concept Summaries
+    section Weeks 5-8 Midterm Sprint
+        Midterm Review Sessions : Practice Exams : Submit Research Proposal
+        Midterm Examinations : Grade Review & Office Hours : Adjust Study Habits
+    section Weeks 9-12 Deep Dive
+        Advanced Special Topics : Group Project Sprint : Draft Research Paper
+        Final Project Deliverable : Peer Presentations : Instructor Feedback
+    section Weeks 13-16 Finals
+        Comprehensive Review : Mock Exam Blitz : Formula & Mindmap Synthesis
+        Final Examinations : Semester Wrap-up & Project Portfolios
+```
+
+### GIS Vector Tile Pyramid & Spatial Data Pipeline (Engineering & Data)
+- **Template ID**: `geospatial-vector-tile-pipeline`
+- **Description**: End-to-end geospatial processing architecture: raw Shapefile / GeoJSON ingestion, PostGIS indexing, Tippecanoe tiling, and Vector Tile (MVT) distribution.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/geospatial-vector-tile-pipeline/
+
+```mermaid
+flowchart TD
+    subgraph Ingestion["1. Spatial Data Ingestion"]
+        SHP["Shapefile / GeoJSON Raw Archives"]
+        GPS["Real-Time GPS Telemetry Stream"]
+        OSM["OpenStreetMap Planet Dumps"]
+    end
+
+    subgraph Processing["2. Spatial Processing & Storage"]
+        PostGIS[("PostgreSQL + PostGIS (H3 Spatial Indexes)")]
+        Tippecanoe["Tippecanoe Vector Tile Compressor"]
+        ProtobufGen["Mapbox Vector Tile (MVT / Protobuf) Encoder"]
+    end
+
+    subgraph Distribution["3. Global Vector Tile Distribution"]
+        S3["Cloud Object Storage (PMTiles / MBTiles)"]
+        CDN["Global Edge CDN Cache"]
+        MapClient["Maplibre / Mapbox Vector Tile Renderer"]
+    end
+
+    SHP --> PostGIS
+    GPS --> PostGIS
+    OSM --> PostGIS
+    PostGIS --> Tippecanoe
+    Tippecanoe --> ProtobufGen
+    ProtobufGen --> S3
+    S3 --> CDN
+    CDN --> MapClient
+```
+
+### Mapbox Vector Tile (MVT) Protobuf Specification (Engineering & Data)
+- **Template ID**: `mvt-vector-tile-protobuf-spec`
+- **Description**: Binary Protobuf encoding specification for Mapbox Vector Tiles (MVT): Tile layers, geometry commands, feature tags, and value dictionaries.
+- **URL**: https://muhamadzolfaghari.github.io/node-flow/templates/mvt-vector-tile-protobuf-spec/
+
+```mermaid
+classDiagram
+    %% Mapbox Vector Tile (MVT) Protobuf Specification
+    class Tile {
+        +Layer[] layers
+        +uint32 version
+        +decodeTile(z, x, y)
+    }
+    class Layer {
+        +string name
+        +Feature[] features
+        +string[] keys
+        +Value[] values
+        +uint32 extent
+        +uint32 version
+    }
+    class Feature {
+        +uint64 id
+        +uint32[] tags
+        +GeomType type
+        +uint32[] geometry
+    }
+    class Value {
+        +string string_value
+        +float float_value
+        +double double_value
+        +int64 int_value
+        +bool bool_value
+    }
+    class GeomType {
+        <<enumeration>>
+        UNKNOWN : 0
+        POINT : 1
+        LINESTRING : 2
+        POLYGON : 3
+    }
+    Tile *-- Layer : contains
+    Layer *-- Feature : encodes
+    Layer *-- Value : dictionary
+    Feature --> GeomType : classifies
+```
+
+
+## Frequently Asked Questions (AEO & GEO Direct Answers)
+### Is NodeFlow free?
+Yes. NodeFlow is open source under the MIT license, with no account, watermark, or paywall. If you connect a third-party AI provider, that provider may charge for its own usage.
+
+### Is my data private?
+Projects, parsing, rendering, and exports run in your browser, and drafts are stored in your browser storage. NodeFlow has no backend of its own. If you choose Gemini or an OpenAI-compatible provider, the prompt you submit (and the active file when you insert into it) is sent to that provider. The deterministic, Ollama, and WebGPU engines do not send it to a cloud service.
+
+### Do I need an API key to use AI?
+No. The deterministic engine works instantly without a key, the WebGPU engine runs a small model on your device after a one-time download, and Ollama uses a model on your own machine. Gemini and OpenAI-compatible engines need your own key.
+
+### What can I import and export?
+Import Mermaid, PlantUML, Graphviz DOT, Draw.io, D2, SQL, OpenAPI, XMind, Markdown, CSV and many more listed on the Formats page. Export SVG, PNG, PDF, PPTX, standalone HTML, source files, and project backups.
+
+### Can I use it offline?
+After the first load, editing, rendering, and exports run client-side. Cloud AI providers and web fonts need a connection.
+
+### How is it different from the Mermaid Live Editor?
+NodeFlow adds multi-file projects with version checkpoints, direct canvas editing for flowcharts, converters for dozens of formats, role-based templates, themes, and an AI assistant that shows a reviewable proposal before changing your files.
+
