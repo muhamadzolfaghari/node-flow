@@ -62,6 +62,8 @@ export function detectDiagramType(text) {
     lower.includes('state machine') ||
     lower.includes('lifecycle') ||
     lower.includes('state diagram') ||
+    lower.includes('defect lifecycle') ||
+    lower.includes('bug triage lifecycle') ||
     (lower.includes('transition') && lower.includes('state')) ||
     /\b(draft|pending|in review|approved|cancelled|active|inactive)\b/.test(lower)
   ) {
@@ -91,18 +93,23 @@ export function detectDiagramType(text) {
     return 'class';
   }
 
-  // Mindmap cues
+  // Mindmap cues (Ideation, Academic Thesis, Retrospectives)
   if (
     lower.includes('mindmap') ||
     lower.includes('brainstorm') ||
     lower.includes('hierarchy') ||
     lower.includes('categories and subcategories') ||
-    lower.includes('breakdown of topics')
+    lower.includes('breakdown of topics') ||
+    lower.includes('literature review') ||
+    lower.includes('thesis structure') ||
+    lower.includes('dissertation') ||
+    lower.includes('research taxonomy') ||
+    lower.includes('sprint retrospective')
   ) {
     return 'mindmap';
   }
 
-  // User Journey cues
+  // User Journey cues (PM / UX)
   if (
     lower.includes('user journey') ||
     lower.includes('customer journey') ||
@@ -113,7 +120,7 @@ export function detectDiagramType(text) {
     return 'journey';
   }
 
-  // Gantt Chart cues
+  // Gantt Chart cues (Project Managers & Operations)
   if (
     lower.includes('gantt') ||
     lower.includes('project schedule') ||
@@ -124,11 +131,14 @@ export function detectDiagramType(text) {
     return 'gantt';
   }
 
-  // Timeline cues
+  // Timeline cues (Academics & Executives)
   if (
     lower.includes('timeline') ||
     lower.includes('history of') ||
     lower.includes('chronology') ||
+    lower.includes('semester plan') ||
+    lower.includes('study schedule') ||
+    lower.includes('okr roadmap') ||
     /\b(q1|q2|q3|q4|202\d|19\d\d)\b/.test(lower)
   ) {
     return 'timeline';
@@ -185,11 +195,14 @@ export function detectDiagramType(text) {
     return 'sankey';
   }
 
-  // Kanban cues
+  // Kanban cues (Product Managers & Agile Teams)
   if (
     lower.includes('kanban') ||
     lower.includes('sprint board') ||
     lower.includes('task board') ||
+    lower.includes('user story map') ||
+    lower.includes('backlog grooming') ||
+    lower.includes('product backlog') ||
     (lower.includes('todo') && lower.includes('in progress'))
   ) {
     return 'kanban';

@@ -270,35 +270,118 @@ const BLANK =
   "flowchart TD\n  Start([Start]) --> Process[Process task]\n  Process --> Done([Complete])";
 
 const AI_STARTERS = [
+  // Developer & Architecture
   {
     label: "Auth & PKCE Flow",
+    role: "Dev",
     type: "sequence",
     prompt: "Client initiates OAuth2 login with PKCE challenge to Auth0 server, receives authorization code, exchanges for JWT access token, and queries Protected Resource API",
   },
   {
     label: "Microservices VPC",
+    role: "Dev",
     type: "architecture",
     prompt: "Public Internet connects via Cloudflare to API Gateway in VPC, routing traffic to User Service and Order Service backed by PostgreSQL and Redis cache",
   },
   {
     label: "E-Commerce DB",
+    role: "Dev",
     type: "er",
     prompt: "Relational database schema with Users, Products, Categories, Orders, and OrderItems with foreign keys and total price calculations",
   },
   {
     label: "CI/CD Deployment",
+    role: "Dev",
     type: "flowchart",
     prompt: "Developer pushes git commit, triggers unit tests and lint checks; if passed, builds docker container and deploys to Kubernetes staging, with canary promotion to production",
   },
+  // QA & Quality Engineering
   {
-    label: "Order Lifecycle",
+    label: "QA Bug Triage & Defect State",
+    role: "QA",
     type: "state",
-    prompt: "Order lifecycle transitioning from Created to PaymentPending, either Paid to Fulfilled or PaymentFailed to Cancelled, with Refunded terminal state",
+    prompt: "Defect lifecycle transitioning from New to Triage, Confirmed to InDev, DeployedToQA to Verified or Reopened with trace logs, closing in Production",
   },
   {
-    label: "Q4 Roadmap",
+    label: "CI/CD Quality Gate Pipeline",
+    role: "QA",
+    type: "flowchart",
+    prompt: "Continuous integration quality gate pipeline: unit tests 100% pass, DB integration tests, headless browser E2E smoke tests, and production release signoff",
+  },
+  {
+    label: "API Integration Test Flow",
+    role: "QA",
+    type: "sequence",
+    prompt: "Automated test harness sends mock auth token to API Gateway, asserts 401 on expired signature, asserts 429 on rate limit threshold, and asserts 200 OK with payload on valid request",
+  },
+  // Product Manager (PM)
+  {
+    label: "User Story Map & MVP",
+    role: "PM",
+    type: "kanban",
+    prompt: "Agile user story map organizing product backlog across user journey milestones: discovery, onboarding, core editor, and export with MVP release slice and V2 enhancements",
+  },
+  {
+    label: "Product Conversion Funnel",
+    role: "PM",
+    type: "sankey",
+    prompt: "Product conversion funnel tracking user dropoff from Organic Search (12000) and Referral (4000) to Signup (3500), Active Editor (2200), and Team Plan (450)",
+  },
+  {
+    label: "Feature Priority 2x2 Matrix",
+    role: "PM",
+    type: "quadrant",
+    prompt: "Feature prioritization matrix evaluating user value versus implementation effort for AI diagnostics, WebRTC sync, dark mode, and PDF exports",
+  },
+  {
+    label: "Customer Onboarding Journey",
+    role: "PM",
+    type: "journey",
+    prompt: "User journey mapping new customer experience from product discovery, first diagram created, template browsing, and exporting vector graphics with satisfaction scores",
+  },
+  // Business & Operations (General Workers / SOP)
+  {
+    label: "SOP Multi-Level Approval",
+    role: "Operations",
+    type: "flowchart",
+    prompt: "Standard operating procedure workflow: document drafted by author, peer review, legal compliance risk check, executive VP sign-off, and staff training rollout",
+  },
+  {
+    label: "Corporate Org Hierarchy",
+    role: "Operations",
+    type: "flowchart",
+    prompt: "Corporate organization chart with CEO, VP Engineering, VP Product, Head of QA, Operations Lead, and cross-functional agile squads",
+  },
+  {
+    label: "Support Refund Escalation",
+    role: "Operations",
+    type: "flowchart",
+    prompt: "Customer refund policy process: verify purchase date, check warranty status, route to finance for payment gateway reversal, and email customer resolution",
+  },
+  {
+    label: "Strategic OKR Roadmap",
+    role: "Operations",
     type: "timeline",
-    prompt: "Quarterly release milestones from Q1 Foundation & Auth, Q2 Core Engine & Plugins, Q3 Cloud Sync & Collaboration, to Q4 Enterprise SSO",
+    prompt: "Annual corporate OKRs broken into Q1 Market Research & Foundation, Q2 Core Engine & Beta, Q3 Enterprise Compliance & SOC2, and Q4 Global Expansion",
+  },
+  // Students & Academics
+  {
+    label: "Thesis & Research Literature Map",
+    role: "Academic",
+    type: "mindmap",
+    prompt: "Doctoral research thesis structure covering theoretical foundations, empirical research methodology, quantitative latency benchmarks, and future WebGPU directions",
+  },
+  {
+    label: "Scientific Method Protocol",
+    role: "Academic",
+    type: "flowchart",
+    prompt: "Scientific experiment protocol from observation and hypothesis formulation to controlled lab testing, statistical data analysis, and peer-reviewed publication",
+  },
+  {
+    label: "Semester Course & Exam Plan",
+    role: "Academic",
+    type: "timeline",
+    prompt: "Semester academic plan across Foundation Weeks 1-4, Midterm Sprint Weeks 5-8, Advanced Research Weeks 9-12, and Final Exams Weeks 13-16",
   },
 ];
 
@@ -354,7 +437,9 @@ export default function Studio() {
     [renameId, setRenameId] = useState(null),
     [format, setFormat] = useState("mermaid"),
     [name, setName] = useState(""),
-    [query, setQuery] = useState("");
+    [query, setQuery] = useState(""),
+    [templateRoleFilter, setTemplateRoleFilter] = useState("all"),
+    [assistantRoleFilter, setAssistantRoleFilter] = useState("All");
   const deferredQuery = useDeferredValue(query, "");
   const [optimisticDocName, setOptimisticDocName] = useOptimistic(
     document?.name || "No file selected",
@@ -6983,29 +7068,72 @@ export default function Studio() {
           )}
           {dialog === "templates" && (
             <>
-              <Input
-                aria-label="Search templates"
-                placeholder="Search UML, ER, architecture…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <div className="flex flex-col gap-2">
+                <Input
+                  aria-label="Search templates"
+                  placeholder="Search UML, ER, architecture, SOP, QA, thesis…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  <span className="text-[11px] text-muted-foreground font-semibold shrink-0">Role:</span>
+                  {[
+                    { id: "all", label: "All" },
+                    { id: "pm", label: "Product (PM)" },
+                    { id: "qa", label: "QA & Testing" },
+                    { id: "dev", label: "Developer" },
+                    { id: "operations", label: "Operations & SOP" },
+                    { id: "academic", label: "Student & Research" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setTemplateRoleFilter(tab.id)}
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-medium shrink-0 transition",
+                        templateRoleFilter === tab.id
+                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid max-h-[50vh] gap-2 overflow-auto sm:grid-cols-2">
-                {DIAGRAM_TEMPLATES.filter((t) =>
-                  (t.title + t.kind + t.category)
+                {DIAGRAM_TEMPLATES.filter((t) => {
+                  const matchesQuery = (t.title + t.kind + t.category + (t.description || ""))
                     .toLowerCase()
-                    .includes(query.toLowerCase()),
-                ).map((t) => (
+                    .includes(query.toLowerCase());
+                  if (!matchesQuery) return false;
+                  if (templateRoleFilter === "all") return true;
+                  const roleStr = (t.role || t.category || "").toLowerCase();
+                  if (templateRoleFilter === "pm") return roleStr.includes("product") || roleStr.includes("pm") || roleStr.includes("journey") || roleStr.includes("kanban");
+                  if (templateRoleFilter === "qa") return roleStr.includes("qa") || roleStr.includes("testing") || roleStr.includes("quality") || roleStr.includes("defect");
+                  if (templateRoleFilter === "dev") return roleStr.includes("uml") || roleStr.includes("cloud") || roleStr.includes("architecture") || roleStr.includes("engineering") || roleStr.includes("developer");
+                  if (templateRoleFilter === "operations") return roleStr.includes("operation") || roleStr.includes("business") || roleStr.includes("sop") || roleStr.includes("org");
+                  if (templateRoleFilter === "academic") return roleStr.includes("education") || roleStr.includes("academic") || roleStr.includes("research") || roleStr.includes("student");
+                  return true;
+                }).map((t) => (
                   <button
                     key={t.id}
                     onClick={() => selectTemplate(t)}
-                    className="rounded-md border bg-card p-3 text-left hover:border-primary"
+                    className="rounded-md border bg-card p-3 text-left hover:border-primary transition"
                   >
-                    <Badge>{t.kind}</Badge>
+                    <div className="flex items-center justify-between gap-1">
+                      <Badge>{t.kind}</Badge>
+                      {t.role && (
+                        <span className="text-[10px] text-muted-foreground font-medium bg-muted/70 px-1.5 py-0.5 rounded">
+                          {t.role}
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-2 text-xs font-medium">
                       {t.title.replace(/^\d+\. /, "")}
                     </p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {t.category}
+                    <p className="mt-1 text-[10px] text-muted-foreground line-clamp-2">
+                      {t.description || t.category}
                     </p>
                   </button>
                 ))}
@@ -7017,10 +7145,26 @@ export default function Studio() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Inspiration Starters</span>
-                  <span className="text-[10px] text-primary">Click to prefill</span>
+                  <div className="flex items-center gap-1">
+                    {["All", "Dev", "PM", "QA", "Operations", "Academic"].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setAssistantRoleFilter(r)}
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-medium transition",
+                          assistantRoleFilter === r
+                            ? "bg-primary text-primary-foreground font-semibold"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {AI_STARTERS.map((s) => (
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                  {AI_STARTERS.filter((s) => assistantRoleFilter === "All" || s.role === assistantRoleFilter).map((s) => (
                     <button
                       key={s.label}
                       type="button"
@@ -7030,6 +7174,7 @@ export default function Studio() {
                       }}
                       className="rounded-full border border-border/80 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-primary/15 hover:border-primary/40 hover:text-primary transition"
                     >
+                      <span className="text-[9px] uppercase font-bold text-muted-foreground mr-1.5 opacity-70">[{s.role}]</span>
                       {s.label}
                     </button>
                   ))}

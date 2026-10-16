@@ -217,6 +217,62 @@ export function ExplorerPanel({
           </p>
         )}
       </div>
+      {/* Role-Specific Workspaces & Starter Kits */}
+      <div className="border-t p-2">
+        <div className="flex items-center justify-between px-1 mb-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            Role Starters
+          </span>
+          <span className="text-[9px] text-muted-foreground">Tailored</span>
+        </div>
+        <div className="grid grid-cols-2 gap-1 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setDialog("templates")}
+            className="flex items-center gap-1.5 rounded-md border border-border/70 bg-card/60 px-2 py-1.5 text-left text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            title="Product Manager: User Story Maps, OKRs, Funnels"
+          >
+            <span className="text-xs">🎯</span>
+            <span className="truncate font-medium">Product (PM)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("templates")}
+            className="flex items-center gap-1.5 rounded-md border border-border/70 bg-card/60 px-2 py-1.5 text-left text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            title="QA & Testing: Defect Lifecycles, CI Gates, E2E Smoke"
+          >
+            <span className="text-xs">🧪</span>
+            <span className="truncate font-medium">QA & Test</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("templates")}
+            className="flex items-center gap-1.5 rounded-md border border-border/70 bg-card/60 px-2 py-1.5 text-left text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            title="Developers & Architects: C4, Microservices, DB ER"
+          >
+            <span className="text-xs">💻</span>
+            <span className="truncate font-medium">Developer</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("templates")}
+            className="flex items-center gap-1.5 rounded-md border border-border/70 bg-card/60 px-2 py-1.5 text-left text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            title="Operations & Business: SOP Workflows, Org Charts"
+          >
+            <span className="text-xs">📋</span>
+            <span className="truncate font-medium">Ops & SOP</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog("templates")}
+            className="col-span-2 flex items-center justify-center gap-1.5 rounded-md border border-border/70 bg-card/60 px-2 py-1.5 text-left text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            title="Students & Academics: Thesis Mindmaps, Scientific Protocols, Exam Plans"
+          >
+            <span className="text-xs">🎓</span>
+            <span className="truncate font-medium">Student & Academic Research</span>
+          </button>
+        </div>
+      </div>
       <div className="grid gap-1 border-t p-2">
         <Button
           variant="ghost"
