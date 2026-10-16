@@ -64,10 +64,10 @@ const DEMOS = [
 ];
 
 const QUICK_STARTS = [
-  { icon: Network, label: "UML & architecture", detail: "Structure, behavior, interactions", query: "UML" },
-  { icon: Database, label: "Entity relationships", detail: "Tables, keys, and data models", query: "ER" },
-  { icon: Layers, label: "Charts & planning", detail: "Gantt, timelines, and data charts", query: "Product & Design" },
-  { icon: GitBranch, label: "Flows & mindmaps", detail: "Processes and connected ideas", query: "mindmap" },
+  { icon: Network, label: "UML & Architecture", detail: "Structure, behavior, interactions", link: "/templates?category=UML%20Specification" },
+  { icon: Database, label: "Entity Relationships", detail: "Tables, keys, and data models", link: "/templates?category=Engineering%20%26%20Data" },
+  { icon: Layers, label: "Charts & Planning", detail: "Gantt, timelines, and data charts", link: "/templates?category=Product%20%26%20Design" },
+  { icon: GitBranch, label: "Flows & Mindmaps", detail: "Processes and connected ideas", link: "/templates?q=mindmap" },
 ];
 
 const FEATURES = [
@@ -109,7 +109,7 @@ const FEATURES = [
   {
     icon: Download,
     title: "Lossless vector & portable exports",
-    description: "Export SVG with embedded roundtrip source metadata, 4× UHD PNG, vector PDF, PPTX slides, standalone HTML, and .atlas backups.",
+    description: "Export SVG with embedded roundtrip source metadata, 4× UHD PNG, print-ready PDF, PPTX slides, standalone HTML, and .atlas backups.",
   },
   {
     icon: Cloud,
@@ -206,7 +206,7 @@ export default function Landing() {
               <li>Air-Gap Ready</li>
               <li>Zero Telemetry</li>
               <li>{FORMATS.length} Architecture Formats</li>
-              <li>158 Unit Tests Passing</li>
+              <li>273 Tests Passing (100% Pass Rate)</li>
               <li>Hardware Wasm Accelerated</li>
               <li>MIT Licensed</li>
             </ul>
@@ -269,7 +269,7 @@ export default function Landing() {
           {QUICK_STARTS.map((f) => (
             <Link
               key={f.label}
-              to={`/templates?q=${encodeURIComponent(f.query)}`}
+              to={f.link}
               className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition hover:border-primary/50 hover:bg-accent/40"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">

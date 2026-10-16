@@ -1,6 +1,6 @@
-# NodeFlow — AI-ready visual studio for diagrams and systems
+# NodeFlow Architecture Studio — AI-Native Visual Workspace for Architecture, Systems & Diagrams
 
-NodeFlow is an open-source, browser-based workspace for creating and editing diagrams from source, templates, imports, and AI. Keep editable files, live previews, direct canvas tools, diagnostics, and project checkpoints together. Local and cloud AI are optional; when a cloud provider is selected, its provider receives the prompt you submit.
+NodeFlow is an open-source, browser-based architecture workspace for creating, analyzing, and editing diagrams from code source, visual canvas, starter templates, and AI agents. Keep editable multi-file projects, live previews, direct canvas tools, live diagnostics, STRIDE threat auditing, request flow simulation, and version checkpoints together. Built for 100% client-side privacy with zero telemetry.
 
 [Open NodeFlow](https://muhamadzolfaghari.github.io/node-flow/) · [Try the examples](screenshots/enterprise/desktop-home.png) · [Open the studio](screenshots/enterprise/desktop-studio.png) · [Formats and limits](docs/FORMATS-ALL.md) · [Competitive research](docs/COMPETITIVE-RESEARCH.md) · [Improvement loop](docs/IMPROVEMENT-LOOP.md)
 
@@ -13,11 +13,11 @@ Phone layouts: [home](screenshots/enterprise/mobile-home.png) · [studio](screen
 ## What this project demonstrates
 
 - **AI-Native Architecture Agent & Technical Specification Engine:** Automated topology classification (Layered N-Tier, Microservices, Event-Driven Streaming, Cloud VPC, Relational Schemas), fan-in/fan-out coupling bottleneck analysis, single point of failure (SPOF) detection, and automated Markdown architecture specifications & ADRs.
-- **Cross-Disciplinary Studio Workflows:** Purpose-built starter kits and workflows for Product Managers (PM), QA & Testing, Developers, Business Operations (SOP), and Students & Academics.
+- **Cross-Disciplinary Studio Workflows:** 51 production-grade starter kits across 8 categories tailored for Product Managers (PM), QA & Testing, Developers, Business Operations (SOP), and Students & Academics.
 - **High-Speed Code Editor & Live Diagnostics:** 160ms debounced linter with column-level error squiggles, in-editor AI Quick Fix hover actions, line jump navigation, and contextual connection arrow autocompletion.
 - **Enterprise STRIDE Threat Model & Compliance Analyzer:** Automated client-side security architecture audits inspecting trust boundaries, cleartext channels, and exposed databases; generates formal SOC2 / ISO 27001 audit markdown reports.
 - **Interactive Request Flow Simulator:** Real-time visual debugging simulating HTTP/gRPC request packets and photon pulses along directed connections on the live canvas.
-- **Cloud & Architecture Stencil Palette:** Curated cloud infrastructure stencils (AWS, GCP, Azure, Kubernetes, CNCF, Databases, Message Queues) with one-click insertion.
+- **Cloud & Architecture Stencil Palette:** 24 curated cloud infrastructure stencils (AWS, GCP, Azure, Kubernetes, CNCF, Databases, Message Queues) with one-click insertion.
 - **Hardware-Accelerated WebAssembly Suite:** Native C Graphviz layout compilation, 32-bit FNV-1a hardware hashing, and linear memory pixel compositing.
 - **Source-first visual editor:** Synchronized previews and direct manipulation for supported Mermaid diagram families.
 - **Universal 38 format registry:** Conversion adapters that preserve original source and make conversion limits explicit (Graphviz, PlantUML, D2, SQL DDL, DBML, Prisma, Protobuf, JSON Schema, GraphQL, BPMN, C4, Terraform, Draw.io, XMind, StarUML, Lucidchart, GeoJSON, MVT, TopoJSON, etc.).
@@ -112,7 +112,7 @@ The studio features curated templates tailored for every role across modern engi
 
 ### Visual modeling suite
 
-DiagramAtlas provides interactive, bidirectional visual modeling panels in the Inspector tab for all major diagram families:
+NodeFlow provides interactive, bidirectional visual modeling panels in the Inspector tab for all major diagram families:
 - **Flowcharts**: 8 shape presets (process, round, subroutine, database, circle, decision, asymmetric, hexagon), 7 curated color styles, 6 arrow connector styles, layout direction switcher (TD, LR, BT, RL), duplication with style cloning, quick-add child step, cascading node deletion, and edge inspection with targeted disconnection.
 - **Sequence Diagrams**: Participant & actor declaration with custom aliases, typed message passing (`->>`, `-->>`, `-x`, `--)`), and safe participant deletion.
 - **Class Diagrams**: Class creation, typed attributes and methods (`+`, `-`, `#`, `~`), UML relationships (`<|--`, `*--`, `o--`, `-->`, `..>`), and cascading class deletion.
@@ -193,7 +193,7 @@ The old `#/compare` address redirects to Formats. Unknown routes display a not-f
 
 ## Reviewed designs
 
-![DiagramAtlas studio](screenshots/enterprise/desktop-studio.png)
+![NodeFlow studio](screenshots/enterprise/desktop-studio.png)
 
 See [verification results and limits](docs/VERIFICATION.md) and the [desktop and phone screenshots](screenshots/enterprise).
 
@@ -234,13 +234,13 @@ npm run dev
 
 ```sh
 npm run build
-npm test              # 115 syntax, exporter, and Wasm checks
-npm run test:unit     # 158 unit tests with Node native runner
-npm run test:coverage # per-module line/branch/func coverage metrics
-npm run test:browser  # headless browser e2e audit
+npm test              # 115 syntax, exporter, and WebAssembly checks
+npm run test:unit     # 158 unit tests with Node native test runner (100% pass)
+npm run test:coverage # per-module line/branch/function coverage metrics
+npm run test:browser  # headless browser e2e workflow audit
 ```
 
-Production files are generated in `dist/`, with the GitHub Pages base path `/node-flow/` (or `/diagram-atlas/`, configurable via `VITE_BASE_URL`). The browser suite starts its own local server, exercises source formats and workspace workflows, and closes it afterward. Set `ATLAS_TEST_URL` to use an existing server.
+Production files are generated in `dist/`, with the GitHub Pages base path `/node-flow/` (configurable via `VITE_BASE_URL`). The browser suite starts its own local server, exercises source formats and workspace workflows, and closes it afterward. Set `NODEFLOW_TEST_URL` to use an existing server.
 
 ## License
 

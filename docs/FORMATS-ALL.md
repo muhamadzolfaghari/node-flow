@@ -1,11 +1,11 @@
-# All Supported Formats (32)
+# All Supported Formats (38)
 
 Derived previews are structural models, not lossless vendor renderers.
 Original source always stays editable; export downloads original or derived view.
 
 | # | Format | Extensions | Mode | Family | Preview |
 |---|--------|-----------|------|--------|---------|
-| 1 | Mermaid | .mmd, .mermaid | Native | Diagrams | flowcharts, ER, UML class/sequence/state, mindmaps, Gantt, C4, journeys, timelines, Git, Sankey, pie, XY, quadrant, Kanban, block |
+| 1 | Mermaid | .mmd, .mermaid | Native | Diagrams | flowcharts, ER, UML class/sequence/state, mindmaps, Gantt, C4, journeys, timelines, Git, Sankey, pie, XY, quadrant, Kanban, block, requirement, packet, architecture |
 | 2 | Graphviz DOT | .dot, .gv | Native | Architecture | native Wasm layout |
 | 3 | PlantUML | .puml, .plantuml | Derived | UML | sequence, class, state, activity, usecase, deployment, object (skinparam/macros stripped) |
 | 4 | D2 | .d2 | Derived | Architecture | nodes, connections, containers |
@@ -36,7 +36,13 @@ Original source always stays editable; export downloads original or derived view
 | 29 | Gliffy JSON | .gliffy (+.json sniff) | Derived | Diagrams | stage objects → flowchart |
 | 30 | Excalidraw JSON | .excalidraw (+.json sniff) | Derived | Diagrams | shapes → flowchart |
 | 31 | Source code → UML | .ts/.tsx/.js/.jsx/.py/.java/.cs/.go/.rs/.kt/.swift/.php/.rb/.cpp/.c | Derived | UML | classes/structs/enums + extends/implements → class |
-| 32 | Mermaid reverse export | — | Export | — | Mermaid → PlantUML/DOT/D2/SQL/DBML/XMI/TS/OPML/MD + OpenAPI stub |
+| 32 | StarUML | .mdj | Derived | UML | Project and UMLClass models with generalizations & operations → classDiagram |
+| 33 | Lucidchart | .lucid, .csv | Derived | Diagrams | Lucidchart CSV or JSON export → flowchart |
+| 34 | Adobe Illustrator | .ai, .svg | Derived | Vector | Artwork shapes and vector paths converted to visual canvas nodes |
+| 35 | Figma / FigJam | .fig, .jam | Derived | Design | Vector frames and connectors mapped to editable diagram |
+| 36 | OmniGraffle | .graffle | Derived | Mac | Native OmniGraffle XML plists compiled to flowchart |
+| 37 | Miro | .miro | Derived | Whiteboard | Whiteboard cards, widgets, and connectors compiled to flowchart |
+| 38 | GeoJSON / GIS | .geojson, .mvt, .shp, .topojson | Derived | GIS | FeatureCollections, MVT Protobuf, and TopoJSON → topology & class diagrams |
 
 ## Reverse / bidirectional matrix (UML ↔ code)
 

@@ -200,6 +200,7 @@ export const CLOUD_STENCILS = [
   { id: "k8s-pod", label: "Kubernetes Pod", category: "Kubernetes", icon: "☸️", codeSnippet: '    Pod["☸️ K8s Pod Container"]\n' },
   { id: "k8s-ingress", label: "K8s Ingress", category: "Kubernetes", icon: "🌐", codeSnippet: '    Ingress["🌐 K8s Ingress Controller"]\n' },
   { id: "k8s-service", label: "ClusterIP Service", category: "Kubernetes", icon: "🔌", codeSnippet: '    Svc["🔌 K8s Service"]\n' },
+  { id: "k8s-istio", label: "Istio Service Mesh", category: "Kubernetes", icon: "⛵", codeSnippet: '    Mesh["⛵ Istio Envoy Sidecar Mesh"]\n' },
   // Databases & Caching
   { id: "db-postgres", label: "PostgreSQL", category: "Databases", icon: "🐘", codeSnippet: '    Postgres[("🐘 PostgreSQL Database")]\n' },
   { id: "db-redis", label: "Redis Cluster", category: "Databases", icon: "⚡", codeSnippet: '    Redis[("⚡ Redis In-Memory Cache")]\n' },

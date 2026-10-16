@@ -3,7 +3,7 @@ import { Crosshair, Brain, Rocket, Lock, Layers, ShieldCheck } from 'lucide-reac
 export const FEATURES = [
   { icon: Crosshair, title: 'CAD & Figma-grade canvas', desc: 'Kinetic momentum panning, cursor-centered zoom, trackpad + pinch support, live minimap and laser pointer.' },
   { icon: Brain, title: 'Dual in-browser AI engine', desc: 'Instant 0 MB heuristic synthesis plus a real local Qwen2.5-Coder LLM via WebGPU. No API keys.' },
-  { icon: Rocket, title: 'Pro export studio', desc: 'Clean vector SVG, 2x/4x PNG, vector PDF, standalone HTML and native .xmind — watermark-free.' },
+  { icon: Rocket, title: 'Pro export studio', desc: 'Clean vector SVG, 2x/4x PNG, print-ready PDF, standalone HTML and native .xmind — watermark-free.' },
   { icon: Lock, title: '100% private & offline', desc: 'Zero telemetry, no backend. Drafts and snapshots live only in your browser localStorage.' },
   { icon: Layers, title: 'Universal multi-format importer', desc: 'XMind, Draw.io, PlantUML, Graphviz DOT, D2, SQL DDL, OpenAPI, Markdown and CSV.' },
   { icon: ShieldCheck, title: 'Non-destructive error guard', desc: 'Typos never wipe your canvas. Errors isolate in a banner while the last good render stays.' },
@@ -11,7 +11,7 @@ export const FEATURES = [
 
 export const FORMAT_ROWS = [
   ['.xmind', 'XMind Pro', '$59–$179/yr', 'Bi-directional import & export, zero paywall'],
-  ['.drawio', 'Lucidchart / Visio', '$95–$240/yr', 'XML → flowchart, 4K PNG + vector PDF'],
+  ['.drawio', 'Lucidchart / Visio', '$95–$240/yr', 'XML → flowchart, 4K PNG + print-ready PDF'],
   ['.puml', 'PlantText / Confluence', '$36–$120/yr', 'Client-side sequence / class / state'],
   ['.d2', 'Terrastruct Studio', '$144–$240/yr', 'Instant in-browser converter'],
   ['.sql', 'dbdiagram Pro', '$108–$229/yr', 'CREATE TABLE → erDiagram'],
@@ -29,7 +29,7 @@ export const MATRIX = [
   ['SQL → ER', '✓ Built-in', '✗', '✗', 'Paid add-on'],
   ['Local AI (no key)', '✓ Dual engine', '✗', 'Cloud paid', 'Cloud paid'],
   ['CAD canvas', '✓ Kinetic + dock', 'Basic zoom', 'Proprietary', 'Good'],
-  ['Vector PDF + 4K PNG', '✓ Print-ready', '✗', 'Paid', 'Paid'],
+  ['Print-ready PDF + 4K PNG', '✓ Print-ready', '✗', 'Paid', 'Paid'],
   ['Privacy', '100% client-side', 'Client-side', 'Local app', 'Hosted cloud'],
 ]
 
