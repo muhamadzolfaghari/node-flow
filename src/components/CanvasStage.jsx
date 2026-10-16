@@ -808,17 +808,20 @@ export default function CanvasStage({
       e.preventDefault();
       autoFit.current = false;
       const rect = stage.getBoundingClientRect();
+      const rawDelta = e.deltaMode === 1 ? e.deltaY * 18 : e.deltaMode === 2 ? e.deltaY * 80 : e.deltaY;
+      const clampedDelta = Math.max(-80, Math.min(80, rawDelta));
+      const zoomFactor = Math.exp(-clampedDelta * 0.0022);
       if (
         e.ctrlKey ||
         e.metaKey ||
         (callbacks.current.wheelMode === "zoom" && Math.abs(e.deltaX) < 2)
-      )
+      ) {
         zoomBy(
-          Math.exp(-e.deltaY * 0.003),
+          zoomFactor,
           e.clientX - rect.left,
           e.clientY - rect.top,
         );
-      else {
+      } else {
         camera.current.x -= e.shiftKey ? e.deltaY : e.deltaX;
         camera.current.y -= e.shiftKey ? 0 : e.deltaY;
         apply();

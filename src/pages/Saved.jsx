@@ -1,4 +1,4 @@
-import { useRef, useState, useDeferredValue, useMemo } from "react";
+import { useRef, useState, useDeferredValue, useMemo, useActionState, useOptimistic } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -51,12 +51,65 @@ export default function Saved() {
     [name, setName] = useState(""),
     [message, setMessage] = useState("");
   const deferredQ = useDeferredValue(q, "");
+
+  const [optimisticProjects, setOptimisticProjects] = useOptimistic(
+    workspace.projects,
+    (currentProjects, update) => {
+      if (update.type === "delete") {
+        return currentProjects.filter((p) => p.id !== update.id);
+      }
+      if (update.type === "rename") {
+        return currentProjects.map((p) =>
+          p.id === update.id ? { ...p, name: update.name } : p,
+        );
+      }
+      if (update.type === "add") {
+        return [update.project, ...currentProjects];
+      }
+      return currentProjects;
+    },
+  );
+
+  const [, projectFormAction, isPendingAction] = useActionState(
+    async (prevState, formData) => {
+      const projectName = (formData.get("projectName") || name).toString().trim();
+      if (!projectName) return { error: "Project name cannot be empty." };
+
+      if (dialog === "create") {
+        const p = createProject(projectName);
+        setOptimisticProjects({ type: "add", project: p });
+        addProject(p);
+        setDialog(null);
+        nav(`/studio?project=${p.id}`);
+        return { success: true };
+      } else if (dialog === "rename" && selected) {
+        setOptimisticProjects({
+          type: "rename",
+          id: selected.id,
+          name: projectName,
+        });
+        setWorkspace((w) => ({
+          ...w,
+          projects: w.projects.map((p) =>
+            p.id === selected.id
+              ? { ...p, name: projectName, updatedAt: new Date().toISOString() }
+              : p,
+          ),
+        }));
+        setDialog(null);
+        return { success: true };
+      }
+      return prevState;
+    },
+    { success: false },
+  );
+
   const list = useMemo(
     () =>
-      workspace.projects
+      optimisticProjects
         .filter((p) => p.name.toLowerCase().includes(deferredQ.toLowerCase()))
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
-    [workspace.projects, deferredQ],
+    [optimisticProjects, deferredQ],
   );
   const legacy = StorageManager.getSavedDiagrams();
   const backup = (project) =>
@@ -293,6 +346,7 @@ export default function Saved() {
               <Button
                 variant="destructive"
                 onClick={() => {
+                  setOptimisticProjects({ type: "delete", id: selected.id });
                   setWorkspace((w) => {
                     const projects = w.projects.filter(
                       (p) => p.id !== selected.id,
@@ -302,7 +356,7 @@ export default function Saved() {
                       projects,
                       activeProjectId:
                         w.activeProjectId === selected.id
-                          ? projects[0].id
+                          ? projects[0]?.id || null
                           : w.activeProjectId,
                     };
                   });
@@ -313,30 +367,7 @@ export default function Saved() {
               </Button>
             </DialogFooter>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!name.trim()) return;
-                if (dialog === "create") {
-                  const p = createProject(name.trim());
-                  addProject(p);
-                  nav(`/studio?project=${p.id}`);
-                } else
-                  setWorkspace((w) => ({
-                    ...w,
-                    projects: w.projects.map((p) =>
-                      p.id === selected.id
-                        ? {
-                            ...p,
-                            name: name.trim(),
-                            updatedAt: new Date().toISOString(),
-                          }
-                        : p,
-                    ),
-                  }));
-                setDialog(null);
-              }}
-            >
+            <form action={projectFormAction}>
               <label
                 htmlFor="project-name"
                 className="mb-2 block text-xs text-muted-foreground"
@@ -345,21 +376,28 @@ export default function Saved() {
               </label>
               <Input
                 id="project-name"
+                name="projectName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoFocus
+                disabled={isPendingAction}
               />
               <DialogFooter className="mt-5">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setDialog(null)}
+                  disabled={isPendingAction}
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {dialog === "create" ? "Create and open" : "Rename"}
+                <Button type="submit" disabled={isPendingAction}>
+                  {isPendingAction
+                    ? "Saving…"
+                    : dialog === "create"
+                      ? "Create and open"
+                      : "Rename"}
                 </Button>
               </DialogFooter>
             </form>
