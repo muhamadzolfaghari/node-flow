@@ -34,10 +34,10 @@ export const MATRIX = [
 ]
 
 export const FAQS = [
-  { q: 'Is NodeFlow completely free?', a: 'Yes — MIT licensed, no subscriptions, paywalls, watermarks or required accounts. Personal, open-source and commercial use.' },
-  { q: 'How does in-browser AI work without an API key?', a: 'Dual engine: instant heuristic synthesis (0 MB) plus a real Qwen2.5-Coder LLM running locally via WebGPU/Wasm. Fully private.' },
-  { q: 'What can I import and export?', a: 'Import XMind, Draw.io, PlantUML, Graphviz DOT, D2, SQL DDL, OpenAPI, Markdown and CSV. Export SVG, 2x/4x PNG, vector PDF, standalone HTML and .xmind.' },
-  { q: 'How is it different from Mermaid Live Editor?', a: 'CAD canvas, XMind bi-directional I/O, universal converters, non-destructive errors, local AI and vector PDF — with zero cloud paywall.' },
-  { q: 'Can I use it offline?', a: 'Yes. Rendering, parsing and exports all run client-side after first load.' },
-  { q: 'Is my data private?', a: 'Absolutely. Zero telemetry, no backend. Drafts and snapshots stay in your browser localStorage.' },
+  { q: 'Is NodeFlow free?', a: 'Yes. NodeFlow is open source under the MIT license, with no account, watermark, or paywall. If you connect a third-party AI provider, that provider may charge for its own usage.' },
+  { q: 'Is my data private?', a: 'Projects, parsing, rendering, and exports run in your browser, and drafts are stored in your browser storage. NodeFlow has no backend of its own. If you choose Gemini or an OpenAI-compatible provider, the prompt you submit (and the active file when you insert into it) is sent to that provider. The deterministic, Ollama, and WebGPU engines do not send it to a cloud service.' },
+  { q: 'Do I need an API key to use AI?', a: 'No. The deterministic engine works instantly without a key, the WebGPU engine runs a small model on your device after a one-time download, and Ollama uses a model on your own machine. Gemini and OpenAI-compatible engines need your own key.' },
+  { q: 'What can I import and export?', a: 'Import Mermaid, PlantUML, Graphviz DOT, Draw.io, D2, SQL, OpenAPI, XMind, Markdown, CSV and many more listed on the Formats page. Export SVG, PNG, PDF, PPTX, standalone HTML, source files, and project backups.' },
+  { q: 'Can I use it offline?', a: 'After the first load, editing, rendering, and exports run client-side. Cloud AI providers and web fonts need a connection.' },
+  { q: 'How is it different from the Mermaid Live Editor?', a: 'NodeFlow adds multi-file projects with version checkpoints, direct canvas editing for flowcharts, converters for dozens of formats, role-based templates, themes, and an AI assistant that shows a reviewable proposal before changing your files.' },
 ]

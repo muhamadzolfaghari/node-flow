@@ -2,6 +2,7 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Network, Menu, X, Code2, Search, ArrowUpRight } from "lucide-react";
 import CommandPalette from "./CommandPalette.jsx";
+import ThemeSwitcher from "./ThemeSwitcher.jsx";
 
 const links = [
   { to: "/studio", label: "Studio" },
@@ -55,8 +56,8 @@ export default function Navbar() {
               <Network className="size-5" />
             </span>
             <span className="leading-none">
-              <span className="block text-base font-bold tracking-tight text-white">
-                Node<span className="text-blue-300">Flow</span>
+              <span className="block text-base font-bold tracking-tight text-foreground">
+                Node<span className="text-primary">Flow</span>
               </span>
               <span className="mt-1.5 block text-[10px] font-medium tracking-widest text-muted-foreground uppercase">
                 Visual studio
@@ -72,7 +73,7 @@ export default function Navbar() {
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-2 text-[13px] font-medium transition ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-white/5 hover:text-white"}`
+                  `rounded-md px-3 py-2 text-[13px] font-medium transition ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`
                 }
               >
                 {l.label}
@@ -92,11 +93,12 @@ export default function Navbar() {
                 ⌘K
               </kbd>
             </button>
+            <ThemeSwitcher />
             <a
               href="https://github.com/muhamadzolfaghari/node-flow"
               target="_blank"
               rel="noreferrer"
-              className="hidden rounded-md p-2 text-muted-foreground hover:text-white sm:block"
+              className="hidden rounded-md p-2 text-muted-foreground hover:text-foreground sm:block"
               aria-label="View GitHub repository"
             >
               <Code2 className="size-4" />
@@ -113,7 +115,7 @@ export default function Navbar() {
               aria-label={open ? "Close navigation" : "Open navigation"}
               aria-expanded={open}
               aria-controls="mobile-navigation"
-              className="grid size-10 place-items-center rounded-md border border-border bg-white/5 lg:hidden"
+              className="grid size-10 place-items-center rounded-md border border-border bg-secondary lg:hidden"
             >
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
             </button>
@@ -132,7 +134,7 @@ export default function Navbar() {
                   to={l.to}
                   end
                   className={({ isActive }) =>
-                    `rounded-md px-3 py-3 text-sm ${isActive ? "bg-accent text-accent-foreground" : "text-slate-300 hover:bg-white/5"}`
+                    `rounded-md px-3 py-3 text-sm ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`
                   }
                 >
                   {l.label}

@@ -12,9 +12,80 @@ export const SHAPES = {
   subroutine: { open: "[[", close: "]]", label: "Subroutine" },
   cylinder: { open: "[(", close: ")]", label: "Cylinder / DB" },
   circle: { open: "((", close: "))", label: "Circle" },
+  doublecircle: { open: "(((", close: ")))", label: "Double circle" },
   diamond: { open: "{", close: "}", label: "Diamond / Decision" },
   hexagon: { open: "{{", close: "}}", label: "Hexagon" },
+  parallelogram: { open: "[/", close: "/]", label: "Parallelogram (input/output)" },
+  parallelogramAlt: { open: "[\\", close: "\\]", label: "Parallelogram (alt)" },
+  trapezoid: { open: "[/", close: "\\]", label: "Trapezoid" },
+  trapezoidAlt: { open: "[\\", close: "/]", label: "Trapezoid (alt)" },
+  asymmetric: { open: ">", close: "]", label: "Asymmetric flag" },
 };
+
+const KEYWORD_IDS = new Set(["subgraph", "classDef", "style", "click", "linkStyle", "class", "flowchart", "graph", "end", "direction"]);
+// Longest delimiters first so "(((" wins over "((" and "[(" over "[".
+const SHAPE_ENTRIES = Object.entries(SHAPES).sort((a, b) => b[1].open.length - a[1].open.length);
+const OPEN_ALT = [...new Set(SHAPE_ENTRIES.map(([, v]) => v.open))].map((o) => o.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+const CLOSE_ALT = [...new Set(Object.values(SHAPES).map((v) => v.close))]
+  .sort((a, b) => b.length - a.length)
+  .map((o) => o.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  .join("|");
+const CONTENT = '"[^"\\n]*"|[^\\n]*?';
+
+/**
+ * Finds every node declaration (id + shape delimiters + label) in a flowchart.
+ * One scanner for all shapes; at the same position the longest opener wins.
+ */
+export function scanNodeDeclarations(source, onlyId) {
+  const found = new Map();
+  for (const [key, shape] of SHAPE_ENTRIES) {
+    const idPattern = onlyId ? escapeRegex(onlyId) : "[A-Za-z_][\\w-]*";
+    const re = new RegExp(
+      `(^|[^\\w-])(${idPattern})([ \\t]*)(${escapeRegex(shape.open)})(${CONTENT})(${escapeRegex(shape.close)})`,
+      "gm",
+    );
+    for (const m of source.matchAll(re)) {
+      const id = m[2];
+      if (KEYWORD_IDS.has(id)) continue;
+      const idStart = m.index + m[1].length;
+      const lineStart = source.lastIndexOf("\n", idStart) + 1;
+      if (/^\s*%%/.test(source.slice(lineStart, idStart))) continue;
+      const prior = found.get(idStart);
+      if (prior && prior.open.length >= shape.open.length) continue;
+      const openStart = idStart + id.length + m[3].length;
+      found.set(idStart, {
+        id,
+        shape: key,
+        open: shape.open,
+        close: shape.close,
+        label: m[5].replace(/^"|"$/g, ""),
+        idStart,
+        openStart,
+        contentStart: openStart + shape.open.length,
+        contentEnd: openStart + shape.open.length + m[5].length,
+        end: openStart + shape.open.length + m[5].length + shape.close.length,
+      });
+    }
+  }
+  return [...found.values()].sort((a, b) => a.idStart - b.idStart);
+}
+
+export const findNodeDeclaration = (source, id) => scanNodeDeclarations(source, id)[0] || null;
+
+/** Declares an undeclared node at its first mention, e.g. `API --> B` → `API["API"] --> B`. */
+function declareAtFirstMention(source, id, shapeType, label) {
+  const shape = SHAPES[shapeType] || SHAPES.rectangle;
+  const re = new RegExp(`(^|[^\\w-])(${escapeRegex(id)})(?![\\w-])`, "gm");
+  for (const m of source.matchAll(re)) {
+    const idStart = m.index + m[1].length;
+    const lineStart = source.lastIndexOf("\n", idStart) + 1;
+    const linePrefix = source.slice(lineStart, idStart);
+    if (/^\s*(%%|flowchart|graph|subgraph|classDef|style|class|click|linkStyle|direction)\b/.test(source.slice(lineStart))) continue;
+    if (/["']$/.test(linePrefix.trimEnd().slice(-1)) && (linePrefix.match(/"/g) || []).length % 2 === 1) continue;
+    return `${source.slice(0, idStart + id.length)}${shape.open}"${safeLabel(label)}"${shape.close}${source.slice(idStart + id.length)}`;
+  }
+  return null;
+}
 
 export const FLOWCHART_DIRECTIONS = {
   TD: { id: "TD", label: "Top to bottom (TD)" },
@@ -22,6 +93,16 @@ export const FLOWCHART_DIRECTIONS = {
   BT: { id: "BT", label: "Bottom to top (BT)" },
   RL: { id: "RL", label: "Right to left (RL)" },
 };
+
+/**
+ * Maps a rendered SVG node id (e.g. "mermaid-render-4-flowchart-Client-0" or
+ * "flowchart-Client-0") back to the source id ("Client"). Non-flowchart ids
+ * are returned unchanged.
+ */
+export const flowchartNodeId = (id) =>
+  typeof id === "string"
+    ? id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] || id
+    : id;
 
 export const isFlowchart = (doc) =>
   doc?.format === "mermaid" &&
@@ -47,24 +128,8 @@ export function changeFlowchartDirection(source, newDir) {
 
 export function flowchartNodes(source) {
   const nodes = new Map();
-  for (const match of source.matchAll(
-    /\b([A-Za-z_][\w-]*)\s*(\[\[|\(\(|\(\[|\[\(|\{\{|\{|\(|\[)([^\n]*?)(\]\]|\)\)|\]\)|\)\]|\}\}|\}|\)|\])/g,
-  )) {
-    if (!["subgraph", "classDef", "style"].includes(match[1])) {
-      const open = match[2];
-      let shape = "rectangle";
-      for (const [key, val] of Object.entries(SHAPES)) {
-        if (val.open === open) {
-          shape = key;
-          break;
-        }
-      }
-      nodes.set(match[1], {
-        id: match[1],
-        label: match[3].replace(/^"|"$/g, ""),
-        shape,
-      });
-    }
+  for (const decl of scanNodeDeclarations(source)) {
+    if (!nodes.has(decl.id)) nodes.set(decl.id, { id: decl.id, label: decl.label, shape: decl.shape });
   }
   for (const edgeMatch of source.matchAll(
     /^\s*([A-Za-z_][\w-]*)\s*[-.=~]+(?:>|\b)(?:\|[^|]*\|)?\s*([A-Za-z_][\w-]*)/gm,
@@ -82,47 +147,31 @@ export function flowchartNodes(source) {
 }
 
 export function getFlowchartNodeShape(source, id) {
-  const pattern = new RegExp(
-    `\\b${escapeRegex(id)}\\s*(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()`,
-  );
-  const match = source.match(pattern);
-  if (!match) return "rectangle";
-  const open = match[1];
-  for (const [key, val] of Object.entries(SHAPES)) {
-    if (val.open === open) return key;
-  }
-  return "rectangle";
+  return findNodeDeclaration(source, id)?.shape || "rectangle";
 }
 
 export function changeFlowchartNodeShape(source, id, shapeType) {
   const shape = SHAPES[shapeType];
   if (!shape) throw new Error("Unsupported shape.");
-  const pattern = new RegExp(
-    `(\\b${escapeRegex(id)}\\s*)(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()([^\\n]*?)(\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))`,
-  );
-  if (!pattern.test(source)) {
-    throw new Error("This node is not declared with an editable shape.");
+  const decl = findNodeDeclaration(source, id);
+  if (!decl) {
+    const declared = declareAtFirstMention(source, id, shapeType, id);
+    if (!declared) throw new Error("Could not find this node in the source.");
+    return declared;
   }
-  return source.replace(
-    pattern,
-    (_, prefix, _open, content) =>
-      `${prefix}${shape.open}${content}${shape.close}`,
-  );
+  const content = source.slice(decl.contentStart, decl.contentEnd);
+  return `${source.slice(0, decl.openStart)}${shape.open}${content}${shape.close}${source.slice(decl.end)}`;
 }
 
 export function renameFlowchartNode(source, id, label) {
-  const pattern = new RegExp(
-    `(\\b${escapeRegex(id)}\\s*)(\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()([^\\n]*?)(\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\))`,
-  );
-  if (!pattern.test(source))
-    throw new Error(
-      "This node is not declared with an editable label. Edit its declaration in the source.",
-    );
-  return source.replace(
-    pattern,
-    (_, prefix, open, old, close) =>
-      `${prefix}${open}"${safeLabel(label)}"${close}`,
-  );
+  if (!label.trim()) throw new Error("Enter a node label.");
+  const decl = findNodeDeclaration(source, id);
+  if (!decl) {
+    const declared = declareAtFirstMention(source, id, "rectangle", label);
+    if (!declared) throw new Error("Could not find this node in the source.");
+    return declared;
+  }
+  return `${source.slice(0, decl.contentStart)}"${safeLabel(label)}"${source.slice(decl.contentEnd)}`;
 }
 
 export function addFlowchartNode(source, label, shapeType = "rectangle") {
@@ -149,17 +198,16 @@ export function connectFlowchartNodes(source, from, to, label = "", arrowType = 
   return `${source.trimEnd()}\n  ${from} ${arrow}${label.trim() ? `|"${safeLabel(label)}"|` : ""} ${to}\n`;
 }
 
-const NODE_DECL_PATTERN =
-  "[A-Za-z_][\\w-]*(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?";
+const NODE_DECL_PATTERN = `[A-Za-z_][\w-]*(?:\s*(?:${OPEN_ALT})[^\n]+?(?:${CLOSE_ALT}))?`;
 
 export function flowchartEdges(source) {
   const edges = [];
   const lines = source.split("\n");
   const inlineRegex = new RegExp(
-    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?\\s*(?:--|==|-\\.)\\s+(?:"([^"\\n]+)"|([^\\n-]+?))\\s+(-->|==>|\\.->|---|===)\\s*([A-Za-z_][\\w-]*)`,
+    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:${OPEN_ALT})[^\\n]+?(?:${CLOSE_ALT}))?\\s*(?:--|==|-\\.)\\s+(?:"([^"\\n]+)"|([^\\n-]+?))\\s+(-->|==>|\\.->|---|===)\\s*([A-Za-z_][\\w-]*)`,
   );
   const pipeRegex = new RegExp(
-    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:\\[\\[|\\(\\(|\\(\\[|\\[\\(|\\{\\{|\\{|\\[|\\()[^\\n\\]\\)\\}]+(?:\\]\\]|\\)\\)|\\]\\)|\\)\\]|\\}\\}|\\}|\\]|\\)))?\\s*([-.~=]+>|[-.~=]+)(?:\\|"?([^"|\\n]*?)"?\\|)?\\s*([A-Za-z_][\\w-]*)`,
+    `\\b([A-Za-z_][\\w-]*)(?:\\s*(?:${OPEN_ALT})[^\\n]+?(?:${CLOSE_ALT}))?\\s*([-.~=]+>|[-.~=]+)(?:\\|"?([^"|\\n]*?)"?\\|)?\\s*([A-Za-z_][\\w-]*)`,
   );
 
   for (const line of lines) {
@@ -257,7 +305,8 @@ export function deleteFlowchartNode(source, id) {
   const result = [];
 
   for (const line of lines) {
-    if (new RegExp(`^\\s*${escaped}\\s*(\\[\\[|\\(\\(|\\(\\[|\\{|\\[|\\().*(\\]\\]|\\)\\)|\\]\\)|\\}|\\)|\\])\\s*$`).test(line)) {
+    // A bare declaration line has no edge; lines with arrows are handled below.
+    if (!/[-.=~]+>/.test(line) && scanNodeDeclarations(line, id).some((d) => d.idStart === line.search(/\S/) && d.end >= line.trimEnd().length)) {
       continue;
     }
     if (new RegExp(`^\\s*style\\s+${escaped}\\b`).test(line)) {

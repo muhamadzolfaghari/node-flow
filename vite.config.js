@@ -51,15 +51,12 @@ export default defineConfig(({ command }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: true,
+      sourcemap: 'hidden',
       chunkSizeWarningLimit: 15000,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('mermaid')) {
-                return 'vendor-mermaid';
-              }
               if (id.includes('@codemirror') || id.includes('codemirror') || id.includes('@lezer')) {
                 return 'vendor-codemirror';
               }

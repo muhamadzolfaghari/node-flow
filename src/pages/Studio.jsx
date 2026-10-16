@@ -22,6 +22,8 @@ import {
   Upload,
   Undo2,
   Redo2,
+  RotateCcw,
+  ArrowRight,
   Search,
   PanelLeft,
   PanelRight,
@@ -90,6 +92,7 @@ import {
 import CodeEditor from "../components/CodeEditor.jsx";
 import CanvasStage, { GridToggle } from "../components/CanvasStage.jsx";
 import DiagnosticsPanel from "../components/DiagnosticsPanel.jsx";
+import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/app-theme.js";
 import { DIAGRAM_TEMPLATES, getTemplateById } from "../components/templates.js";
 import {
   FORMATS,
@@ -255,6 +258,7 @@ import {
   deleteArchitectureService,
   addArchitectureEdge,
   deleteArchitectureEdge,
+  flowchartNodeId,
 } from "../lib/visual-editing.js";
 import { cn } from "../lib/utils.js";
 
@@ -332,9 +336,10 @@ export default function Studio() {
     [view, setView] = useState(() =>
       window.innerWidth < 900 ? "canvas" : "split",
     );
-  const [theme, setTheme] = useState("dark"),
+  const [theme, setTheme] = useState(() => DIAGRAM_THEME_FOR[resolveTheme(getStoredTheme())] || "dark"),
     [grid, setGrid] = useState("dots"),
     [toast, setToast] = useState(""),
+    [toastUndo, setToastUndo] = useState(null),
     [contextMenu, setContextMenu] = useState({
       isOpen: false,
       position: { x: 0, y: 0 },
@@ -488,9 +493,14 @@ export default function Studio() {
     [prompt, setPrompt] = useState(""),
     [aiType, setAiType] = useState("auto"),
     [aiMode, setAiMode] = useState("instant"),
+    [aiProposal, setAiProposal] = useState(null),
     [aiCustomUrl, setAiCustomUrl] = useState(() => localStorage.getItem("nodeflow_ai_url") || "https://api.openai.com/v1"),
     [aiApiKey, setAiApiKey] = useState(() => localStorage.getItem("nodeflow_ai_key") || ""),
     [aiModel, setAiModel] = useState(() => localStorage.getItem("nodeflow_ai_model") || "gpt-4o-mini"),
+    [aiGeminiKey, setAiGeminiKey] = useState(() => localStorage.getItem("nodeflow_gemini_key") || ""),
+    [aiGeminiModel, setAiGeminiModel] = useState(() => localStorage.getItem("nodeflow_gemini_model") || "gemini-3.8-flash"),
+    [aiGeminiModels, setAiGeminiModels] = useState([]),
+    [aiModelsBusy, setAiModelsBusy] = useState(false),
     [aiOllamaUrl, setAiOllamaUrl] = useState(() => localStorage.getItem("nodeflow_ollama_url") || "http://localhost:11434"),
     [aiOllamaModel, setAiOllamaModel] = useState(() => localStorage.getItem("nodeflow_ollama_model") || "deepseek-coder"),
     [aiDestination, setAiDestination] = useState("new-file"),
@@ -508,6 +518,13 @@ export default function Studio() {
   }, [project]);
   const assistant = useDiagramAssistant();
   const preview = useDocumentPreview(document, theme, view);
+  const aiProposalPreview = useDocumentPreview(
+    aiProposal
+      ? { id: aiProposal.id, name: "AI proposal.mmd", format: "mermaid", source: aiProposal.source }
+      : null,
+    theme,
+    "split",
+  );
   const definition = getFormat(document?.format),
     nodes = isFlowchart(document) ? flowchartNodes(document.source) : [];
   const seqParticipants = useMemo(() => {
@@ -587,7 +604,10 @@ export default function Studio() {
       ? getDiagramConfig(document.source)
       : { look: "classic", theme: "default" };
   }, [document?.source]);
-  const say = (message) => setToast(message);
+  const say = (message, undo = null) => {
+    setToast(message);
+    setToastUndo(undo);
+  };
   const updateSource = (id, source) =>
     updateProject((p) => ({
       ...p,
@@ -654,9 +674,22 @@ export default function Studio() {
   useEffect(() => {
     setSelected(null);
   }, [document?.id]);
+  // Switching the app theme also picks the matching diagram theme (it can still
+  // be changed independently afterwards from the theme selector).
+  useEffect(() => {
+    const onTheme = (event) => {
+      const next = DIAGRAM_THEME_FOR[event.detail?.resolved];
+      if (next) setTheme(next);
+    };
+    window.addEventListener("nodeflow-theme", onTheme);
+    return () => window.removeEventListener("nodeflow-theme", onTheme);
+  }, []);
   useEffect(() => {
     if (toast) {
-      const timeout = setTimeout(() => setToast(""), 4500);
+      const timeout = setTimeout(() => {
+        setToast("");
+        setToastUndo(null);
+      }, toastUndo ? 9000 : 4500);
       return () => clearTimeout(timeout);
     }
   }, [toast]);
@@ -671,6 +704,17 @@ export default function Studio() {
             ? "Project saved in this browser"
             : saveStatus,
         );
+      }
+      // The editor owns ⌘Z while focused; elsewhere (e.g. the canvas) route it
+      // to the editor history so canvas edits can be undone.
+      if (
+        modifier &&
+        key === "z" &&
+        !e.target.closest?.("input,textarea,select,[contenteditable],.cm-editor")
+      ) {
+        e.preventDefault();
+        if (e.shiftKey) editorRef.current?.redo();
+        else editorRef.current?.undo();
       }
       if (modifier && key === "o") {
         e.preventDefault();
@@ -1051,7 +1095,10 @@ export default function Studio() {
       setLabel("");
     }
   };
-  const nodeId = selected?.id?.match(/^flowchart-(.+)-\d+$/)?.[1] || selected?.id;
+  const nodeId = flowchartNodeId(selected?.id);
+  useEffect(() => {
+    if (nodeId && isFlowchart(document)) editorRef.current?.reveal(nodeId);
+  }, [nodeId]);
   const relatedEdges = useMemo(() => {
     if (!isFlowchart(document) || !nodeId) return [];
     return flowchartEdges(document.source).filter(
@@ -1240,7 +1287,7 @@ export default function Studio() {
                     icon: Download,
                     onClick: () => {
                       openDocument(d.id);
-                      setTimeout(() => exportSvg(), 100);
+                      setTimeout(() => doExport("svg"), 1200);
                     },
                   },
                   {
@@ -1249,7 +1296,7 @@ export default function Studio() {
                     icon: Image,
                     onClick: () => {
                       openDocument(d.id);
-                      setTimeout(() => exportPng(), 100);
+                      setTimeout(() => doExport("png"), 1200);
                     },
                   },
                   { divider: true },
@@ -1266,7 +1313,7 @@ export default function Studio() {
             className={cn(
               "flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left text-xs transition-colors",
               d.id === project.activeId
-                ? "border-primary bg-primary/10 text-blue-200"
+                ? "border-primary bg-primary/10 text-foreground"
                 : "border-transparent text-muted-foreground hover:bg-accent",
             )}
           >
@@ -1350,7 +1397,7 @@ export default function Studio() {
               id: "save-snapshot",
               label: "Save Version Snapshot Now",
               icon: GitCommit,
-              onClick: () => saveSnapshot(),
+              onClick: () => snapshot(),
             },
             { divider: true },
             {
@@ -1822,7 +1869,7 @@ export default function Studio() {
                 <div className="mt-2 flex gap-2">
                   <select
                     aria-label="New node shape"
-                    className="h-8 rounded-md border bg-background px-2 text-xs"
+                    className="h-8 min-w-0 flex-1 rounded-md border bg-background px-2 text-xs"
                     value={newShape}
                     onChange={(e) => setNewShape(e.target.value)}
                   >
@@ -1835,7 +1882,7 @@ export default function Studio() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs"
+                    className="shrink-0 text-xs"
                     onClick={() => {
                       try {
                         updateSource(
@@ -5587,21 +5634,23 @@ export default function Studio() {
           <Item
             onSelect={() => editorRef.current?.undo()}
             icon={Undo2}
-            disabled={view === "canvas"}
           >
             Undo<DropdownMenuShortcut>⌘Z</DropdownMenuShortcut>
           </Item>
           <Item
             onSelect={() => editorRef.current?.redo()}
             icon={Redo2}
-            disabled={view === "canvas"}
           >
             Redo<DropdownMenuShortcut>⇧⌘Z</DropdownMenuShortcut>
           </Item>
           <Item
-            onSelect={() => editorRef.current?.search()}
+            onSelect={() => {
+              if (view === "canvas") {
+                setView(window.matchMedia("(min-width: 1024px)").matches ? "split" : "code");
+                setTimeout(() => editorRef.current?.search(), 150);
+              } else editorRef.current?.search();
+            }}
             icon={Search}
-            disabled={view === "canvas"}
           >
             Find in file<DropdownMenuShortcut>⌘F</DropdownMenuShortcut>
           </Item>
@@ -5660,6 +5709,16 @@ export default function Studio() {
           <Item onSelect={() => setDialog("assistant")} icon={Sparkles}>
             Diagram assistant
           </Item>
+          <Item onSelect={() => setIsStencilOpen(true)} icon={Cloud}>
+            Cloud and architecture stencils
+          </Item>
+          <Item onSelect={() => setIsShowcaseOpen(true)} icon={Layers}>
+            Architecture examples
+          </Item>
+          <Item onSelect={() => setIsGitHubSyncOpen(true)} icon={FolderGit2}>
+            GitHub file sync
+          </Item>
+          <DropdownMenuSeparator />
           <Item onSelect={() => setDialog("shortcuts")}>
             Keyboard shortcuts
           </Item>
@@ -5704,7 +5763,7 @@ export default function Studio() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            className="hidden text-xs gap-1.5 sm:inline-flex"
             onClick={() => setIsStencilOpen(true)}
             title="Cloud & Architecture Stencil Palette"
           >
@@ -5714,7 +5773,7 @@ export default function Studio() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            className="hidden text-xs gap-1.5 sm:inline-flex"
             onClick={() => setIsShowcaseOpen(true)}
             title="Enterprise Architecture Showcases"
           >
@@ -5724,7 +5783,7 @@ export default function Studio() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            className="hidden text-xs gap-1.5 sm:inline-flex"
             onClick={() => setIsGitHubSyncOpen(true)}
             title="GitHub Repository Sync"
           >
@@ -6112,11 +6171,14 @@ export default function Studio() {
                 view === "code" && "source-only",
               )}
             >
-              {view !== "canvas" && (
+              {/* Always mounted (hidden in Canvas view) so undo history, find and
+                  AI fix keep working while editing visually. */}
+              {(
                 <div
                   className={cn(
                     "min-h-0 min-w-0 overflow-hidden bg-card",
                     view === "split" && "hidden lg:block",
+                    view === "canvas" && "hidden",
                   )}
                 >
                   <CodeEditor
@@ -6144,7 +6206,7 @@ export default function Studio() {
                             label: "AI Diagnostics & Fix",
                             icon: Sparkles,
                             shortcut: "Alt+F",
-                            onClick: () => runAiFix(),
+                            onClick: () => editorRef.current?.runAiFix(),
                           },
                           { divider: true },
                           {
@@ -6235,8 +6297,7 @@ export default function Studio() {
                     onContextMenu={(e, nodeInfo, edgeInfo) => {
                       if (nodeInfo) {
                         const targetNodeId =
-                          nodeInfo.id.match(/^flowchart-(.+)-\d+$/)?.[1] ||
-                          nodeInfo.id;
+                          flowchartNodeId(nodeInfo.id);
                         setContextMenu({
                           isOpen: true,
                           position: { x: e.clientX, y: e.clientY },
@@ -6421,7 +6482,7 @@ export default function Studio() {
                                   const updated = addFlowchartNode(
                                     document.source,
                                     "New Step",
-                                    shape || "rectangle",
+                                    newShape || "rectangle",
                                   );
                                   updateSource(document.id, updated);
                                   say("Added new step to diagram");
@@ -6471,13 +6532,13 @@ export default function Studio() {
                               id: "export-svg",
                               label: "Export Vector SVG",
                               icon: Download,
-                              onClick: exportSvg,
+                              onClick: () => doExport("svg"),
                             },
                             {
                               id: "export-png",
                               label: "Export High-Res PNG",
                               icon: Image,
-                              onClick: exportPng,
+                              onClick: () => doExport("png"),
                             },
                             {
                               id: "copy-code",
@@ -6509,7 +6570,7 @@ export default function Studio() {
                               label: "AI Diagnostics & Fix",
                               icon: Sparkles,
                               shortcut: "Alt+F",
-                              onClick: () => runAiFix(),
+                              onClick: () => editorRef.current?.runAiFix(),
                             },
                           ],
                         });
@@ -6593,7 +6654,7 @@ export default function Studio() {
                             newShape,
                           ),
                         );
-                        setShape(newShape);
+                        setNewShape(newShape);
                         say(`Updated node shape to ${newShape}`);
                       } catch (e) {
                         say(e.message);
@@ -6636,7 +6697,7 @@ export default function Studio() {
                           const updated = addFlowchartNode(
                             document.source,
                             "New Step",
-                            shape || "rectangle",
+                            newShape || "rectangle",
                           );
                           updateSource(document.id, updated);
                           say("Added new step to diagram");
@@ -6650,8 +6711,8 @@ export default function Studio() {
                       const from = maybeTo ? fromOrTo : nodeId;
                       const to = maybeTo ? maybeTo : fromOrTo;
                       if (!from || !to) return;
-                      const cleanFromId = from.match(/^flowchart-(.+)-\d+$/)?.[1] || from;
-                      const cleanToId = to.match(/^flowchart-(.+)-\d+$/)?.[1] || to;
+                      const cleanFromId = flowchartNodeId(from);
+                      const cleanToId = flowchartNodeId(to);
                       try {
                         updateSource(
                           document.id,
@@ -6671,7 +6732,7 @@ export default function Studio() {
                     onBatchStyleNodes={(ids, colorKey) => {
                       if (!isFlowchart(document) || !ids?.length) return;
                       try {
-                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        const cleanIds = ids.map((id) => flowchartNodeId(id));
                         updateSource(
                           document.id,
                           batchStyleFlowchartNodes(document.source, cleanIds, colorKey)
@@ -6684,7 +6745,7 @@ export default function Studio() {
                     onWrapInSubgraph={(ids, title) => {
                       if (!isFlowchart(document) || !ids?.length) return;
                       try {
-                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        const cleanIds = ids.map((id) => flowchartNodeId(id));
                         updateSource(
                           document.id,
                           wrapInSubgraph(document.source, cleanIds, title)
@@ -6697,7 +6758,7 @@ export default function Studio() {
                     onBatchDeleteNodes={(ids) => {
                       if (!isFlowchart(document) || !ids?.length) return;
                       try {
-                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        const cleanIds = ids.map((id) => flowchartNodeId(id));
                         updateSource(
                           document.id,
                           batchDeleteFlowchartNodes(document.source, cleanIds)
@@ -6711,7 +6772,7 @@ export default function Studio() {
                     onBatchDuplicateNodes={(ids) => {
                       if (!isFlowchart(document) || !ids?.length) return;
                       try {
-                        const cleanIds = ids.map((id) => id.match(/^flowchart-(.+)-\d+$/)?.[1] || id);
+                        const cleanIds = ids.map((id) => flowchartNodeId(id));
                         updateSource(
                           document.id,
                           batchDuplicateFlowchartNodes(document.source, cleanIds)
@@ -6779,7 +6840,7 @@ export default function Studio() {
                     label: "Run AI Diagnostics & Fix",
                     icon: Sparkles,
                     shortcut: "Alt+F",
-                    onClick: () => runAiFix(),
+                    onClick: () => editorRef.current?.runAiFix(),
                   },
                   {
                     id: "copy-error",
@@ -6960,6 +7021,7 @@ export default function Studio() {
         onOpenChange={(open) => {
           if (!open) {
             setRenameId(null);
+            setAiProposal(null);
             setDialog(null);
           }
         }}
@@ -6968,6 +7030,7 @@ export default function Studio() {
           className={cn(
             "max-h-[85vh] overflow-auto",
             dialog === "templates" && "sm:max-w-2xl",
+            dialog === "ai-review" && "sm:max-w-5xl",
           )}
         >
           <DialogHeader>
@@ -6979,6 +7042,7 @@ export default function Studio() {
                   rename: "Rename file",
                   templates: "Template library",
                   assistant: "Diagram assistant",
+                  "ai-review": "Review AI proposal",
                   "delete-file": "Delete this file?",
                   "import-errors": "Some files could not be opened",
                   shortcuts: "Keyboard shortcuts",
@@ -6996,6 +7060,7 @@ export default function Studio() {
                   templates: "Add a diagram to your current project.",
                   assistant:
                     "Draft a new diagram from a description. Review the generated source before using it.",
+                  "ai-review": "Inspect the generated source and preview. Nothing changes in your project until you apply it.",
                   "delete-file":
                     "This removes the file from this project. Existing version snapshots remain available.",
                   "import-errors":
@@ -7191,6 +7256,7 @@ export default function Studio() {
                     <option value="instant">⚡ Instant · Deterministic (0s)</option>
                     <option value="qwen">🧠 Qwen 2.5-Coder · WebGPU (Local)</option>
                     <option value="ollama">🦙 Ollama · Local Daemon (localhost:11434)</option>
+                    <option value="gemini">✨ Google Gemini · Native API</option>
                     <option value="custom">🌐 OpenAI / Groq / OpenRouter API</option>
                   </select>
                 </div>
@@ -7269,6 +7335,80 @@ export default function Studio() {
                 </div>
               )}
 
+              {aiMode === "gemini" && (
+                <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-2.5 animate-in fade-in">
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase mb-1 block">Gemini API key · Stored in this browser</label>
+                    <Input
+                      type="password"
+                      autoComplete="off"
+                      value={aiGeminiKey}
+                      onChange={(e) => {
+                        setAiGeminiKey(e.target.value);
+                        localStorage.setItem("nodeflow_gemini_key", e.target.value);
+                      }}
+                      placeholder="Paste a Gemini API key"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase">Gemini model</label>
+                      <button
+                        type="button"
+                        className="text-[10px] text-primary disabled:opacity-50"
+                        disabled={aiModelsBusy || !aiGeminiKey.trim()}
+                        onClick={async () => {
+                          setAiModelsBusy(true);
+                          try {
+                            const models = await assistant.listModels("gemini", aiGeminiKey);
+                            setAiGeminiModels(models);
+                            if (models.some((model) => model.id === aiGeminiModel)) return;
+                            if (models[0]) {
+                              setAiGeminiModel(models[0].id);
+                              localStorage.setItem("nodeflow_gemini_model", models[0].id);
+                            }
+                          } catch (error) {
+                            say(`Could not load Gemini models: ${error.message}`);
+                          } finally {
+                            setAiModelsBusy(false);
+                          }
+                        }}
+                      >
+                        {aiModelsBusy ? "Loading…" : "Refresh available models"}
+                      </button>
+                    </div>
+                    {aiGeminiModels.length ? (
+                      <select
+                        aria-label="Gemini model"
+                        className="h-8 w-full rounded border bg-background px-2 text-xs"
+                        value={aiGeminiModel}
+                        onChange={(e) => {
+                          setAiGeminiModel(e.target.value);
+                          localStorage.setItem("nodeflow_gemini_model", e.target.value);
+                        }}
+                      >
+                        {aiGeminiModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+                      </select>
+                    ) : (
+                      <Input
+                        aria-label="Gemini model"
+                        value={aiGeminiModel}
+                        onChange={(e) => {
+                          setAiGeminiModel(e.target.value);
+                          localStorage.setItem("nodeflow_gemini_model", e.target.value);
+                        }}
+                        placeholder="gemini-3.8-flash"
+                        className="h-8 text-xs"
+                      />
+                    )}
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">
+                    Direct browser requests send your prompt to Google. For a shared production deployment, use a server-side key proxy.
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="size-3 text-primary" /> Auto-validated & repaired
@@ -7321,25 +7461,20 @@ export default function Studio() {
                         apiUrl: aiCustomUrl,
                         apiKey: aiApiKey,
                         apiModel: aiModel,
+                        geminiApiKey: aiGeminiKey,
+                        geminiModel: aiGeminiModel,
+                        contextSource: aiDestination === "insert" && document ? document.source : "",
                       }
                     );
                     if (!source)
                       throw new Error("No diagram source was generated.");
-
-                    if (aiDestination === "insert" && document) {
-                      updateSource(document.id, `${document.source.trimEnd()}\n\n${source}\n`);
-                      say("Generated diagram appended to active document");
-                    } else {
-                      newFiles([
-                        {
-                          name: "assistant-draft.mmd",
-                          format: "mermaid",
-                          source,
-                        },
-                      ]);
-                      say("Draft added as a new file");
-                    }
-                    setDialog(null);
+                    setAiProposal({
+                      id: uid(),
+                      source,
+                      destination: aiDestination === "insert" && document ? "insert" : "new-file",
+                      documentId: aiDestination === "insert" && document ? document.id : null,
+                    });
+                    setDialog("ai-review");
                   } catch (e) {
                     say(e.message);
                   }
@@ -7348,6 +7483,69 @@ export default function Studio() {
                 <Sparkles />
                 {assistant.busy ? (assistant.progress || "Generating…") : "Generate Diagram"}
               </Button>
+            </div>
+          )}
+          {dialog === "ai-review" && aiProposal && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>
+                  Destination: {aiProposal.destination === "insert" ? "append to the selected source file" : "create a new Mermaid file"}
+                </span>
+                <span role={aiProposalPreview.error ? "alert" : "status"} className={aiProposalPreview.error ? "text-destructive" : "text-emerald-500"}>
+                  {aiProposalPreview.error ? "Preview needs attention" : aiProposalPreview.status.message}
+                </span>
+              </div>
+              <div className="grid min-h-[420px] gap-3 md:grid-cols-2">
+                <label className="flex min-h-[320px] flex-col gap-2 text-xs font-medium">
+                  Mermaid source
+                  <textarea
+                    aria-label="AI proposal source"
+                    value={aiProposal.source}
+                    onChange={(event) => setAiProposal((proposal) => ({ ...proposal, source: event.target.value }))}
+                    spellCheck={false}
+                    className="min-h-0 flex-1 resize-y rounded-md border bg-background p-3 font-mono text-xs leading-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <div className="flex min-h-[320px] flex-col gap-2 text-xs font-medium">
+                  Live preview
+                  <div className="marketing-diagram dot-grid min-h-0 flex-1 overflow-auto rounded-md border bg-background p-3">
+                    <div ref={aiProposalPreview.containerRef} className="mermaid-stage min-h-full w-full" />
+                  </div>
+                  {aiProposalPreview.error && (
+                    <p className="text-xs leading-5 text-destructive">{aiProposalPreview.error}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setAiProposal(null); setDialog(null); }}>
+                  Discard proposal
+                </Button>
+                <Button
+                  disabled={!aiProposal.source.trim() || !!aiProposalPreview.error || aiProposalPreview.status.state !== "ok"}
+                  onClick={() => {
+                    if (aiProposal.destination === "insert" && aiProposal.documentId) {
+                      const target = project.documents.find((item) => item.id === aiProposal.documentId);
+                      if (!target) {
+                        say("The destination file is no longer available. Choose a new file instead.");
+                        return;
+                      }
+                      const previousSource = target.source;
+                      updateSource(target.id, `${target.source.trimEnd()}\n\n${aiProposal.source.trim()}\n`);
+                      say("Reviewed diagram appended to the selected file", () => {
+                        updateSource(target.id, previousSource);
+                        say("AI change undone");
+                      });
+                    } else {
+                      newFiles([{ name: "assistant-draft.mmd", format: "mermaid", source: aiProposal.source.trim() }]);
+                      say("Reviewed diagram added as a new file");
+                    }
+                    setAiProposal(null);
+                    setDialog(null);
+                  }}
+                >
+                  <CheckCircle2 /> Apply proposal
+                </Button>
+              </DialogFooter>
             </div>
           )}
           {dialog === "delete-file" && (
@@ -7420,6 +7618,15 @@ export default function Studio() {
           className="fixed bottom-10 left-1/2 z-[100] max-w-[90vw] -translate-x-1/2 rounded-md border bg-popover px-4 py-3 text-xs shadow-xl"
         >
           {toast}
+          {toastUndo && (
+            <button
+              type="button"
+              className="ml-3 font-semibold text-primary hover:underline"
+              onClick={toastUndo}
+            >
+              Undo
+            </button>
+          )}
         </div>
       )}
       <ContextMenu
@@ -7511,9 +7718,13 @@ function Menu({ label, children }) {
     </DropdownMenu>
   );
 }
-function Item({ icon: Icon, children, ...props }) {
+function Item({ icon: Icon, children, onSelect, onClick, ...props }) {
   return (
-    <DropdownMenuItem className="text-xs" {...props}>
+    <DropdownMenuItem
+      className="text-xs"
+      onSelect={onSelect || onClick}
+      {...props}
+    >
       {Icon && <Icon className="size-3.5" />}
       {children}
     </DropdownMenuItem>

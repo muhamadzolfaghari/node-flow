@@ -62,9 +62,13 @@ try {
       document
         .querySelectorAll("[data-atlas-test-control]")
         .forEach((e) => e.removeAttribute("data-atlas-test-control"));
-      const el = [
-        ...document.querySelectorAll('button,[role="menuitem"],a'),
-      ].find(
+      const menuItems = [
+        ...document.querySelectorAll('[role="menuitem"]'),
+      ].filter((e) => e.getClientRects().length);
+      const buttons = [...document.querySelectorAll("button,a")].filter(
+        (e) => e.getClientRects().length,
+      );
+      const el = (menuItems.length ? menuItems : buttons).find(
         (e) =>
           e.textContent.trim() === text ||
           (e.getAttribute("role") === "menuitem" &&
@@ -101,7 +105,14 @@ try {
     await page.type(selector, value);
   };
   async function replaceSource(value) {
-    await page.click(".cm-content");
+    await page.$eval(".cm-content", (el) =>
+      el.scrollIntoView({ block: "center", inline: "nearest" }),
+    );
+    const editorPoint = await page.$eval(".cm-content", (el) => {
+      const rect = el.getBoundingClientRect();
+      return { x: rect.x + Math.min(80, rect.width / 2), y: rect.y + 12 };
+    });
+    await page.mouse.click(editorPoint.x, editorPoint.y);
     const modifier = await page.evaluate(() =>
       /Mac/.test(navigator.platform) ? "Meta" : "Control",
     );
@@ -118,6 +129,43 @@ try {
     1,
     "Opening studio must not create duplicate templates",
   );
+  // Generated diagrams must be reviewable and dismissible before project mutation.
+  await click("Tools");
+  await click("Diagram assistant");
+  await page.waitForSelector('[aria-label="Diagram description"]');
+  await fill(
+    '[aria-label="Diagram description"]',
+    "A customer submits an order, payment is approved, then the order is shipped",
+  );
+  await page.evaluate(() => {
+    const label = [...document.querySelectorAll("label")].find((e) =>
+      e.textContent.includes("Insert in active file"),
+    );
+    if (!label) throw new Error("Missing active-file proposal destination");
+    label.setAttribute("data-atlas-test-control", "true");
+  });
+  await page.click('[data-atlas-test-control="true"]');
+  await click("Generate Diagram");
+  await page.waitForSelector('[aria-label="AI proposal source"]');
+  await page.waitForFunction(() => {
+    const source =
+      document.querySelector('[aria-label="AI proposal source"]')?.value || "";
+    const dialog = [...document.querySelectorAll('[role="dialog"]')].find((e) =>
+      e.textContent.includes("Live preview"),
+    );
+    const apply = [...(dialog?.querySelectorAll("button") || [])].find((e) =>
+      e.textContent.includes("Apply proposal"),
+    );
+    return (
+      source.length > 0 &&
+      dialog?.textContent.includes("Preview ready") &&
+      apply &&
+      !apply.disabled
+    );
+  });
+  assert.equal(await page.$$eval("[data-document-id]", (e) => e.length), 1);
+  await click("Discard proposal");
+  assert.equal(await page.$$eval("[data-document-id]", (e) => e.length), 1);
   // Every registry sample is usable from the actual studio, not just a parser API.
   for (const format of FORMATS) {
     await page.click('[aria-label="New file"]');
@@ -258,10 +306,7 @@ try {
       );
     if (extension === "pdf") assert.match(bytes.toString(), /^%PDF-/);
     if (extension === "pptx")
-      assert.deepEqual(
-        [...bytes.subarray(0, 4)],
-        [0x50, 0x4b, 0x03, 0x04],
-      );
+      assert.deepEqual([...bytes.subarray(0, 4)], [0x50, 0x4b, 0x03, 0x04]);
     if (extension === "html") assert.match(bytes.toString(), /<svg/);
   }
   // ZIP backups restore the full project, rather than importing duplicate sources.

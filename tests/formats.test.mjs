@@ -205,3 +205,70 @@ test("TopoJSON shared arcs topology compiles to Mermaid flowchart", async () => 
   assert.notEqual(await mermaid.parse(res.code), false);
 });
 
+
+import { flowchartNodeId, renameFlowchartNode } from "../src/lib/visual-editing.js";
+
+test("flowchartNodeId strips Mermaid render prefixes and suffixes", () => {
+  assert.equal(flowchartNodeId("mermaid-render-4-flowchart-Client-0"), "Client");
+  assert.equal(flowchartNodeId("flowchart-api-gw-2"), "api-gw");
+  assert.equal(flowchartNodeId("plain"), "plain");
+});
+
+test("renameFlowchartNode edits inline declarations inside edges", () => {
+  const out = renameFlowchartNode("flowchart LR\n  A[One] --> B[Two]", "A", "Uno");
+  assert.match(out, /A\["Uno"\] --> B\[Two\]/);
+});
+
+import { deleteFlowchartNode } from "../src/lib/visual-editing.js";
+
+test("deleteFlowchartNode keeps the other endpoint declared inline", () => {
+  const out = deleteFlowchartNode('flowchart LR\n  A{"One"} --> B[Two label]\n  B --> C', "A");
+  assert.match(out, /B\[Two label\]/);
+  assert.doesNotMatch(out, /One/);
+});
+
+import {
+  SHAPES,
+  flowchartNodes,
+  getFlowchartNodeShape,
+  changeFlowchartNodeShape,
+  flowchartEdges,
+} from "../src/lib/visual-editing.js";
+
+const SHAPE_SOURCE = `flowchart LR
+  A[Start] --> B{Ok?}
+  B --> C[(DB)]
+  C --> D[/In/]
+  D --> E((Circle))
+  E --> F(((Double)))
+  F --> G>Flag]
+  G --> H[/Trap\\]
+  H --> I[\\Alt/]
+  I --> J[[Sub]]
+  J --> K{{Hex}}
+  K --> L([Pill])
+  L --> M
+`;
+
+test("every Mermaid flowchart shape is recognised with its own kind", () => {
+  const shapes = Object.fromEntries(flowchartNodes(SHAPE_SOURCE).map((n) => [n.id, n.shape]));
+  assert.deepEqual(shapes, {
+    A: "rectangle", B: "diamond", C: "cylinder", D: "parallelogram", E: "circle", F: "doublecircle",
+    G: "asymmetric", H: "trapezoid", I: "trapezoidAlt", J: "subroutine", K: "hexagon", L: "stadium", M: "rectangle",
+  });
+  assert.equal(flowchartEdges(SHAPE_SOURCE).length, 12);
+});
+
+test("every shape can be applied to a node and round-trips", () => {
+  for (const key of Object.keys(SHAPES)) {
+    const out = changeFlowchartNodeShape("flowchart LR\n  A[One] --> B[Two]", "A", key);
+    assert.equal(getFlowchartNodeShape(out, "A"), key, key);
+    assert.equal(getFlowchartNodeShape(out, "B"), "rectangle");
+  }
+});
+
+test("shape and label edits declare a bare node at its first mention", () => {
+  const out = changeFlowchartNodeShape("flowchart LR\n  API --> Svc[Order]", "API", "diamond");
+  assert.match(out, /API\{"API"\} --> Svc\[Order\]/);
+  assert.equal(renameFlowchartNode("flowchart LR\n  API --> B", "API", "Gateway").includes('API["Gateway"]'), true);
+});

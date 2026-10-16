@@ -29,7 +29,10 @@ import {
   Sparkles,
   ArrowUpRight,
   Activity,
+  Mouse,
+  Download,
 } from "lucide-react";
+import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 
@@ -64,6 +67,7 @@ export default function CanvasStage({
     canvasRef = useRef(null),
     camera = useRef({ x: 30, y: 30, z: 1 }),
     shouldFit = useRef(true),
+    autoFit = useRef(false),
     editInputRef = useRef(null),
     spaceHeld = useRef(false),
     marqueeRef = useRef(null),
@@ -205,6 +209,22 @@ export default function CanvasStage({
       bbox = viewBoxBounds;
     }
 
+    // Bounds above are in viewBox user units. Camera maths works in the
+    // container's pixel space, so remove the viewBox origin and apply the
+    // svg's rendered scale (clientWidth is unaffected by the camera transform).
+    if (bbox) {
+      const originX = vb && vb.width > 0 ? vb.x : 0;
+      const originY = vb && vb.height > 0 ? vb.y : 0;
+      const scaleX = vb && vb.width > 0 && svg.clientWidth > 0 ? svg.clientWidth / vb.width : 1;
+      const scaleY = vb && vb.height > 0 && svg.clientHeight > 0 ? svg.clientHeight / vb.height : scaleX;
+      return {
+        x: (bbox.x - originX) * scaleX,
+        y: (bbox.y - originY) * scaleY,
+        w: bbox.w * scaleX,
+        h: bbox.h * scaleY,
+      };
+    }
+
     // Fallback to boundingClientRect if attached
     if (!bbox) {
       try {
@@ -231,7 +251,10 @@ export default function CanvasStage({
 
   const fit = () => {
     const s = stageRef.current;
-    if (!s || !containerRef.current?.querySelector("svg")) return;
+    if (!s || !containerRef.current?.querySelector("svg")) return false;
+    // Stage not laid out yet; fitting now would produce a tiny zoom. The
+    // ResizeObserver retries while shouldFit is still set.
+    if (s.clientWidth < 100 || s.clientHeight < 100) return false;
     const b = getContentBounds();
     setSize({ w: b.w, h: b.h });
     const paddingX = Math.min(96, Math.max(36, s.clientWidth * 0.08));
@@ -254,6 +277,7 @@ export default function CanvasStage({
       z,
     };
     apply();
+    return true;
   };
 
   const center = () => {
@@ -269,6 +293,7 @@ export default function CanvasStage({
   const zoomBy = (factor, cx, cy) => {
     const s = stageRef.current;
     if (!s) return;
+    autoFit.current = false;
     const ax = cx ?? s.clientWidth / 2,
       ay = cy ?? s.clientHeight / 2;
     const old = camera.current;
@@ -307,8 +332,10 @@ export default function CanvasStage({
     if (shouldFit.current) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          fit();
-          shouldFit.current = false;
+          if (fit()) {
+            shouldFit.current = false;
+            autoFit.current = true;
+          }
         });
       });
     }
@@ -374,7 +401,10 @@ export default function CanvasStage({
           elRect.left < stageRect.right
         ) {
           const x = Math.max(180, Math.min(stageRect.width - 180, elRect.left - stageRect.left + elRect.width / 2));
-          const y = Math.max(16, elRect.top - stageRect.top - 50);
+          const above = elRect.top - stageRect.top - 52;
+          const below = elRect.bottom - stageRect.top + 12;
+          // Sit above the node; flip underneath when the top edge has no room.
+          const y = above >= 8 ? above : Math.min(below, stageRect.height - 56);
           setNodeAnchor({
             x,
             y,
@@ -435,11 +465,11 @@ export default function CanvasStage({
     };
     updatePan(e);
     const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", updatePan);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", updatePan);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
   };
@@ -485,8 +515,8 @@ export default function CanvasStage({
 
       const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
       if (targetEl && targetEl.id) {
-        let cleanTargetId = targetEl.id.replace(/^flowchart-([^-]+)-.*/, "$1");
-        let cleanFromId = connectDragRef.current.fromId.replace(/^flowchart-([^-]+)-.*/, "$1");
+        let cleanTargetId = flowchartNodeId(targetEl.id);
+        let cleanFromId = flowchartNodeId(connectDragRef.current.fromId);
         if (cleanTargetId !== cleanFromId) {
           if (lastTargetEl !== targetEl) {
             clearHighlight();
@@ -513,8 +543,8 @@ export default function CanvasStage({
 
       const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
       if (targetEl && targetEl.id) {
-        let cleanTargetId = targetEl.id.replace(/^flowchart-([^-]+)-.*/, "$1");
-        let cleanFromId = fromId.replace(/^flowchart-([^-]+)-.*/, "$1");
+        let cleanTargetId = flowchartNodeId(targetEl.id);
+        let cleanFromId = flowchartNodeId(fromId);
         if (cleanTargetId !== cleanFromId) {
           callbacks.current.onConnectNodes?.(cleanFromId, cleanTargetId);
         }
@@ -533,7 +563,7 @@ export default function CanvasStage({
     const seen = new Set();
     svg.querySelectorAll("g.node, g.actor, g.entity").forEach((el) => {
       const rawId = el.id || "";
-      let cleanId = rawId.replace(/^flowchart-([^-]+)-.*/, "$1");
+      let cleanId = flowchartNodeId(rawId);
       if (!cleanId || seen.has(cleanId)) return;
       seen.add(cleanId);
       const label = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim() || cleanId;
@@ -581,6 +611,7 @@ export default function CanvasStage({
       pinch = null,
       moved = false;
     const down = (e) => {
+      autoFit.current = false;
       if (e.button !== 0) return;
       if (e.target.closest?.(".stage-floating-toolbar, .stage-batch-toolbar, .studio-canvas-controls, button, input, select, form")) {
         return;
@@ -688,7 +719,7 @@ export default function CanvasStage({
                 const label = n
                   .querySelector(".nodeLabel, .label, text, title")
                   ?.textContent?.trim();
-                let cleanId = n.id.replace(/^flowchart-([^-]+)-.*/, "$1");
+                let cleanId = flowchartNodeId(n.id);
                 foundNodes.push({ id: cleanId, rawId: n.id, label: label || cleanId });
               }
             }
@@ -775,6 +806,7 @@ export default function CanvasStage({
     };
     const wheel = (e) => {
       e.preventDefault();
+      autoFit.current = false;
       const rect = stage.getBoundingClientRect();
       if (
         e.ctrlKey ||
@@ -904,7 +936,10 @@ export default function CanvasStage({
     window.addEventListener("keyup", handleSpaceUp);
 
     const resize = new ResizeObserver(() => {
-      if (shouldFit.current) fit();
+      if (shouldFit.current && fit()) {
+        shouldFit.current = false;
+        autoFit.current = true;
+      } else if (autoFit.current) fit();
     });
     resize.observe(stage);
     return () => {
@@ -1186,10 +1221,18 @@ export default function CanvasStage({
       {selected && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="stage-floating-toolbar absolute flex items-center gap-1 rounded-full border border-primary/30 bg-card/95 px-3 py-1 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-2 z-20 text-xs select-none transition-[left,top] duration-150"
+          className="stage-floating-toolbar absolute z-20 flex max-w-[calc(100%-16px)] items-center gap-0.5 rounded-xl border border-border/70 bg-popover/95 p-1 text-xs shadow-2xl ring-1 ring-black/5 backdrop-blur-xl animate-in fade-in zoom-in-95 select-none transition-[left,top] duration-150"
           style={
             nodeAnchor
-              ? { left: `${nodeAnchor.x}px`, top: `${nodeAnchor.y}px`, transform: "translateX(-50%)" }
+              ? {
+                  // Keep the toolbar fully inside the stage (it is ~440px wide).
+                  left: `${Math.max(
+                    Math.min(220, (stageRef.current?.clientWidth || 0) / 2),
+                    Math.min(nodeAnchor.x, (stageRef.current?.clientWidth || Infinity) - 220),
+                  )}px`,
+                  top: `${Math.max(8, nodeAnchor.y)}px`,
+                  transform: "translateX(-50%)",
+                }
               : { left: "50%", top: "16px", transform: "translateX(-50%)" }
           }
         >
@@ -1246,10 +1289,10 @@ export default function CanvasStage({
                 setIsEditing(true);
                 setTimeout(() => editInputRef.current?.focus(), 50);
               }}
-              className="font-semibold text-primary flex items-center gap-1.5 max-w-[160px] truncate hover:bg-primary/10 rounded px-1.5 py-0.5 transition"
+              className="flex h-7 max-w-[150px] items-center gap-1.5 truncate rounded-md px-2 text-[11px] font-semibold text-foreground transition hover:bg-accent"
               title="Click or double-click to rename"
             >
-              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              <span className="size-1.5 shrink-0 rounded-full bg-primary" />
               <span className="truncate">{selected.label || selected.id}</span>
               <Pencil className="size-2.5 opacity-60 ml-0.5" />
             </button>
@@ -1264,24 +1307,16 @@ export default function CanvasStage({
                 setShowShapes(!showShapes);
                 setShowColors(false);
               }}
-              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-accent transition"
+              className="inline-flex size-7 items-center justify-center rounded-md text-foreground/80 transition hover:bg-accent hover:text-foreground"
               title="Change node shape"
             >
-              <Shapes className="size-3 text-sky-400" />
-              <span>Shape</span>
-              <ChevronDown className="size-2.5 opacity-70" />
+              <Shapes className="size-4 text-sky-400" />
+              <span className="sr-only">Shape</span>
+              
             </button>
             {showShapes && (
               <div className="absolute left-0 top-full mt-2 z-30 min-w-[140px] rounded-lg border border-border/80 bg-popover/95 p-1 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
-                {[
-                  { id: "rectangle", label: "Rectangle [ ]" },
-                  { id: "rounded", label: "Rounded ( )" },
-                  { id: "stadium", label: "Stadium ([ ])" },
-                  { id: "cylinder", label: "Cylinder [( )]" },
-                  { id: "diamond", label: "Diamond { }" },
-                  { id: "circle", label: "Circle (( ))" },
-                  { id: "hexagon", label: "Hexagon {{ }}" },
-                ].map((s) => (
+                {Object.entries(SHAPES).map(([id, shape]) => ({ id, label: `${shape.label}  ${shape.open} ${shape.close}` })).map((s) => (
                   <button
                     key={s.id}
                     onClick={() => {
@@ -1304,12 +1339,12 @@ export default function CanvasStage({
                 setShowColors(!showColors);
                 setShowShapes(false);
               }}
-              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-accent transition"
+              className="inline-flex size-7 items-center justify-center rounded-md text-foreground/80 transition hover:bg-accent hover:text-foreground"
               title="Change node style & color"
             >
-              <Palette className="size-3 text-emerald-400" />
-              <span>Color</span>
-              <ChevronDown className="size-2.5 opacity-70" />
+              <Palette className="size-4 text-emerald-400" />
+              <span className="sr-only">Color</span>
+              
             </button>
             {showColors && (
               <div className="absolute left-0 top-full mt-2 z-30 min-w-[130px] rounded-lg border border-border/80 bg-popover/95 p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 grid grid-cols-4 gap-1.5">
@@ -1341,11 +1376,11 @@ export default function CanvasStage({
           {callbacks.current.onQuickAdd && (
             <button
               onClick={callbacks.current.onQuickAdd}
-              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-primary/20 hover:text-primary transition"
+              className="inline-flex size-7 items-center justify-center rounded-md text-foreground/80 transition hover:bg-accent hover:text-foreground hover:!bg-primary/15 hover:!text-primary"
               title="Add connected child step (Tab)"
             >
-              <Plus className="size-3" />
-              <span>Add Step</span>
+              <Plus className="size-4" />
+              <span className="sr-only">Add Step</span>
             </button>
           )}
 
@@ -1357,16 +1392,16 @@ export default function CanvasStage({
                   setShowShapes(false);
                   setShowColors(false);
                 }}
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition ${
+                className={`inline-flex size-7 items-center justify-center rounded-md transition ${
                   showConnect
                     ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-accent"
+                    : "text-foreground/80 hover:bg-accent hover:text-foreground"
                 }`}
                 title="Connect to another node"
               >
-                <Link2 className="size-3 text-cyan-400" />
-                <span>Connect</span>
-                <ChevronDown className="size-2.5 opacity-70" />
+                <Link2 className="size-4 text-cyan-400" />
+                <span className="sr-only">Connect</span>
+                
               </button>
               {showConnect && (
                 <div className="absolute left-0 top-full mt-2 z-30 min-w-[170px] max-h-52 overflow-y-auto rounded-lg border border-border/80 bg-popover/95 p-1 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
@@ -1413,26 +1448,26 @@ export default function CanvasStage({
           {callbacks.current.onDuplicateSelected && (
             <button
               onClick={callbacks.current.onDuplicateSelected}
-              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-accent transition"
+              className="inline-flex size-7 items-center justify-center rounded-md text-foreground/80 transition hover:bg-accent hover:text-foreground"
               title="Duplicate node (Cmd/Ctrl+D)"
             >
-              <Copy className="size-3" />
-              <span>Duplicate</span>
+              <Copy className="size-4" />
+              <span className="sr-only">Duplicate</span>
             </button>
           )}
           {callbacks.current.onDeleteSelected && (
             <button
               onClick={callbacks.current.onDeleteSelected}
-              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-rose-400 hover:bg-rose-500/20 transition"
+              className="inline-flex size-7 items-center justify-center rounded-md text-rose-400 transition hover:bg-rose-500/15"
               title="Delete node (Delete/Backspace)"
             >
-              <Trash2 className="size-3" />
-              <span>Delete</span>
+              <Trash2 className="size-4" />
+              <span className="sr-only">Delete</span>
             </button>
           )}
           <button
             onClick={() => callbacks.current.onSelect?.(null)}
-            className="rounded p-0.5 text-muted-foreground hover:text-foreground transition ml-1"
+            className="ml-0.5 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
             title="Deselect (Escape)"
           >
             <X className="size-3.5" />
@@ -1588,37 +1623,40 @@ export default function CanvasStage({
         </div>
       )}
 
-      <div className={`absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border px-2.5 py-1 shadow-2xl backdrop-blur-xl ${
+      <div role="toolbar" aria-label="Canvas controls" className={`absolute bottom-3.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-2xl border p-1 shadow-2xl backdrop-blur-xl ${
         isLight
           ? "border-slate-200/90 bg-white/95 text-slate-800 shadow-slate-300/50 ring-1 ring-black/5"
           : "border-slate-700/60 bg-slate-900/90 text-slate-200 shadow-black/60 ring-1 ring-white/10"
       }`}>
         {/* Tool Mode: Pointer (V) vs Hand (H) */}
-        <div className="flex items-center rounded-full bg-muted/60 p-0.5 mr-1">
+        <div className="mr-1 flex items-center rounded-lg bg-muted/60 p-0.5">
           <button
             onClick={() => setTool("pointer")}
-            className={`rounded-full p-1 transition ${
+            className={`inline-flex size-7 items-center justify-center rounded-md transition ${
               tool === "pointer"
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             title="Select tool (V)"
+            aria-pressed={tool === "pointer"}
           >
-            <MousePointer2 className="size-3.5" />
+            <MousePointer2 className="size-4" />
           </button>
           <button
             onClick={() => setTool("hand")}
-            className={`rounded-full p-1 transition ${
+            className={`inline-flex size-7 items-center justify-center rounded-md transition ${
               tool === "hand"
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             title="Hand / Pan tool (H)"
+            aria-pressed={tool === "hand"}
           >
-            <Hand className="size-3.5" />
+            <Hand className="size-4" />
           </button>
         </div>
 
+        <span className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Zoom out (-)" onClick={() => zoomBy(0.8)}>
           <Minus />
         </Tool>
@@ -1697,27 +1735,33 @@ export default function CanvasStage({
         <Tool title="Reset view (0)" onClick={reset}>
           <RotateCcw />
         </Tool>
-        <Tool title="Toggle minimap" onClick={() => setMinimap(!minimap)}>
+        <span className="mx-1 h-4 border-l border-border/80" />
+        <Tool title={minimap ? "Hide minimap" : "Show minimap"} aria-pressed={minimap} className={minimap ? "bg-accent text-foreground" : ""} onClick={() => setMinimap(!minimap)}>
           <MapIcon />
         </Tool>
         <Tool
-          title={`Wheel mode: ${wheelMode}`}
+          title={wheelMode === "zoom" ? "Scroll wheel zooms (click to make it pan)" : "Scroll wheel pans (click to make it zoom)"}
+          aria-pressed={wheelMode === "zoom"}
+          className={wheelMode === "zoom" ? "bg-accent text-foreground" : ""}
           onClick={() => setWheelMode(wheelMode === "zoom" ? "pan" : "zoom")}
         >
-          <MousePointer2 />
+          <Mouse />
         </Tool>
         <Tool
-          title={isSimulating ? "Stop Flow Simulator" : "Interactive Data Flow Simulator"}
+          title={isSimulating ? "Stop flow simulator" : "Run flow simulator"}
+          aria-pressed={isSimulating}
+          className={isSimulating ? "bg-accent" : ""}
           onClick={() => setIsSimulating(!isSimulating)}
         >
           <Activity className={isSimulating ? "text-cyan-400 animate-pulse" : ""} />
         </Tool>
-        <Tool title="Search nodes (Cmd/Ctrl+P)" onClick={() => setSearchOpen(true)}>
+        <span className="mx-1 h-4 border-l border-border/80" />
+        <Tool title="Find a node (⌘/Ctrl+P)" onClick={() => setSearchOpen(true)}>
           <Search />
         </Tool>
         {callbacks.current.onOpenExportStudio && (
-          <Tool title="Export Studio" onClick={callbacks.current.onOpenExportStudio}>
-            <Sparkles className="text-cyan-400" />
+          <Tool title="Export studio" onClick={callbacks.current.onOpenExportStudio}>
+            <Download className="text-cyan-400" />
           </Tool>
         )}
       </div>

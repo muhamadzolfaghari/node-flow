@@ -13,7 +13,7 @@ export { ContextMenu } from './ui/ContextMenu.jsx'
 export const badgeVariants = cva('inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap', {
   variants: { tone: {
     default: 'border-border bg-secondary/50 text-muted-foreground',
-    indigo: 'border-blue-400/25 bg-blue-400/10 text-blue-300',
+    indigo: 'border-primary/30 bg-primary/10 text-primary',
     green: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300',
     amber: 'border-amber-400/25 bg-amber-400/10 text-amber-300',
     rose: 'border-rose-400/25 bg-rose-400/10 text-rose-300',

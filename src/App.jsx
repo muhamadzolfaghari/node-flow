@@ -17,7 +17,7 @@ const Compare = lazy(() => import("./pages/Compare.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 const PAGE_TITLES = {
-  "/": "Universal Diagram & Chart Studio",
+  "/": "Visual workspace for diagrams and systems",
   "/studio": "Studio",
   "/templates": "Templates",
   "/saved": "Projects",

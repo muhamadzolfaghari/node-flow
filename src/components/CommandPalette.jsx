@@ -122,7 +122,7 @@ export default function CommandPalette({ open, onClose }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search diagrams and commands…"
-          className="min-w-0 w-full bg-transparent text-sm text-white outline-none placeholder:text-muted-foreground"
+          className="min-w-0 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
         <button
           onClick={onClose}
@@ -149,7 +149,7 @@ export default function CommandPalette({ open, onClose }) {
               )}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-white">
+              <span className="block truncate text-sm font-medium text-foreground">
                 {r.title}
               </span>
               <span className="block truncate text-xs text-muted-foreground">

@@ -138,32 +138,32 @@ function language(doc) {
 // Modern IDE Dark Theme for Editor & Diagnostics
 const theme = EditorView.theme(
   {
-    "&": { backgroundColor: "#0c1017", color: "#dce5f2", fontSize: "12px", height: "100%" },
+    "&": { backgroundColor: "var(--editor-bg)", color: "var(--editor-fg)", fontSize: "12px", height: "100%" },
     ".cm-content": {
       fontFamily: "JetBrains Mono, monospace",
       padding: "16px 0",
-      caretColor: "#60a5fa",
+      caretColor: "var(--primary)",
     },
     ".cm-line": { padding: "0 16px", lineHeight: "22px" },
     ".cm-gutters": {
-      backgroundColor: "#0c1017",
-      color: "#475569",
+      backgroundColor: "var(--editor-bg)",
+      color: "var(--editor-gutter-fg)",
       border: "none",
-      borderRight: "1px solid #1e293b",
+      borderRight: "1px solid var(--editor-line)",
       minWidth: "44px",
     },
-    ".cm-activeLineGutter": { backgroundColor: "#1e293b", color: "#93c5fd" },
-    ".cm-activeLine": { backgroundColor: "#17223455" },
+    ".cm-activeLineGutter": { backgroundColor: "var(--editor-line)", color: "var(--primary)" },
+    ".cm-activeLine": { backgroundColor: "var(--editor-active-line)" },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: "#1e3a8a66",
+      backgroundColor: "var(--editor-selection)",
     },
-    ".cm-cursor": { borderLeftColor: "#60a5fa" },
-    ".cm-panels": { backgroundColor: "#111827", color: "#dce5f2" },
+    ".cm-cursor": { borderLeftColor: "var(--primary)" },
+    ".cm-panels": { backgroundColor: "var(--popover)", color: "var(--editor-fg)" },
     ".cm-tooltip": {
-      backgroundColor: "#111827",
-      border: "1px solid #334155",
+      backgroundColor: "var(--popover)",
+      border: "1px solid var(--border)",
       borderRadius: "6px",
-      color: "#e2e8f0",
+      color: "var(--popover-foreground)",
       boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
     },
     // CodeMirror Lint Diagnostic Styles
@@ -223,15 +223,15 @@ const theme = EditorView.theme(
 
 // High-Contrast Vibrant Syntax Token Colors
 const highlight = HighlightStyle.define([
-  { tag: tags.keyword, color: "#93c5fd", fontWeight: "600" },
-  { tag: tags.string, color: "#86efac" },
-  { tag: tags.comment, color: "#64748b", fontStyle: "italic" },
-  { tag: tags.number, color: "#fcd34d" },
-  { tag: tags.operator, color: "#c084fc", fontWeight: "600" },
-  { tag: tags.typeName, color: "#38bdf8" },
-  { tag: tags.propertyName, color: "#f472b6" },
-  { tag: tags.bracket, color: "#94a3b8" },
-  { tag: tags.meta, color: "#fb923c" },
+  { tag: tags.keyword, color: "var(--syn-keyword)", fontWeight: "600" },
+  { tag: tags.string, color: "var(--syn-string)" },
+  { tag: tags.comment, color: "var(--syn-comment)", fontStyle: "italic" },
+  { tag: tags.number, color: "var(--syn-number)" },
+  { tag: tags.operator, color: "var(--syn-operator)", fontWeight: "600" },
+  { tag: tags.typeName, color: "var(--syn-type)" },
+  { tag: tags.propertyName, color: "var(--syn-property)" },
+  { tag: tags.bracket, color: "var(--syn-bracket)" },
+  { tag: tags.meta, color: "var(--syn-meta)" },
 ]);
 
 // Rich Contextual Autocomplete & Snippet Provider
@@ -303,6 +303,12 @@ const diagramSnippets = [
   snippetCompletion('linkStyle ${1:0} stroke:${2:#f59e0b},stroke-width:2px', { label: "linkStyle", detail: "Connection link style directive", type: "property" }),
 ];
 
+const diagramTypeKeywords = new Set([
+  "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram",
+  "gantt", "pie", "journey", "gitGraph", "mindmap", "timeline", "quadrantChart", "xychart", "xychart-beta",
+  "sankey", "sankey-beta", "block", "block-beta", "packet", "packet-beta", "architecture", "architecture-beta",
+  "requirementDiagram", "C4Context", "kanban",
+]);
 const keywordCompletions = keywords.map((label) => ({
   label,
   type: "keyword",
@@ -320,6 +326,9 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
   const [syntaxStatus, setSyntaxStatus] = useState({ valid: true, error: null, line: null, raw: null });
   const [fixBusy, setFixBusy] = useState(false);
   const [fixSuccessMsg, setFixSuccessMsg] = useState(null);
+  const [fixFailMsg, setFixFailMsg] = useState(null);
+  const syntaxStatusRef = useRef(syntaxStatus);
+  syntaxStatusRef.current = syntaxStatus;
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   latest.current = { document, onChange };
@@ -339,7 +348,9 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
     setFixBusy(true);
 
     try {
-      const result = await fixAnySyntax(docText, docFmt, syntaxStatus.raw || syntaxStatus.error || "");
+      const status = syntaxStatusRef.current;
+      setFixFailMsg(null);
+      const result = await fixAnySyntax(docText, docFmt, status.raw || status.error || "");
       if (result.success && result.fixedCode && result.fixedCode !== docText) {
         // Dispatch atomic transaction preserving history
         view.dispatch({
@@ -351,13 +362,18 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
         setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
         setShowSuggestions(false);
         setTimeout(() => setFixSuccessMsg(null), 4000);
+      } else {
+        setFixFailMsg("Couldn't repair this automatically. Check the highlighted line or use the Diagram assistant.");
+        setTimeout(() => setFixFailMsg(null), 6000);
       }
     } catch (e) {
       console.warn("AI Quick Fix execution error:", e);
+      setFixFailMsg("AI Quick Fix failed. Try again or edit the highlighted line.");
+      setTimeout(() => setFixFailMsg(null), 6000);
     } finally {
       setFixBusy(false);
     }
-  }, [syntaxStatus]);
+  }, []);
 
   // Real-time As-You-Type CodeMirror Linter Extension
   const syntaxLinter = useMemo(() => {
@@ -463,9 +479,29 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
               (context) => {
                 const word = context.matchBefore(/\w*/);
                 if (!word || (word.from === word.to && !context.explicit)) return null;
+                const doc = context.state.doc;
+                const line = doc.lineAt(context.pos);
+                const lineBeforeCursor = line.text.slice(0, context.pos - line.from);
+                // Whole-diagram templates and type keywords only make sense on
+                // the first line or an empty line, not mid-statement.
+                const atStatementStart = line.number === 1 || !lineBeforeCursor.slice(0, word.from - line.from).trim();
+                const text = doc.toString();
+                const seen = new Set();
+                const symbols = [];
+                for (const match of text.matchAll(/\b[A-Za-z_][\w-]*\b/g)) {
+                  const id = match[0];
+                  if (id.length < 2 || seen.has(id) || id === text.slice(word.from, word.to)) continue;
+                  seen.add(id);
+                  if (!keywords.includes(id)) symbols.push({ label: id, type: "variable", detail: "in this file", boost: 2 });
+                }
+                const structural = line.number === 1 || !text.slice(0, line.from).trim();
                 return {
                   from: word.from,
-                  options: [...diagramSnippets, ...keywordCompletions],
+                  options: [
+                    ...(structural || !lineBeforeCursor.trim() ? diagramSnippets : []),
+                    ...(atStatementStart || structural ? keywordCompletions : keywordCompletions.filter((k) => !diagramTypeKeywords.has(k.label))),
+                    ...symbols,
+                  ],
                 };
               },
             ],
@@ -480,18 +516,22 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
     [syntaxLinter, runAiFix]
   );
 
+  // Create the view once per mount. Rebuilding it whenever `document` or
+  // `createState` changed identity dropped focus, selection, history and the
+  // search panel on every keystroke.
+  const hasDocument = Boolean(document);
   useEffect(() => {
-    if (!document) return;
+    if (!hasDocument) return;
     editor.current = new EditorView({
-      state: createState(document),
+      state: createState(latest.current.document),
       parent: host.current,
     });
-    currentId.current = document.id;
+    currentId.current = latest.current.document.id;
     return () => {
       editor.current?.destroy();
       editor.current = null;
     };
-  }, [createState, document]);
+  }, [hasDocument]);
 
   useEffect(() => {
     if (!document || !editor.current) return;
@@ -552,6 +592,26 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
         navigator.clipboard?.writeText(v.state.doc.toString());
       }
     },
+    // Select a node's declaration (falling back to its first mention) so a
+    // canvas click is mirrored in the source. Does not take focus.
+    reveal: (id) => {
+      const v = editor.current;
+      if (!v || !id) return;
+      const text = v.state.doc.toString();
+      const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const declaration = new RegExp(`(^|[^\\w-])(${escaped})(?=\\s*(\\[|\\(|\\{))`, "m").exec(text);
+      const mention = new RegExp(`(^|[^\\w-])(${escaped})(?![\\w-])`, "m").exec(text);
+      const hit = declaration || mention;
+      if (!hit) return;
+      const from = hit.index + hit[1].length;
+      const line = v.state.doc.lineAt(from);
+      const closing = declaration ? line.text.slice(from - line.from).search(/[\]\)\}]/) : -1;
+      const to = declaration && closing > -1 ? from + closing + 1 : from + id.length;
+      v.dispatch({
+        selection: { anchor: from, head: Math.min(to, line.to) },
+        effects: EditorView.scrollIntoView(from, { y: "nearest" }),
+      });
+    },
     goTo: (line) => {
       const v = editor.current;
       if (v) {
@@ -568,9 +628,9 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
   }));
 
   return (
-    <div className="flex h-full flex-col min-h-0 bg-[#0c1017]">
+    <div className="flex h-full flex-col min-h-0 bg-background">
       {/* Floating AI Diagnostic, Fix & Autocomplete Status Bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-[#1e293b] bg-[#0f172a]/95 px-3 py-1.5 text-[11px] backdrop-blur select-none z-10">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-card/95 px-3 py-1.5 text-[11px] backdrop-blur select-none z-10">
         <div className="flex items-center gap-2 overflow-hidden">
           {syntaxStatus.valid ? (
             <span className="inline-flex items-center gap-1.5 text-emerald-400 font-medium truncate">
@@ -579,8 +639,8 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span>Valid syntax</span>
-              <span className="text-slate-500">·</span>
-              <span className="text-slate-400 uppercase tracking-wider text-[10px]">{document?.format || "mermaid"}</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground uppercase tracking-wider text-[10px]">{document?.format || "mermaid"}</span>
             </span>
           ) : (
             <div className="flex items-center gap-2 overflow-hidden">
@@ -628,6 +688,11 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
             </div>
           )}
 
+          {fixFailMsg && (
+            <span role="status" className="inline-flex items-center gap-1 text-amber-400 font-medium">
+              <span>{fixFailMsg}</span>
+            </span>
+          )}
           {fixSuccessMsg && (
             <span className="inline-flex items-center gap-1 text-emerald-400 font-medium animate-fadeIn">
               <Check className="h-3 w-3" />
@@ -636,12 +701,12 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-slate-400 text-[10px]">
-          <span className="hidden sm:inline text-slate-500">
-            <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[9px] text-slate-300">Tab</kbd> Autocomplete
+        <div className="flex items-center gap-2 text-muted-foreground text-[10px]">
+          <span className="hidden sm:inline text-muted-foreground">
+            <kbd className="rounded bg-secondary px-1 py-0.5 text-[9px] text-foreground/80">Tab</kbd> Autocomplete
           </span>
-          <span className="hidden md:inline text-slate-500">
-            <kbd className="rounded bg-slate-800 px-1 py-0.5 text-[9px] text-slate-300">Alt+F</kbd> AI Fix
+          <span className="hidden md:inline text-muted-foreground">
+            <kbd className="rounded bg-secondary px-1 py-0.5 text-[9px] text-foreground/80">Alt+F</kbd> AI Fix
           </span>
         </div>
       </div>
@@ -656,7 +721,7 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
             </span>
             <button
               onClick={() => setShowSuggestions(false)}
-              className="text-slate-400 hover:text-white text-[11px]"
+              className="text-muted-foreground hover:text-white text-[11px]"
             >
               ✕ Close
             </button>
@@ -665,7 +730,7 @@ export default function CodeEditor({ ref, document, onChange, onContextMenu }) {
             {explanations.slice(0, 3).map((e) => (
               <div key={e.id} className="rounded border border-slate-700 bg-slate-900/80 p-2">
                 <p className="font-semibold text-amber-300 text-[11px]">{e.symptom}</p>
-                <p className="text-slate-300 mt-0.5 text-[11px] leading-relaxed"><span className="text-slate-500 font-medium">Cause:</span> {e.cause}</p>
+                <p className="text-foreground/80 mt-0.5 text-[11px] leading-relaxed"><span className="text-muted-foreground font-medium">Cause:</span> {e.cause}</p>
                 <div className="mt-1.5 grid grid-cols-2 gap-2 text-[10px] font-mono">
                   <div className="rounded bg-rose-950/40 border border-rose-900/50 p-1.5 text-rose-300">
                     <span className="text-rose-500 font-bold block mb-0.5">✗ Incorrect:</span>

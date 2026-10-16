@@ -1,8 +1,24 @@
-# NodeFlow — Visual Diagram & Architecture Studio
+# NodeFlow — AI-ready visual studio for diagrams and systems
 
-An open source, browser-based, local-first studio for diagrams, data models, architecture, and mind maps. Work in projects with multiple source files, a high-performance code editor, a live diagram canvas, syntax diagnostics, format converters, and version checkpoints.
+NodeFlow is an open-source, browser-based workspace for creating and editing diagrams from source, templates, imports, and AI. Keep editable files, live previews, direct canvas tools, diagnostics, and project checkpoints together. Local and cloud AI are optional; when a cloud provider is selected, its provider receives the prompt you submit.
 
-[Open the application](https://muhamadzolfaghari.github.io/node-flow/) · [Format registry](src/lib/formats.js) · [Design system](docs/DESIGN-SYSTEM.md) · [Initial audit](docs/DESIGN-AUDIT.md)
+[Open NodeFlow](https://muhamadzolfaghari.github.io/node-flow/) · [Try the examples](screenshots/enterprise/desktop-home.png) · [Open the studio](screenshots/enterprise/desktop-studio.png) · [Formats and limits](docs/FORMATS-ALL.md) · [Competitive research](docs/COMPETITIVE-RESEARCH.md) · [Improvement loop](docs/IMPROVEMENT-LOOP.md)
+
+| Home and examples | Source editor and canvas |
+| --- | --- |
+| ![NodeFlow home page](screenshots/enterprise/desktop-home.png) | ![NodeFlow studio](screenshots/enterprise/desktop-studio.png) |
+
+Phone layouts: [home](screenshots/enterprise/mobile-home.png) · [studio](screenshots/enterprise/mobile-studio.png) · [projects](screenshots/enterprise/mobile-projects.png)
+
+## What this project demonstrates
+
+- A source-first visual editor with synchronized previews and direct manipulation for supported Mermaid diagram families.
+- A format registry and conversion adapters that preserve original source and make conversion limits explicit.
+- Provider-based AI generation, including deterministic and local inference plus native Gemini and OpenAI-compatible APIs.
+- A local-first project model with browser storage, version checkpoints, portable backups, and explicit export paths.
+- A responsive React workspace with keyboard navigation, diagnostics, and accessible interface primitives.
+
+Start with the [interactive examples](https://muhamadzolfaghari.github.io/node-flow/) or browse the [desktop and phone screenshots](screenshots/enterprise).
 
 ## Workspace
 
@@ -41,7 +57,7 @@ An open source, browser-based, local-first studio for diagrams, data models, arc
   - Built on React 19 utilizing `useActionState` for async transitions, `useOptimistic` for instant tab and title updates, `useDeferredValue` for responsive search filtering, and direct `ref` props across components.
 - **Version checkpoints:** save up to 30 project snapshots and restore the original source of a file.
 - **Project portability & exports:** download SVG with embedded roundtrip source metadata, high-res PNG (2×, 4×), print-ready PDF, standalone offline interactive HTML viewer, 16:9 widescreen PowerPoint presentation slides (`.pptx`), `.atlas` project backups, and ZIP source archives.
-- **Diagram assistant:** multi-engine diagram synthesis supporting Instant deterministic rule generation (0 latency, offline across 19 diagram families), local in-browser WebGPU inference via Qwen2.5-Coder (`@mlc-ai/web-llm`), local Ollama daemon connection (`localhost:11434`), and custom OpenAI-compatible API endpoints (OpenAI, Groq, OpenRouter) with client-side key storage. Includes clickable inspiration starter chips, automatic post-generation syntax validation and self-repair, and targeted insertion options (New File vs. Append to active document).
+- **Diagram assistant:** provider registry for deterministic generation, local WebGPU Qwen, Ollama, native Gemini through `@google/genai`, and OpenAI-compatible APIs. Gemini model discovery is available for the configured key. Generated Mermaid passes through the existing syntax-repair pipeline and can be opened in a new file or appended to the active file. Cloud providers receive the prompt; credentials are stored in browser local storage for this personal-use client mode.
 
 ## Supported source formats
 
@@ -112,37 +128,31 @@ DiagramAtlas provides interactive, bidirectional visual modeling panels in the I
 - **Cloud & Architecture Diagrams**: Cloud microservices and VPC topology modeling with group boundaries, service declarations with icon presets (server, database, cloud, disk, internet, key, user), port/side directional connections (`R`, `L`, `T`, `B`), and element deletion.
 - **Look & Feel / Theming**: Vector crisp vs. Hand-drawn sketchy look switcher, plus 5 theme presets (Default, Neutral, Forest, Dark, Base).
 
-## Enterprise Capabilities
+## Architecture and project tools
 
-NodeFlow provides battle-tested enterprise architecture engineering tools, zero-server offline persistence, and direct version control synchronization:
+NodeFlow includes architecture stencils, local project storage, and an optional GitHub file sync flow. These are useful building blocks for team workflows; the hosted app does not currently provide accounts, shared cloud projects, collaboration, SSO, or administrative policies.
 
-- **Enterprise Cloud & Architecture Stencil Palette**:
-  - One-click insertion of 24+ production cloud and infrastructure components across **AWS** (Lambda, S3, DynamoDB, API Gateway, SQS, ECS Fargate), **GCP** (Cloud Run, BigQuery, Pub/Sub, Cloud Storage), **Azure** (Functions, Cosmos DB, AKS), **Kubernetes & CNCF** (Pods, Ingress Controllers, ClusterIP Services), **Databases** (PostgreSQL, Redis Cluster, Apache Kafka, Snowflake), and **Cybersecurity & Edge** (Cloudflare WAF, HashiCorp Vault, Keycloak OIDC).
-  - Instant fuzzy search across services, tags, and cloud providers.
+- **Cloud and architecture stencils:** 24 Mermaid snippets across AWS, GCP, Azure, Kubernetes, databases, and security. They are editable diagram source, not vendor-certified infrastructure definitions.
 - **Interactive Data Flow Simulator**:
   - Live hardware-accelerated SVG photon pulses travelling along connection paths and dependency edges.
   - Interactive playback deck: Play / Pause, Speed regulation (0.5×, 1×, 2×), Reset counter, and real-time active edge tracking across complex architectures.
-- **Enterprise IndexedDB Offline Storage Engine**:
-  - High-capacity client-side object stores (`showcases`, `projects`, `github_cache`) bypassing traditional 5MB `localStorage` limits.
-  - Automatic background project checkpoint synchronization with zero cloud dependency.
-  - Pre-loaded enterprise architecture showcase library:
+- **Browser storage and backups:** projects use browser storage with quota limits; IndexedDB stores project backups and showcase data. Download `.atlas` backups for portability. Browser storage is tied to this browser profile and can be cleared.
+- **Example architecture library:**
     - *AWS Multi-Region Serverless Banking (FinTech active-active with DynamoDB Global Tables)*
     - *Kubernetes & Istio Zero-Trust Service Mesh (mTLS & Envoy sidecars)*
     - *C4 Enterprise Banking System (Core Banking, API Gateway, Anti-Fraud)*
     - *Event-Driven Kafka Lakehouse (Debezium CDC, Spark Structured Streaming, Apache Iceberg)*
     - *Zero-Trust Identity & API Security (OAuth2 PKCE, Keycloak, HashiCorp Vault, Cloudflare WAF)*
-- **Direct GitHub Repository Synchronization**:
-  - Direct integration with GitHub REST API via secure personal access token (PAT) stored exclusively in local browser storage.
-  - Pull and commit diagram source files directly to branches (`main`, `develop`, etc.) with customized commit messages.
-- **Enterprise Research & Benchmark**:
-  - Comprehensive competitive analysis against MermaidChart, Eraser.io, IcePanel, Excalidraw, and Draw.io with a strategic roadmap documented in `enterprise_research_and_roadmap.md`.
+- **GitHub file transfer:** pull and push a selected source file through GitHub’s API. The personal access token is stored in browser local storage, so use a narrowly scoped token and a trusted device.
+
+See the [competitor research and product implications](docs/COMPETITIVE-RESEARCH.md) for a source-linked review of Miro, Lucid, and Eraser.
 
 ## Exports
 
 - Original editable source in its file format.
 - Derived Mermaid source, except native Graphviz previews.
 - Derived code, schema, and outline specifications: PlantUML (`.puml`), Graphviz DOT (`.dot`), D2 (`.d2`), SQL DDL (`.sql`), DBML (`.dbml`), TypeScript stubs (`.ts`), UML XMI 2.1 (`.xmi`), OPML outlines (`.opml`), Markdown outlines (`.md`), and OpenAPI 3.0 specifications (`.json`) extracted from sequence diagrams.
-- SVG vector diagrams with embedded diagram source metadata (`<metadata>` and XML comments) so exported `.svg` files can be dropped back into the studio to resume editing with 100% fidelity.
+- SVG vector diagrams with embedded diagram source metadata (`<metadata>` and XML comments) so the editable source can be recovered when the SVG is imported back into the studio.
 - PNG at 2× or 4× scale; dimensions depend on the diagram.
 - PDF with a high-resolution raster image (not vector PDF).
 - Standalone HTML containing the rendered diagram and navigation controls.
@@ -154,11 +164,11 @@ Resolve current preview errors before exporting a diagram image. Switch to Canva
 
 ## Local storage and privacy
 
-The application has no account service or application backend. Projects are stored in this browser's local storage. Existing NodeFlow/DiagramAtlas drafts and named diagrams remain accessible; they are not deleted during migration.
+The application has no account service or application backend. Projects are stored in this browser profile. Existing NodeFlow/DiagramAtlas drafts and named diagrams remain accessible; they are not deleted during migration.
 
 Browser storage is device- and browser-specific, has a quota, and can be cleared by the user. Download project backups for durable copies. If storage fills, the workspace reports it and still allows a backup download. Source imports are limited to 15 MB per file and 100 files per project; expanded ZIP input is limited to 30 MB.
 
-Libraries, fonts, and optional model weights may be fetched over the network. Source processing runs in the browser. An offline installation is not guaranteed by the hosted application; there is no service worker or shared cloud collaboration in this version.
+Libraries, fonts, and optional model weights may be fetched over the network. Source parsing and rendering run in the browser. Selecting Gemini or an OpenAI-compatible cloud endpoint sends the submitted prompt to that provider. The hosted app has no service worker, shared cloud collaboration, or enterprise identity and policy layer.
 
 ## Design and navigation
 

@@ -4,7 +4,11 @@
  * Combines deterministic rule-based repair (instant, 0 latency) with
  * local LLM fallback (Qwen / Ollama) when available.
  */
-import mermaid from 'mermaid';
+let mermaidPromise;
+const getMermaid = () => {
+  mermaidPromise ||= import('mermaid').then((module) => module.default);
+  return mermaidPromise;
+};
 
 /**
  * Repairs broken Mermaid diagram code
@@ -61,6 +65,14 @@ export async function fixMermaidSyntax(code, errorMessage = '', opts = {}) {
     }
   }
 
+  // 4b. Line-level repair: use the parser's reported line and try progressively
+  // stronger edits, keeping the first one the real parser accepts.
+  const lineRepair = await repairReportedLine(currentCode, validation.error || errorMessage);
+  if (lineRepair) {
+    fixes.push(lineRepair.fix);
+    return { success: true, fixedCode: lineRepair.code, fixes, method: 'line-repair' };
+  }
+
   // 5. If AI Assistant engine is provided and ready (Qwen or Ollama), query it
   if (opts.aiAssistant) {
     try {
@@ -91,11 +103,47 @@ export async function fixMermaidSyntax(code, errorMessage = '', opts = {}) {
 }
 
 /**
+ * Tries targeted edits on the line the parser complains about. Each candidate
+ * is validated; the least destructive passing candidate wins.
+ */
+export async function repairReportedLine(code, errorMessage = '') {
+  const lineNumber = Number(String(errorMessage).match(/line\s+(\d+)/i)?.[1]);
+  const lines = code.split('\n');
+  if (!lineNumber || lineNumber < 2 || lineNumber > lines.length) return null;
+  const index = lineNumber - 1;
+  const original = lines[index];
+  if (!original.trim()) return null;
+  const candidates = [
+    {
+      fix: `Removed stray text after the statement on line ${lineNumber}`,
+      line: original.replace(/^(.*[\]\)\}])\s+[^\]\)\}\s][^\]\)\}]*$/, '$1'),
+    },
+    {
+      fix: `Removed the last word on line ${lineNumber}`,
+      line: original.replace(/\s+\S+\s*$/, ''),
+    },
+    {
+      fix: `Commented out the invalid line ${lineNumber}`,
+      line: `${original.match(/^\s*/)[0]}%% ${original.trim()}`,
+    },
+  ];
+  for (const candidate of candidates) {
+    if (candidate.line === original || !candidate.line.trim()) continue;
+    const next = [...lines];
+    next[index] = candidate.line;
+    const joined = next.join('\n');
+    if ((await testMermaidSyntax(joined)).valid) return { code: joined, fix: candidate.fix };
+  }
+  return null;
+}
+
+/**
  * Validates syntax using Mermaid parser
  */
 export async function testMermaidSyntax(code) {
   if (!code || !code.trim()) return { valid: false, error: 'Empty code' };
   try {
+    const mermaid = await getMermaid();
     const res = await mermaid.parse(code);
     return { valid: Boolean(res) };
   } catch (err) {
@@ -325,7 +373,10 @@ function applyRuleBasedFixes(code, errorMsg = '') {
 
       // Fix unquoted special characters in node bracket labels: id[Some (Text) & /More/] -> id["Some (Text) & /More/"]
       const quotedBracket = l.replace(/(\b\w+)\s*\[([^"\n\[\]]*?[()\/&:,+{}<>][^"\n\[\]]*?)\]/g, (match, id, text) => {
-        return `${id}["${text.trim()}"]`;
+        // Leave valid shape delimiters alone: [(cylinder)], [/parallelogram/], [\trapezoid\]
+        const t = text.trim();
+        if (/^\(.*\)$/.test(t) || /^\/.*\/$/.test(t) || /^\\.*\\$/.test(t) || /^\/.*\\$/.test(t) || /^\\.*\/$/.test(t)) return match;
+        return `${id}["${t}"]`;
       });
       if (quotedBracket !== l) {
         l = quotedBracket;

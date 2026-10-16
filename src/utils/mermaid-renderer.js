@@ -1,4 +1,3 @@
-import mermaid from 'mermaid';
 import { renderGraphvizWasm } from './wasm/wasm-accelerator.js';
 
 /**
@@ -9,6 +8,14 @@ import { renderGraphvizWasm } from './wasm/wasm-accelerator.js';
 
 let currentTheme = 'dark';
 let renderSequence = 0;
+let mermaidPromise;
+
+async function getMermaid() {
+  if (!mermaidPromise) {
+    mermaidPromise = import('mermaid').then((module) => module.default);
+  }
+  return mermaidPromise;
+}
 
 /**
  * Check if the diagram source is Graphviz DOT syntax
@@ -374,8 +381,9 @@ export function getThemeVariables(theme = 'dark') {
   };
 }
 
-export function initMermaid(theme = 'dark') {
+export async function initMermaid(theme = 'dark') {
   currentTheme = theme;
+  const mermaid = await getMermaid();
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
@@ -418,7 +426,7 @@ export function initMermaid(theme = 'dark') {
 
 export function setMermaidTheme(theme) {
   currentTheme = theme;
-  initMermaid(theme);
+  return initMermaid(theme);
 }
 
 export function getMermaidTheme() {
@@ -460,6 +468,8 @@ export async function renderMermaid(container, code) {
   // 2. Standard Mermaid Path
   // Pre-validate syntax to prevent crashing or displaying default Mermaid error SVG
   try {
+    const mermaid = await getMermaid();
+    await initMermaid(currentTheme);
     const parseResult = await mermaid.parse(code, { suppressErrors: true });
     if (parseResult === false) {
       return { success: false, error: 'Invalid Mermaid syntax.' };
@@ -471,6 +481,7 @@ export async function renderMermaid(container, code) {
 
 
   try {
+    const mermaid = await getMermaid();
     const id = `mermaid-render-${seq}`;
     const result = await mermaid.render(id, code);
 

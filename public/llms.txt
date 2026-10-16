@@ -4,10 +4,10 @@
 > https://muhamadzolfaghari.github.io/node-flow/
 
 ## Overview
-NodeFlow is an enterprise-grade diagramming workbench running entirely client-side inside the browser. It unifies 30+ modeling languages, design formats, and specifications into a live reactive canvas with zero cloud lock-in or telemetry.
+NodeFlow is an diagramming workbench that runs in the browser. It unifies 30+ modeling languages, design formats, and specifications into a live reactive canvas with no account and no NodeFlow backend.
 
 ## Key Capabilities
-- **Local-First Privacy**: All diagram compilation, WebAssembly execution, and IndexedDB project persistence occur locally. No code or architecture is sent to third-party cloud servers.
+- **Local-First Privacy**: All diagram compilation, WebAssembly execution, and IndexedDB project persistence occur locally. Nothing is sent to a cloud service unless you choose Gemini or an OpenAI-compatible AI provider, which receives the prompt you submit.
 - **Cross-Disciplinary Workflows**:
   - *Product Managers (PM)*: User story mapping, quarterly OKRs, and customer journey maps.
   - *QA & Testing*: Defect triage lifecycles, automated CI/CD smoke test gates, and test coverage matrices.
@@ -30,4 +30,4 @@ NodeFlow is an enterprise-grade diagramming workbench running entirely client-si
 - Web App Studio: https://muhamadzolfaghari.github.io/node-flow/#/studio
 - Template Library: https://muhamadzolfaghari.github.io/node-flow/#/templates
 - Format Specifications: https://muhamadzolfaghari.github.io/node-flow/#/formats
-- Source Code Repository: https://github.com/muhamadzolfaghari/diagram-atlas
+- Source Code Repository: https://github.com/muhamadzolfaghari/node-flow

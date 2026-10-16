@@ -12,6 +12,51 @@
   --accent: #222e40; --accent-foreground: #f1f5fa;
   --destructive: #f47180; --border: #263143; --input: #2d3b50; --ring: #8bacff;
   --radius: .5rem;
+  /* Code editor + syntax tokens (overridden per theme) */
+  --editor-bg: #0c1017; --editor-fg: #dce5f2; --editor-gutter-fg: #475569; --editor-line: #1e293b;
+  --editor-active-line: #17223455; --editor-selection: #1e3a8a66;
+  --syn-keyword: #93c5fd; --syn-string: #86efac; --syn-comment: #64748b; --syn-number: #fcd34d;
+  --syn-operator: #c084fc; --syn-type: #38bdf8; --syn-property: #f472b6; --syn-bracket: #94a3b8; --syn-meta: #fb923c;
+}
+/* ---- App themes: <html data-app-theme="…"> ---- */
+:root[data-app-theme="light"] {
+  color-scheme: light;
+  --background: #f6f8fb; --foreground: #0f172a; --card: #ffffff; --card-foreground: #0f172a;
+  --popover: #ffffff; --popover-foreground: #0f172a; --primary: #2f5fd8; --primary-foreground: #ffffff;
+  --secondary: #eef2f8; --secondary-foreground: #1e293b; --muted: #f0f3f8; --muted-foreground: #526179;
+  --accent: #e5ecf8; --accent-foreground: #0f172a; --destructive: #d3304a; --border: #d8dfea; --input: #c9d3e3; --ring: #4f7cf0;
+  --editor-bg: #ffffff; --editor-fg: #1e293b; --editor-gutter-fg: #94a3b8; --editor-line: #e2e8f0;
+  --editor-active-line: #eef3fb; --editor-selection: #bcd2ff88;
+  --syn-keyword: #1d4ed8; --syn-string: #15803d; --syn-comment: #8a97ab; --syn-number: #b45309;
+  --syn-operator: #7e22ce; --syn-type: #0369a1; --syn-property: #be185d; --syn-bracket: #64748b; --syn-meta: #c2410c;
+}
+:root[data-app-theme="midnight"] {
+  --background: #070a16; --foreground: #e6e9ff; --card: #0d1226; --card-foreground: #e6e9ff;
+  --popover: #11172f; --popover-foreground: #e6e9ff; --primary: #8493ff; --primary-foreground: #0a0d24;
+  --secondary: #161d3a; --secondary-foreground: #d5dbff; --muted: #12183a; --muted-foreground: #8f9acb;
+  --accent: #1e2852; --accent-foreground: #f2f4ff; --destructive: #ff7a90; --border: #232d5a; --input: #2b3768; --ring: #a3afff;
+  --editor-bg: #070a16; --editor-fg: #dfe4ff; --editor-gutter-fg: #4d5a94; --editor-line: #1a2146;
+  --editor-active-line: #121a3d88; --editor-selection: #3a47a066;
+}
+:root[data-app-theme="nord"] {
+  --background: #2e3440; --foreground: #eceff4; --card: #343b49; --card-foreground: #eceff4;
+  --popover: #3b4252; --popover-foreground: #eceff4; --primary: #88c0d0; --primary-foreground: #2e3440;
+  --secondary: #3b4252; --secondary-foreground: #e5e9f0; --muted: #3a4152; --muted-foreground: #a9b4c8;
+  --accent: #434c5e; --accent-foreground: #eceff4; --destructive: #e07a85; --border: #4c566a; --input: #56627a; --ring: #88c0d0;
+  --editor-bg: #2b303b; --editor-fg: #e5e9f0; --editor-gutter-fg: #6b768c; --editor-line: #3b4252;
+  --editor-active-line: #3b425299; --editor-selection: #4c566a99;
+  --syn-keyword: #81a1c1; --syn-string: #a3be8c; --syn-comment: #6f7b91; --syn-number: #ebcb8b;
+  --syn-operator: #b48ead; --syn-type: #8fbcbb; --syn-property: #d08770; --syn-bracket: #a9b4c8; --syn-meta: #d08770;
+}
+:root[data-app-theme="contrast"] {
+  --background: #000000; --foreground: #ffffff; --card: #0a0a0a; --card-foreground: #ffffff;
+  --popover: #111111; --popover-foreground: #ffffff; --primary: #ffd400; --primary-foreground: #000000;
+  --secondary: #1a1a1a; --secondary-foreground: #ffffff; --muted: #141414; --muted-foreground: #d4d4d4;
+  --accent: #2a2a2a; --accent-foreground: #ffffff; --destructive: #ff6b6b; --border: #8a8a8a; --input: #a0a0a0; --ring: #ffd400;
+  --editor-bg: #000000; --editor-fg: #ffffff; --editor-gutter-fg: #bdbdbd; --editor-line: #5a5a5a;
+  --editor-active-line: #262626; --editor-selection: #ffd40055;
+  --syn-keyword: #6cb6ff; --syn-string: #7ee787; --syn-comment: #b3b3b3; --syn-number: #ffd400;
+  --syn-operator: #ff9bf5; --syn-type: #5eead4; --syn-property: #ff8fb1; --syn-bracket: #e5e5e5; --syn-meta: #ffa657;
 }
 @theme inline {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -27,7 +72,7 @@
   --radius-sm: calc(var(--radius) - 2px); --radius-md: var(--radius); --radius-lg: calc(var(--radius) + 2px); --radius-xl: calc(var(--radius) + 4px);
 }
 @layer base {
-  * { @apply border-border; scrollbar-width: thin; scrollbar-color: #34445b transparent; }
+  * { @apply border-border; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted-foreground) 45%, transparent) transparent; }
   html, body, #root { min-height: 100%; }
   body { @apply bg-background text-foreground font-sans antialiased; margin: 0; }
   button, a, select { -webkit-tap-highlight-color: transparent; }
@@ -38,11 +83,11 @@
 }
 .glass { background: var(--card); border: 1px solid var(--border); }
 .card-hover { transition: border-color .15s, background .15s; }
-.card-hover:hover { border-color: #536888; background: #151e2c; }
+.card-hover:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); background: var(--accent); }
 .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90; }
 .btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-md border border-border bg-secondary/40 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-accent; }
 .chip { @apply inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2 py-1 text-[11px] font-medium text-muted-foreground; }
-.brand-mark { display: grid; width: 32px; height: 32px; place-items: center; background: #253b67; border: 1px solid #4268ac; border-radius: 7px; color: #b7cdfb; }
+.brand-mark { display: grid; width: 32px; height: 32px; place-items: center; background: color-mix(in srgb, var(--primary) 22%, var(--card)); border: 1px solid color-mix(in srgb, var(--primary) 55%, var(--border)); border-radius: 7px; color: var(--primary); }
 .skip-link { position: fixed; top: -80px; left: 16px; z-index: 100; background: var(--primary); color: white; padding: 12px 18px; border-radius: 6px; }
 .skip-link:focus { top: 12px; }
 .command-dialog { position: fixed; top: 12vh; margin: 0 auto; padding: 0; width: min(560px, calc(100% - 32px)); max-height: 80vh; border: 1px solid var(--border); border-radius: 10px; background: var(--popover); color: var(--foreground); box-shadow: 0 24px 80px #0008; }
