@@ -184,7 +184,7 @@ export function getThemeVariables(theme = 'dark') {
     };
   }
 
-  if (theme === 'tokyo-night') {
+  if (theme === 'tokyo-night' || theme === 'tokyoNight') {
     return {
       darkMode: true,
       background: 'transparent',
@@ -319,6 +319,59 @@ export function getThemeVariables(theme = 'dark') {
     };
   }
 
+  if (theme === 'geospatial') {
+    return {
+      darkMode: true,
+      background: 'transparent',
+      fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+      fontSize: '13.5px',
+      primaryColor: '#03202e',
+      primaryTextColor: '#e0f2fe',
+      primaryBorderColor: '#06b6d4',
+      lineColor: '#14b8a6',
+      secondaryColor: '#0f172a',
+      secondaryTextColor: '#38bdf8',
+      secondaryBorderColor: '#0284c7',
+      tertiaryColor: '#1c1917',
+      tertiaryTextColor: '#f59e0b',
+      tertiaryBorderColor: '#10b981',
+      nodeBorder: '#06b6d4',
+      mainBkg: '#03202e',
+      nodeTextColor: '#f0fdf4',
+      clusterBkg: '#08334466',
+      clusterBorder: '#06b6d488',
+      defaultLinkColor: '#14b8a6',
+      titleColor: '#38bdf8',
+      edgeLabelBackground: '#082f49ee',
+      actorBkg: '#03202e',
+      actorBorder: '#06b6d4',
+      actorTextColor: '#f0fdf4',
+      actorLineColor: '#0e7490',
+      signalColor: '#38bdf8',
+      signalTextColor: '#f0fdf4',
+      labelBoxBkgColor: '#083344',
+      labelBoxBorderColor: '#06b6d4',
+      labelTextColor: '#e0f2fe',
+      noteBorderColor: '#f59e0b',
+      noteBkgColor: '#291805',
+      noteTextColor: '#fef3c7',
+      activationBorderColor: '#06b6d4',
+      activationBkgColor: '#0891b2',
+      git0: '#06b6d4',
+      git1: '#10b981',
+      git2: '#f59e0b',
+      git3: '#8b5cf6',
+      git4: '#ec4899',
+      git5: '#3b82f6',
+      pie1: '#06b6d4',
+      pie2: '#10b981',
+      pie3: '#f59e0b',
+      pie4: '#0284c7',
+      pie5: '#14b8a6',
+      pie6: '#8b5cf6',
+    };
+  }
+
   // Dark (Enterprise Studio Dark with vibrant neon accents)
   return {
     darkMode: true,
@@ -387,7 +440,22 @@ export async function initMermaid(theme = 'dark') {
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
-    theme: currentTheme === 'default' ? 'default' : currentTheme === 'forest' ? 'forest' : currentTheme === 'neutral' ? 'neutral' : 'dark',
+    theme:
+      currentTheme === 'default'
+        ? 'default'
+        : currentTheme === 'forest'
+          ? 'forest'
+          : currentTheme === 'neutral'
+            ? 'neutral'
+            : currentTheme === 'base' ||
+              currentTheme === 'geospatial' ||
+              currentTheme === 'cyberpunk' ||
+              currentTheme === 'nord' ||
+              currentTheme === 'tokyo-night' ||
+              currentTheme === 'tokyoNight' ||
+              currentTheme === 'catppuccin'
+              ? 'base'
+              : 'dark',
     themeVariables: getThemeVariables(currentTheme),
     suppressErrorRendering: true,
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',

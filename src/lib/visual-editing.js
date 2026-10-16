@@ -452,9 +452,14 @@ export const DIAGRAM_LOOKS = {
 
 export const DIAGRAM_THEMES = {
   default: { id: "default", label: "Default" },
-  neutral: { id: "neutral", label: "Neutral Slate" },
   dark: { id: "dark", label: "Midnight Dark" },
+  geospatial: { id: "geospatial", label: "Geospatial Carto Neon" },
+  tokyoNight: { id: "tokyo-night", label: "Tokyo Night" },
+  cyberpunk: { id: "cyberpunk", label: "Cyberpunk Neon" },
+  nord: { id: "nord", label: "Nord Frost" },
+  catppuccin: { id: "catppuccin", label: "Catppuccin Mocha" },
   forest: { id: "forest", label: "Forest Emerald" },
+  neutral: { id: "neutral", label: "Neutral Slate" },
   base: { id: "base", label: "Minimal Base" },
 };
 

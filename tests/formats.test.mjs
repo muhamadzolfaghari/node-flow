@@ -295,3 +295,37 @@ test("geospatial WKT, Shapefile schema, and Vector Tile pyramid compile to valid
   assert.ok(shpMermaid.includes("ESRI Shapefile Multi-Layer"));
   assert.notEqual(await mermaid.parse(shpMermaid), false);
 });
+
+test("binary Shapefile and Vector Tile buffers parse into valid Mermaid diagrams", async () => {
+  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.js");
+
+  // 1. Synthesize binary Shapefile header (100 bytes)
+  const shpBuffer = new ArrayBuffer(100);
+  const shpView = new DataView(shpBuffer);
+  shpView.setInt32(0, 9994, false); // File Code 9994 in Big Endian
+  shpView.setInt32(24, 50, false); // File length in 16-bit words (100 bytes)
+  shpView.setInt32(28, 1000, true); // Version 1000
+  shpView.setInt32(32, 5, true); // ShapeType 5 (Polygon)
+  shpView.setFloat64(36, -122.5, true); // Xmin
+  shpView.setFloat64(44, 37.7, true); // Ymin
+  shpView.setFloat64(52, -122.3, true); // Xmax
+  shpView.setFloat64(60, 37.9, true); // Ymax
+
+  const shpMermaid = parseGeoJsonToMermaid(shpBuffer, "ZoningDistricts.shp");
+  assert.ok(shpMermaid.includes("ESRI Shapefile"));
+  assert.ok(shpMermaid.includes("Polygon"));
+  assert.ok(shpMermaid.includes("-122.5"));
+  assert.notEqual(await mermaid.parse(shpMermaid), false);
+
+  // 2. Synthesize binary Vector Tile Protobuf buffer
+  const pbfBytes = new Uint8Array([
+    0x1a, 0x0c,
+    0x0a, 0x05, 0x77, 0x61, 0x74, 0x65, 0x72, // string "water"
+    0x28, 0x80, 0x20, // extent 4096
+    0x78, 0x02, // version 2
+  ]);
+  const pbfMermaid = parseGeoJsonToMermaid(pbfBytes.buffer, "14/8240/5320.pbf");
+  assert.ok(pbfMermaid.includes("Vector Tile Protobuf"));
+  assert.ok(pbfMermaid.includes("water"));
+  assert.notEqual(await mermaid.parse(pbfMermaid), false);
+});

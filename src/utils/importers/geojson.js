@@ -4,14 +4,48 @@
  * and spatial pipeline architectures into structured, visual Mermaid diagrams.
  */
 
-export function parseGeoJsonToMermaid(input) {
-  if (!input || typeof input !== "string") {
+export function parseGeoJsonToMermaid(input, filename = "") {
+  if (!input) {
+    return 'flowchart TD\n  Empty["Empty Geospatial Dataset"]';
+  }
+
+  // 1. Handle binary ArrayBuffer or TypedArray (.pbf / .mvt / .shp / .dbf)
+  if (input instanceof ArrayBuffer || ArrayBuffer.isView(input)) {
+    const bytes =
+      input instanceof ArrayBuffer
+        ? new Uint8Array(input)
+        : new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+    return parseBinaryGeospatialToMermaid(bytes, filename);
+  }
+
+  if (typeof input !== "string") {
     return 'flowchart TD\n  Empty["Empty Geospatial Dataset"]';
   }
 
   const clean = input.trim();
 
-  // 1. Check for Vector Tile Protobuf specification / schema (MVT format / .proto)
+  // 2. Base64 encoded geospatial binary or data URI
+  if (clean.startsWith("data:") && clean.includes(";base64,")) {
+    try {
+      const b64 = clean.split(";base64,")[1];
+      const binaryStr = atob(b64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      return parseBinaryGeospatialToMermaid(bytes, filename);
+    } catch {}
+  }
+
+  // 3. Raw binary file loaded into a string with null bytes / magic
+  if (
+    clean.includes("\x00\x00\x27\x0a") ||
+    (clean.length > 4 && clean.charCodeAt(0) === 0 && clean.charCodeAt(1) === 0)
+  ) {
+    const bytes = new Uint8Array(clean.length);
+    for (let i = 0; i < clean.length; i++) bytes[i] = clean.charCodeAt(i) & 0xff;
+    return parseBinaryGeospatialToMermaid(bytes, filename);
+  }
+
+  // 4. Check for Vector Tile Protobuf specification / schema (MVT format / .proto)
   if (
     clean.includes("syntax = \"proto2\"") ||
     clean.includes("syntax = \"proto3\"") ||
@@ -24,14 +58,243 @@ export function parseGeoJsonToMermaid(input) {
     return parseVectorTileProtoToMermaid(clean);
   }
 
-  // 2. Parse GeoJSON / Shapefile JSON representation / TopoJSON
+  // 5. Parse GeoJSON / Shapefile JSON representation / TopoJSON
   try {
     const data = JSON.parse(clean);
     return convertGeoJsonObjectToMermaid(data);
   } catch {
-    // 3. Text-based geospatial spec (WKT, ESRI Shapefile schema, or spatial pipeline DSL)
+    // 6. Text-based geospatial spec (WKT, ESRI Shapefile schema, or spatial pipeline DSL)
     return parseGeospatialDslToMermaid(clean);
   }
+}
+
+export function parseBinaryGeospatialToMermaid(bytes, filename = "") {
+  // Check for ESRI Shapefile (.shp) file magic (9994 / 0x0000270a in big-endian)
+  if (
+    bytes.length >= 100 &&
+    bytes[0] === 0x00 &&
+    bytes[1] === 0x00 &&
+    bytes[2] === 0x27 &&
+    bytes[3] === 0x0a
+  ) {
+    return parseBinaryShapefile(bytes, filename);
+  }
+
+  // Check for DBF (.dbf) dBASE III file
+  if (
+    bytes.length >= 32 &&
+    (bytes[0] === 0x03 || bytes[0] === 0x83 || bytes[0] === 0xf5)
+  ) {
+    return parseBinaryDbf(bytes, filename);
+  }
+
+  // Default to Vector Tile Protobuf (MVT / PBF) parser
+  return parseBinaryVectorTile(bytes, filename);
+}
+
+function parseBinaryShapefile(bytes, filename = "") {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const shapeTypeInt = dv.getInt32(32, true);
+  const xMin = dv.getFloat64(36, true);
+  const yMin = dv.getFloat64(44, true);
+  const xMax = dv.getFloat64(52, true);
+  const yMax = dv.getFloat64(60, true);
+
+  const shapeTypeNames = {
+    0: "Null Shape",
+    1: "Point",
+    3: "PolyLine",
+    5: "Polygon",
+    8: "MultiPoint",
+    11: "PointZ",
+    13: "PolyLineZ",
+    15: "PolygonZ",
+    18: "MultiPointZ",
+    21: "PointM",
+    23: "PolyLineM",
+    25: "PolygonM",
+    31: "MultiPatch",
+  };
+  const shapeName = shapeTypeNames[shapeTypeInt] || `ShapeType_${shapeTypeInt}`;
+  const icon = getGeomIcon(shapeName);
+
+  let offset = 100;
+  let recordCount = 0;
+  const sampleRecords = [];
+  while (offset + 8 <= bytes.length) {
+    const recNum = dv.getInt32(offset, false);
+    const contentLenWords = dv.getInt32(offset + 4, false);
+    const contentLenBytes = contentLenWords * 2;
+    recordCount++;
+    if (sampleRecords.length < 8 && offset + 8 + 4 <= bytes.length) {
+      const recShapeType = dv.getInt32(offset + 8, true);
+      sampleRecords.push({
+        num: recNum,
+        type: shapeTypeNames[recShapeType] || shapeName,
+        bytes: contentLenBytes,
+      });
+    }
+    offset += 8 + contentLenBytes;
+  }
+
+  let code = `flowchart TD\n`;
+  code += `  %% ESRI Shapefile Binary Dataset\n`;
+  code += `  classDef meta fill:#041f2a,stroke:#06b6d4,stroke-width:2px,color:#e0f2fe,rx:8px;\n`;
+  code += `  classDef geom fill:#03251e,stroke:#10b981,stroke-width:1.5px,color:#f0fdf4,rx:8px;\n`;
+  code += `  classDef bbox fill:#241804,stroke:#f59e0b,stroke-width:1.5px,color:#fef3c7,rx:8px;\n`;
+  code += `  subgraph SHP["🗺️ ESRI Shapefile: ${escapeLabel(filename || "Dataset.shp")}"]\n`;
+  code += `    Meta["📦 Shapefile Layer Header<br/><small style='opacity:0.8'>Primary Geometry: ${icon} <b>${shapeName}</b> • ${recordCount || "Active"} Records • ${(bytes.length / 1024).toFixed(1)} KB</small>"]:::meta\n`;
+  code += `    BBox["🌐 Spatial Extent (Bounding Box)<br/><small style='opacity:0.8'>West: ${Number.isFinite(xMin) ? xMin.toFixed(4) : "-180"}, South: ${Number.isFinite(yMin) ? yMin.toFixed(4) : "-90"}<br/>East: ${Number.isFinite(xMax) ? xMax.toFixed(4) : "180"}, North: ${Number.isFinite(yMax) ? yMax.toFixed(4) : "90"}</small>"]:::bbox\n`;
+  code += `    Meta --> BBox\n`;
+  if (sampleRecords.length > 0) {
+    code += `    subgraph Records["Geometry Feature Records"]\n`;
+    sampleRecords.forEach((r, i) => {
+      code += `      rec_${i}["${icon} Feature #${r.num}<br/><small style='opacity:0.8'>${r.type} (${r.bytes} bytes)</small>"]:::geom\n`;
+    });
+    if (recordCount > sampleRecords.length) {
+      code += `      more_rec["... and ${recordCount - sampleRecords.length} additional spatial features"]\n`;
+    }
+    code += `    end\n`;
+    code += `    Meta --> Records\n`;
+  }
+  code += `  end\n`;
+  return code;
+}
+
+function parseBinaryDbf(bytes, filename = "") {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const recordCount = dv.getInt32(4, true);
+  const headerLen = dv.getInt16(8, true);
+  const fields = [];
+  let offset = 32;
+  while (offset + 32 <= headerLen && bytes[offset] !== 0x0d && offset < bytes.length) {
+    let name = "";
+    for (let i = 0; i < 11; i++) {
+      const c = bytes[offset + i];
+      if (c === 0) break;
+      name += String.fromCharCode(c);
+    }
+    const type = String.fromCharCode(bytes[offset + 11]);
+    const len = bytes[offset + 16];
+    if (name.trim()) fields.push({ name: name.trim(), type, len });
+    offset += 32;
+  }
+
+  let code = `flowchart TD\n`;
+  code += `  %% ESRI Shapefile Attribute Table (.dbf)\n`;
+  code += `  classDef dbf fill:#041f2a,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe,rx:8px;\n`;
+  code += `  classDef col fill:#03251e,stroke:#10b981,stroke-width:1.5px,color:#f0fdf4,rx:8px;\n`;
+  code += `  subgraph DBF["📊 Shapefile Attribute Table: ${escapeLabel(filename || "Attributes.dbf")}"]\n`;
+  code += `    Table["dBASE III Attribute Records<br/><small style='opacity:0.8'>${recordCount} Rows • ${fields.length} Columns</small>"]:::dbf\n`;
+  fields.slice(0, 10).forEach((f, idx) => {
+    code += `    col_${idx}["Field: <b>${escapeLabel(f.name)}</b><br/><small style='opacity:0.8'>Type: ${f.type} (${f.len} bytes)</small>"]:::col\n`;
+    code += `    Table --> col_${idx}\n`;
+  });
+  code += `  end\n`;
+  return code;
+}
+
+function parseBinaryVectorTile(bytes, filename = "") {
+  let pos = 0;
+  const layers = [];
+
+  function readVarint() {
+    let res = 0,
+      shift = 0;
+    while (pos < bytes.length) {
+      const b = bytes[pos++];
+      res |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    return res;
+  }
+
+  try {
+    while (pos < bytes.length) {
+      const tag = readVarint();
+      const wire = tag & 7;
+      const field = tag >>> 3;
+      if (wire === 2) {
+        const len = readVarint();
+        const end = pos + len;
+        if (field === 3) {
+          // Layer message
+          let lyrName = `Layer_${layers.length + 1}`;
+          let featCount = 0;
+          let extent = 4096;
+          let version = 2;
+          const tagKeys = [];
+
+          while (pos < end && pos < bytes.length) {
+            const ltag = readVarint();
+            const lwire = ltag & 7;
+            const lfield = ltag >>> 3;
+            if (lwire === 2) {
+              const llen = readVarint();
+              if (lfield === 1) {
+                const strBytes = bytes.subarray(pos, pos + llen);
+                lyrName = new TextDecoder().decode(strBytes);
+              } else if (lfield === 2) {
+                featCount++;
+              } else if (lfield === 3) {
+                if (tagKeys.length < 5) {
+                  tagKeys.push(new TextDecoder().decode(bytes.subarray(pos, pos + llen)));
+                }
+              }
+              pos += llen;
+            } else if (lwire === 0) {
+              const val = readVarint();
+              if (lfield === 5) extent = val;
+              if (lfield === 15) version = val;
+            } else if (lwire === 5) {
+              pos += 4;
+            } else if (lwire === 1) {
+              pos += 8;
+            } else {
+              break;
+            }
+          }
+          layers.push({ name: lyrName, count: featCount, extent, version, keys: tagKeys });
+        }
+        pos = end;
+      } else if (wire === 0) {
+        readVarint();
+      } else if (wire === 5) {
+        pos += 4;
+      } else if (wire === 1) {
+        pos += 8;
+      } else {
+        break;
+      }
+    }
+  } catch {}
+
+  let code = `flowchart TD\n`;
+  code += `  %% Mapbox Vector Tile (MVT PBF) Binary Tile Structure\n`;
+  code += `  classDef tile fill:#041f2a,stroke:#06b6d4,stroke-width:2px,color:#e0f2fe,rx:8px;\n`;
+  code += `  classDef lyr fill:#03251e,stroke:#10b981,stroke-width:1.5px,color:#f0fdf4,rx:8px;\n`;
+  code += `  classDef attr fill:#241804,stroke:#f59e0b,stroke-width:1.5px,color:#fef3c7,rx:8px;\n`;
+  const tileTitle = filename ? escapeLabel(filename) : "Tile [z/x/y.pbf]";
+  const totalLayers = layers.length || 1;
+  code += `  subgraph TileRoot["📦 Vector Tile Protobuf: ${tileTitle}"]\n`;
+  code += `    TileInfo["🗺️ MVT Tile Matrix<br/><small style='opacity:0.8'>Specification: MVT v2.1 • Size: ${(bytes.length / 1024).toFixed(1)} KB • ${totalLayers} Vector Layers</small>"]:::tile\n`;
+  if (layers.length === 0) {
+    code += `    Lyr0["Layer: default<br/><small>Extent: 4096 • Features: Vector Tile Geometries</small>"]:::lyr\n`;
+    code += `    TileInfo --> Lyr0\n`;
+  } else {
+    layers.forEach((lyr, idx) => {
+      const icon = getGeomIcon(lyr.name);
+      code += `    lyr_${idx}["${icon} Layer: <b>${escapeLabel(lyr.name)}</b><br/><small style='opacity:0.8'>Extent: ${lyr.extent}x${lyr.extent} • ${lyr.count} Features</small>"]:::lyr\n`;
+      code += `    TileInfo --> lyr_${idx}\n`;
+      if (lyr.keys && lyr.keys.length > 0) {
+        code += `    keys_${idx}["🏷️ Attributes<br/><small style='opacity:0.8'>${lyr.keys.map(escapeLabel).join(", ")}</small>"]:::attr\n`;
+        code += `    lyr_${idx} --> keys_${idx}\n`;
+      }
+    });
+  }
+  code += `  end\n`;
+  return code;
 }
 
 function convertGeoJsonObjectToMermaid(geo) {

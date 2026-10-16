@@ -147,102 +147,147 @@ export default function CanvasStage({
   /**
    * Accurately determines content geometry bounding box.
    * Eliminates dead whitespace offsets and centers on the true diagram geometry
-   * across all Mermaid, Graphviz, Mindmap, Architecture, Packet, and Sequence diagrams.
+   * across all Mermaid, Graphviz, Mindmap, Architecture, Packet, Gantt, Pie, and Sequence diagrams.
    */
   const getContentBounds = () => {
     const svg = containerRef.current?.querySelector("svg");
     if (!svg) return { x: 0, y: 0, w: 1000, h: 700 };
 
-    // 1. Check viewBox first: Mermaid and Graphviz calculate exact diagram coordinates in viewBox
-    const vb = svg.viewBox?.baseVal;
+    // 1. Parse viewBox from baseVal or raw attribute
+    let vb = svg.viewBox?.baseVal;
     let viewBoxBounds = null;
     if (vb && vb.width > 5 && vb.height > 5) {
       viewBoxBounds = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
-      // Ensure SVG element has explicit pixel dimensions matching viewBox so 1 user unit === 1 screen px
-      if (!svg.style.width || svg.style.width.includes("%")) {
-        svg.style.width = `${vb.width}px`;
-      }
-      if (!svg.style.height || svg.style.height.includes("%")) {
-        svg.style.height = `${vb.height}px`;
+    } else {
+      const rawVb = svg.getAttribute("viewBox");
+      if (rawVb) {
+        const parts = rawVb.trim().split(/[\s,]+/).map(Number);
+        if (parts.length === 4 && parts.every(Number.isFinite) && parts[2] > 5 && parts[3] > 5) {
+          viewBoxBounds = { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+        }
       }
     }
 
-    // 2. Try svg.getBBox() on root SVG element
-    let geomBounds = null;
+    // Ensure SVG element has explicit pixel dimensions matching viewBox so 1 user unit === 1 screen px
+    if (viewBoxBounds) {
+      if (!svg.style.width || svg.style.width.includes("%")) {
+        svg.style.width = `${viewBoxBounds.w}px`;
+      }
+      if (!svg.style.height || svg.style.height.includes("%")) {
+        svg.style.height = `${viewBoxBounds.h}px`;
+      }
+    }
+
+    // 2. Scan child content elements (groups, nodes, edges, labels, foreignObjects) to find the actual content boundary
+    let elementsBBox = null;
     try {
-      if (typeof svg.getBBox === "function") {
-        const b = svg.getBBox();
-        if (b && b.width > 10 && b.height > 10 && Number.isFinite(b.x) && Number.isFinite(b.y)) {
-          geomBounds = { x: b.x, y: b.y, w: b.width, h: b.height };
+      const contentNodes = svg.querySelectorAll(":scope > g:not(defs):not([class*='marker']), :scope > svg:not(defs)");
+      if (contentNodes.length > 0) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let found = false;
+        contentNodes.forEach((node) => {
+          if (typeof node.getBBox === "function") {
+            const nb = node.getBBox();
+            if (nb && nb.width > 0 && nb.height > 0 && Number.isFinite(nb.x) && Number.isFinite(nb.y)) {
+              let x0 = nb.x, y0 = nb.y, x1 = nb.x + nb.width, y1 = nb.y + nb.height;
+              const ctm = node.getCTM ? node.getCTM() : null;
+              const sctm = svg.getCTM ? svg.getCTM() : null;
+              if (ctm && sctm && typeof svg.createSVGPoint === "function") {
+                try {
+                  const m = sctm.inverse().multiply(ctm);
+                  const p0 = svg.createSVGPoint(); p0.x = x0; p0.y = y0;
+                  const p1 = svg.createSVGPoint(); p1.x = x1; p1.y = y1;
+                  const tp0 = p0.matrixTransform(m);
+                  const tp1 = p1.matrixTransform(m);
+                  x0 = Math.min(tp0.x, tp1.x);
+                  x1 = Math.max(tp0.x, tp1.x);
+                  y0 = Math.min(tp0.y, tp1.y);
+                  y1 = Math.max(tp0.y, tp1.y);
+                } catch {}
+              }
+              minX = Math.min(minX, x0);
+              minY = Math.min(minY, y0);
+              maxX = Math.max(maxX, x1);
+              maxY = Math.max(maxY, y1);
+              found = true;
+            }
+          }
+        });
+
+        // Also check HTML foreignObject elements (which Chromium excludes from SVG getBBox)
+        svg.querySelectorAll("foreignObject").forEach((fo) => {
+          const fx = parseFloat(fo.getAttribute("x") || "0");
+          const fy = parseFloat(fo.getAttribute("y") || "0");
+          const fw = parseFloat(fo.getAttribute("width") || "0");
+          const fh = parseFloat(fo.getAttribute("height") || "0");
+          if (fw > 0 && fh > 0 && Number.isFinite(fx) && Number.isFinite(fy)) {
+            minX = Math.min(minX, fx);
+            minY = Math.min(minY, fy);
+            maxX = Math.max(maxX, fx + fw);
+            maxY = Math.max(maxY, fy + fh);
+            found = true;
+          }
+        });
+
+        if (found && maxX > minX && maxY > minY) {
+          elementsBBox = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
         }
       }
     } catch {}
 
-    // 3. If svg.getBBox didn't work, compute the union bbox of all immediate top-level child groups
-    if (!geomBounds) {
-      try {
-        const topGroups = svg.querySelectorAll(":scope > g:not([class*='marker']):not(defs)");
-        if (topGroups.length > 0) {
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          let found = false;
-          topGroups.forEach((g) => {
-            if (typeof g.getBBox === "function") {
-              const gb = g.getBBox();
-              if (gb && gb.width > 0 && gb.height > 0) {
-                minX = Math.min(minX, gb.x);
-                minY = Math.min(minY, gb.y);
-                maxX = Math.max(maxX, gb.x + gb.width);
-                maxY = Math.max(maxY, gb.y + gb.height);
-                found = true;
-              }
-            }
-          });
-          if (found && maxX > minX && maxY > minY) {
-            geomBounds = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-          }
+    // 3. Try root svg.getBBox()
+    let rootBBox = null;
+    try {
+      if (typeof svg.getBBox === "function") {
+        const b = svg.getBBox();
+        if (b && b.width > 10 && b.height > 10 && Number.isFinite(b.x) && Number.isFinite(b.y)) {
+          rootBBox = { x: b.x, y: b.y, w: b.width, h: b.height };
         }
-      } catch {}
-    }
+      }
+    } catch {}
 
-    // Prefer geomBounds if valid and reasonable, otherwise fallback to viewBoxBounds
-    let bbox = null;
-    if (geomBounds && geomBounds.w > 10 && geomBounds.h > 10) {
-      if (viewBoxBounds && (geomBounds.w < viewBoxBounds.w * 0.25 || geomBounds.h < viewBoxBounds.h * 0.25)) {
-        bbox = viewBoxBounds;
+    // 4. Select the target bounds that best frames where the content actually exists:
+    // If elementsBBox is significantly smaller than a wide/empty viewBox (such as in Gantt charts or oversized canvases),
+    // we frame elementsBBox with padding to focus directly on the diagram's content.
+    let target = null;
+    if (elementsBBox && elementsBBox.w > 10 && elementsBBox.h > 10) {
+      if (viewBoxBounds && (viewBoxBounds.w > elementsBBox.w * 1.4 || viewBoxBounds.h > elementsBBox.h * 1.4)) {
+        // Empty space in viewBox (like 2400px Gantt chart width) -> focus on actual content!
+        target = {
+          x: Math.max(0, elementsBBox.x - 24),
+          y: Math.max(0, elementsBBox.y - 20),
+          w: elementsBBox.w + 48,
+          h: elementsBBox.h + 40,
+        };
       } else {
-        bbox = geomBounds;
+        target = viewBoxBounds || elementsBBox;
       }
     } else if (viewBoxBounds) {
-      bbox = viewBoxBounds;
+      target = viewBoxBounds;
+    } else if (rootBBox) {
+      target = rootBBox;
     }
 
-    // Bounds above are in viewBox user units. Camera maths works in the
-    // container's pixel space, so remove the viewBox origin and apply the
-    // svg's rendered scale (clientWidth is unaffected by the camera transform).
-    if (bbox) {
-      const originX = vb && Number.isFinite(vb.x) ? vb.x : 0;
-      const originY = vb && Number.isFinite(vb.y) ? vb.y : 0;
-      const scaleX = vb && vb.width > 0 && svg.clientWidth > 0 ? svg.clientWidth / vb.width : 1;
-      const scaleY = vb && vb.height > 0 && svg.clientHeight > 0 ? svg.clientHeight / vb.height : scaleX;
+    if (target) {
+      const vbOriginX = viewBoxBounds && Number.isFinite(viewBoxBounds.x) ? viewBoxBounds.x : 0;
+      const vbOriginY = viewBoxBounds && Number.isFinite(viewBoxBounds.y) ? viewBoxBounds.y : 0;
       return {
-        x: (bbox.x - originX) * scaleX,
-        y: (bbox.y - originY) * scaleY,
-        w: bbox.w * scaleX,
-        h: bbox.h * scaleY,
+        x: target.x - vbOriginX,
+        y: target.y - vbOriginY,
+        w: target.w,
+        h: target.h,
       };
     }
 
     // Fallback to boundingClientRect if attached
-    if (!bbox) {
-      try {
-        const rect = svg.getBoundingClientRect();
-        if (rect && rect.width > 10 && rect.height > 10) {
-          bbox = { x: 0, y: 0, w: rect.width, h: rect.height };
-        }
-      } catch {}
-    }
+    try {
+      const rect = svg.getBoundingClientRect();
+      if (rect && rect.width > 10 && rect.height > 10) {
+        return { x: 0, y: 0, w: rect.width, h: rect.height };
+      }
+    } catch {}
 
-    return bbox || { x: 0, y: 0, w: 1000, h: 700 };
+    return { x: 0, y: 0, w: 1000, h: 700 };
   };
 
   const dimensions = () => {
@@ -269,10 +314,12 @@ export default function CanvasStage({
     const bottomInset = 64;
     const availW = Math.max(50, s.clientWidth - paddingX);
     const availH = Math.max(50, s.clientHeight - topInset - bottomInset);
+    // Keep small diagrams crisp and naturally sized (max 1.1x) while allowing larger diagrams to scale nicely
+    const maxZ = b.w < 380 && b.h < 280 ? 1.1 : 1.35;
     const z = Math.max(
       0.04,
       Math.min(
-        1.5,
+        maxZ,
         availW / Math.max(b.w, 10),
         availH / Math.max(b.h, 10),
       ),
@@ -328,6 +375,7 @@ export default function CanvasStage({
     jumpToNode: (id) => jumpToNode({ id, rawId: id, label: id }),
     openSearch: () => setSearchOpen(true),
   }));
+  const lastRenderSig = useRef("");
   useEffect(() => {
     shouldFit.current = true;
   }, [documentId]);
@@ -335,11 +383,14 @@ export default function CanvasStage({
     if (status.state !== "ok") return;
     const svg = containerRef.current?.querySelector("svg");
     if (!svg) return;
+    const currentSig = `${documentId}:${svg.getAttribute("id") || ""}:${svg.children.length}`;
+    const needsFit = shouldFit.current || (lastRenderSig.current !== "" && lastRenderSig.current !== currentSig);
+    lastRenderSig.current = currentSig;
     setSize(dimensions());
     setThumbnail(
       `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`,
     );
-    if (shouldFit.current) {
+    if (needsFit) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (fit()) {

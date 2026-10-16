@@ -801,6 +801,16 @@ export async function importDocument(file) {
       format: extracted.format,
     };
   }
+  if (/\.(mvt|pbf|shp|dbf)$/i.test(file.name)) {
+    const buffer = await file.arrayBuffer();
+    const { parseGeoJsonToMermaid } = await import("../utils/importers/geojson.js");
+    const mermaidCode = parseGeoJsonToMermaid(buffer, file.name);
+    return {
+      name: file.name,
+      source: mermaidCode,
+      format: "geojson",
+    };
+  }
   const source = await file.text();
   return {
     name: file.webkitRelativePath || file.name,

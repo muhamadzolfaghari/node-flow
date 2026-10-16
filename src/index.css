@@ -113,6 +113,9 @@
 .studio-stage-wrap.theme-forest {
   background: radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.13) 0%, rgba(5, 150, 105, 0.06) 40%, transparent 75%), #031c15;
 }
+.studio-stage-wrap.theme-geospatial {
+  background: radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.18) 0%, rgba(20, 184, 166, 0.09) 38%, transparent 75%), #03141d;
+}
 .dot-grid {
   background-image: radial-gradient(rgba(148, 163, 184, 0.35) 1.25px, transparent 1.25px);
   background-size: 24px 24px;
@@ -258,6 +261,54 @@
 .theme-light .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) circle {
   fill: #ecfeff !important;
   stroke: #0891b2 !important;
+}
+
+/* Geospatial Carto Neon Theme Harmonization */
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+1):not([style*="fill"]) .label-container {
+  fill: #041f2a !important;
+  stroke: #06b6d4 !important;
+}
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+2):not([style*="fill"]) .label-container {
+  fill: #03251e !important;
+  stroke: #10b981 !important;
+}
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+3):not([style*="fill"]) .label-container {
+  fill: #241804 !important;
+  stroke: #f59e0b !important;
+}
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+4):not([style*="fill"]) .label-container {
+  fill: #061a33 !important;
+  stroke: #38bdf8 !important;
+}
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+5):not([style*="fill"]) .label-container {
+  fill: #20081d !important;
+  stroke: #f43f5e !important;
+}
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) rect,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) polygon,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) circle,
+.theme-geospatial .mermaid-stage g.nodes > g.node:nth-of-type(6n+6):not([style*="fill"]) .label-container {
+  fill: #170c29 !important;
+  stroke: #a855f7 !important;
+}
+.theme-geospatial .mermaid-stage g.node path:not(.flowchart-link) {
+  stroke: #06b6d4 !important;
+  fill: #041f2a !important;
 }
 
 /* Database Cylinder Shape: Rich elevated styling */

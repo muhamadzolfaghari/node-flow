@@ -472,13 +472,13 @@ export default function Studio() {
     [clsTo, setClsTo] = useState(""),
     [clsRel, setClsRel] = useState("inheritance"),
     [clsRelLabel, setClsRelLabel] = useState(""),
-    // State diagram modeling state
+    // State diagram modelling state
     [stateId, setStateId] = useState(""),
     [stateLabel, setStateLabel] = useState(""),
     [stateFrom, setStateFrom] = useState(""),
     [stateTo, setStateTo] = useState(""),
     [stateEvent, setStateEvent] = useState(""),
-    // ER diagram modeling state
+    // ER diagram modelilng state
     [erEntity, setErEntity] = useState(""),
     [erAttrTarget, setErAttrTarget] = useState(""),
     [erAttrType, setErAttrType] = useState("string"),
@@ -603,16 +603,35 @@ export default function Studio() {
   // Enterprise IndexedDB unlimited background persistence
   useEffect(() => {
     if (project?.id) {
-      enterpriseStorage.saveProjectBackup(project).catch(() => {});
+      enterpriseStorage.saveProjectBackup(project).catch(() => { });
     }
   }, [project]);
   const assistant = useDiagramAssistant();
-  const preview = useDocumentPreview(document, theme, view);
+  const isGeospatialDoc =
+    document?.format === "geojson" ||
+    /vector_tile|FeatureCollection|Topology|Shapefile|map_layer|\.pbf\b|\.shp\b/i.test(
+      document?.source || "",
+    );
+  const diagramConfig = useMemo(() => {
+    return document?.format === "mermaid"
+      ? getDiagramConfig(document.source)
+      : { look: "classic", theme: "default" };
+  }, [document?.source, document?.format]);
+  const effectiveTheme = useMemo(() => {
+    if (diagramConfig?.theme && diagramConfig.theme !== "default") {
+      return diagramConfig.theme;
+    }
+    if (isGeospatialDoc) {
+      return "geospatial";
+    }
+    return theme;
+  }, [diagramConfig?.theme, isGeospatialDoc, theme]);
+  const preview = useDocumentPreview(document, effectiveTheme, view);
   const aiProposalPreview = useDocumentPreview(
     aiProposal
       ? { id: aiProposal.id, name: "AI proposal.mmd", format: "mermaid", source: aiProposal.source }
       : null,
-    theme,
+    effectiveTheme,
     "split",
   );
   const definition = getFormat(document?.format),
@@ -688,11 +707,6 @@ export default function Studio() {
   }, [document?.source]);
   const archEdgeList = useMemo(() => {
     return isArchitecture(document) ? architectureEdges(document.source) : [];
-  }, [document?.source]);
-  const diagramConfig = useMemo(() => {
-    return document?.format === "mermaid"
-      ? getDiagramConfig(document.source)
-      : { look: "classic", theme: "default" };
   }, [document?.source]);
   const say = (message, undo = null) => {
     setToast(message);
@@ -3488,8 +3502,8 @@ export default function Studio() {
                                         t.status === "done"
                                           ? "secondary"
                                           : t.status === "crit"
-                                          ? "destructive"
-                                          : "outline"
+                                            ? "destructive"
+                                            : "outline"
                                       }
                                       className="text-[9px] h-4 px-1 shrink-0 font-mono"
                                     >
@@ -4165,11 +4179,10 @@ export default function Studio() {
                             key={t}
                             type="button"
                             onClick={() => setXySeriesType(t)}
-                            className={`rounded px-2 py-0.5 text-[11px] font-medium uppercase transition ${
-                              xySeriesType === t
+                            className={`rounded px-2 py-0.5 text-[11px] font-medium uppercase transition ${xySeriesType === t
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            }`}
+                              }`}
                           >
                             {t}
                           </button>
@@ -5863,9 +5876,9 @@ export default function Studio() {
                   : event.key === "End"
                     ? ids.length - 1
                     : (current +
-                        (event.key === "ArrowRight" ? 1 : -1) +
-                        ids.length) %
-                      ids.length;
+                      (event.key === "ArrowRight" ? 1 : -1) +
+                      ids.length) %
+                    ids.length;
               if (ids[next]) {
                 openDocument(ids[next]);
                 requestAnimationFrame(() =>
@@ -6200,7 +6213,7 @@ export default function Studio() {
                     status={preview.status}
                     documentId={document.id}
                     grid={grid}
-                    theme={theme}
+                    theme={effectiveTheme}
                     selected={selected}
                     onSelect={chooseNode}
                     onContextMenu={(e, nodeInfo, edgeInfo) => {
@@ -6692,10 +6705,7 @@ export default function Studio() {
                       }
                     }}
                     onOpenExportStudio={() => setIsExportStudioOpen(true)}
-                    isGeospatial={
-                      document?.format === "geojson" ||
-                      /vector_tile|FeatureCollection|Topology|Shapefile|map_layer/i.test(document?.source || "")
-                    }
+                    isGeospatial={isGeospatialDoc}
                     presentation={presentation}
                   />
                   {preview.error && (
@@ -7622,9 +7632,9 @@ export default function Studio() {
             updateSource(
               document.id,
               (document.source || "") +
-                (document.source?.endsWith("\n") ? "" : "\n") +
-                snippet +
-                "\n"
+              (document.source?.endsWith("\n") ? "" : "\n") +
+              snippet +
+              "\n"
             );
             say("Cloud stencil inserted into diagram");
           } else {
