@@ -272,3 +272,26 @@ test("shape and label edits declare a bare node at its first mention", () => {
   assert.match(out, /API\{"API"\} --> Svc\[Order\]/);
   assert.equal(renameFlowchartNode("flowchart LR\n  API --> B", "API", "Gateway").includes('API["Gateway"]'), true);
 });
+
+test("geospatial WKT, Shapefile schema, and Vector Tile pyramid compile to valid Mermaid", async () => {
+  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.js");
+
+  // 1. WKT (Well-Known Text)
+  const wktSample = `POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))\nLINESTRING (30 10, 10 30, 40 40)\nPOINT (30 10)`;
+  const wktMermaid = parseGeoJsonToMermaid(wktSample);
+  assert.ok(wktMermaid.includes("flowchart TD"));
+  assert.ok(wktMermaid.includes("POLYGON"));
+  assert.notEqual(await mermaid.parse(wktMermaid), false);
+
+  // 2. Vector Tile Pyramid
+  const tileSample = `https://tiles.example.com/{z}/{x}/{y}.pbf`;
+  const tileMermaid = parseGeoJsonToMermaid(tileSample);
+  assert.ok(tileMermaid.includes("Vector Tile Pyramid Architecture"));
+  assert.notEqual(await mermaid.parse(tileMermaid), false);
+
+  // 3. ESRI Shapefile Schema
+  const shpSample = `Shapefile: Buildings.shp\nShapeType: 5 (Polygon)\nBBOX: [-122.5, 37.7, -122.3, 37.8]\nDBF Fields: FID, NAME, HEIGHT, USE`;
+  const shpMermaid = parseGeoJsonToMermaid(shpSample);
+  assert.ok(shpMermaid.includes("ESRI Shapefile Multi-Layer"));
+  assert.notEqual(await mermaid.parse(shpMermaid), false);
+});
