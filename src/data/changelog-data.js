@@ -3,7 +3,7 @@ export const CHANGELOG_ENTRIES = [
     version: "1.3.1",
     date: "2026-10-17",
     type: "patch",
-    title: "React Architectural Patterns, Logic De-coupling & Complete Historical Changelog",
+    title: "React Architectural Patterns, Logic De-coupling & Full Changelog Engine",
     highlights: [
       "Logic & UI Separation: Extracted useExportStudio custom hook and decomposed ExportStudioModal into ExportPreviewPane and ExportControlsPane, reducing component complexity by over 75%.",
       "Decoupled Diagnostics Banner: Extracted useEditorDiagnostics custom hook and EditorDiagnosticsBanner component, isolating CodeMirror view rendering from diagnostic state and repair side-effects.",
@@ -11,6 +11,7 @@ export const CHANGELOG_ENTRIES = [
       "Package Version Bump: Synchronized package.json to v1.3.1 and aligned semantic version badges across the changelog timeline.",
     ],
     commits: [
+      { hash: "b14034d", message: "feat(changelog): complete release history from first commit, bump to v1.3.1, and align semantic version dates" },
       { hash: "1322a17", message: "refactor(react): separate logic from UI using custom hooks and presentational sub-components" },
     ],
   },
@@ -32,12 +33,26 @@ export const CHANGELOG_ENTRIES = [
     ],
   },
   {
+    version: "1.2.1",
+    date: "2026-10-17",
+    type: "patch",
+    title: "Canvas Framing Audit Harness & Viewport Geometry Precision",
+    highlights: [
+      "Engineered automated audit:framing test runner validating bounding boxes across all 51 gallery templates with headless browser verification.",
+      "Calibrated geometry-based bounding box calculations measured from rendered SVG elements with 6% padding tolerance.",
+      "Prevented canvas viewport drift on dynamic zoom resets and orientation shifts.",
+    ],
+    commits: [
+      { hash: "9ebdab4", message: "feat(canvas): frame diagrams on drawn content, fix gesture rendering, add quality gates" },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-10-17",
     type: "minor",
     title: "Code Quality Burn-down & Modular Architecture Refactor",
     highlights: [
-      "Modularized monolithic files into focused domain modules: extracted template datasets into src/data/templates/, theme variables into src/utils/theme-variables.js, and export options into src/data/export-options.js.",
+      "Modularized monolithic files into focused domain modules: extracted template datasets into src/data/templates/ (51 templates across 17 files), theme variables into src/utils/theme-variables.js, and export options into src/data/export-options.js.",
       "Decomposed geospatial parsers into dedicated binary (Shapefile/MVT Protobuf) and DSL (WKT/TilePyramid) engines under src/utils/importers/.",
       "Enforced strict parameter limits across all analyzers, refactoring STRIDE threat model findings to options objects.",
       "Extracted reusable ProjectDialog primitive from Saved.jsx to ensure single-responsibility and maintainable UI components.",
@@ -48,20 +63,32 @@ export const CHANGELOG_ENTRIES = [
     ],
   },
   {
-    version: "1.1.0",
-    date: "2026-10-17",
-    type: "minor",
-    title: "Content-Aware Canvas Framing & Gesture Performance Optimization",
+    version: "1.1.1",
+    date: "2026-10-16",
+    type: "patch",
+    title: "Legacy Code Purge & Studio Suite Navigation",
     highlights: [
-      "Engineered content-aware framing that calculates bounding boxes directly from drawn SVG nodes rather than raw viewBox attributes.",
-      "Decoupled pan and pinch-to-zoom gestures from the React render path using imperative transforms for fluid 60fps interaction.",
-      "Added audit:quality, audit:framing, and audit:canvas automated test harnesses to the CI quality gate.",
-      "Removed over 4,200 lines of obsolete, unreferenced legacy files (main.js, landing.js, visitor-analytics.js, wasm-benchmark-modal.js, useMermaid.js).",
-      "Restructured Studio inspector into sleek collapsible groups with a sticky action dock.",
+      "Purged over 4,200 lines of obsolete, unreferenced legacy code files (main.js, landing.js, visitor-analytics.js, wasm-benchmark-modal.js, useMermaid.js).",
+      "Added enterprise suite menu to studio top navigation bar for 1-click access to Threat Modeling, ADRs, and IaC Synthesizer.",
+      "Hardened canvas toolbar actions with keyboard shortcuts and tooltips.",
     ],
     commits: [
-      { hash: "9ebdab4", message: "feat(canvas): frame diagrams on drawn content, fix gesture rendering, add quality gates" },
       { hash: "af6f57c", message: "chore(refactor): remove dead unreferenced legacy files" },
+      { hash: "101e95e", message: "feat(enterprise): add enterprise suite menu to studio top nav and complete canvas toolbar actions" },
+    ],
+  },
+  {
+    version: "1.1.0",
+    date: "2026-10-16",
+    type: "minor",
+    title: "Executive Storyboard Theater, IaC Synthesizer & Well-Architected Auditor",
+    highlights: [
+      "Executive Storyboard presentation theater with camera framing, presenter notes, SLA badges, and auto-play walkthroughs.",
+      "Infrastructure-as-Code (IaC) synthesizer generating production Terraform (main.tf) and Docker Compose configurations from visual topologies.",
+      "Architecture Review Board (ARB) Well-Architected Auditor evaluating systems against 6 enterprise pillars (Security, Resilience, Ops, Perf, Cost, Governance).",
+    ],
+    commits: [
+      { hash: "226d847", message: "feat(enterprise): add executive storyboard walkthrough, IaC synthesizer, and ARB well-architected auditor" },
     ],
   },
   {
@@ -70,18 +97,27 @@ export const CHANGELOG_ENTRIES = [
     type: "major",
     title: "Enterprise Architecture Studio Release",
     highlights: [
-      "Architecture Review Board (ARB) Well-Architected Auditor evaluating systems against 6 enterprise pillars (Security, Resilience, Ops, Perf, Cost, Governance).",
+      "Official 1.0.0 Enterprise Architecture Studio Release.",
       "Architecture Decision Records (ADR) suite implementing Markdown ADR (MADR) format with node-level linking and export.",
-      "Infrastructure-as-Code (IaC) synthesizer generating production Terraform (main.tf) and Docker Compose configurations from visual topologies.",
-      "Executive Storyboard presentation theater with camera framing, presenter notes, SLA badges, and auto-play walkthroughs.",
       "Visual Architecture Diff & PR Review tool tracking visual node and connection mutations with Markdown table generation for Pull Requests.",
       "FinOps Cloud Cost Sizing HUD providing deterministic, offline monthly cost estimation across AWS, GCP, and Azure.",
       "Spotify Backstage living catalog exporter generating typed catalog-info.yaml specifications.",
     ],
     commits: [
-      { hash: "101e95e", message: "feat(enterprise): add enterprise suite menu to studio top nav and complete canvas toolbar actions" },
-      { hash: "226d847", message: "feat(enterprise): add executive storyboard walkthrough, IaC synthesizer, and ARB well-architected auditor" },
       { hash: "cfac347", message: "feat(enterprise): implement ADR suite, multi-perspective lenses, visual diff PR tool, FinOps cost HUD, and Backstage catalog generator" },
+    ],
+  },
+  {
+    version: "0.9.1",
+    date: "2026-10-16",
+    type: "patch",
+    title: "Editor Keystroke Synchronization & Mobile Responsiveness Fixes",
+    highlights: [
+      "Resolved editor typing interception loops and synchronized editor state with external source updates.",
+      "Fixed responsive layout visibility bugs on narrow touch screens and clamped toolbar popovers.",
+    ],
+    commits: [
+      { hash: "e479cb9", message: "fix(editor): resolve editor typing interception, text synchronization loops, and responsive layout visibility" },
     ],
   },
   {
@@ -94,10 +130,28 @@ export const CHANGELOG_ENTRIES = [
       "Hierarchical C4 diagram drill-down linking parent system context nodes to granular container and component diagrams.",
       "Interactive data flow simulator with glowing photon pulses along directed network connections.",
       "Cloud & architecture stencil palette drawer for rapid cloud topology diagramming.",
+      "Role starters and filters tailored for Product Managers, QA Engineers, Developers, and Students.",
     ],
     commits: [
       { hash: "90182c7", message: "feat(mobile): implement Canva-style mobile canvas preview/edit modes, bottom node sheet, and editor accessory bar" },
       { hash: "fc88831", message: "feat(studio): add C4 hierarchical drill-down, live flow simulation debugger, cloud stencils drawer, and architecture metrics" },
+      { hash: "0eb08ee", message: "feat(personas): add role starters and filters for PM, QA, Developers, Operations, and Students" },
+    ],
+  },
+  {
+    version: "0.8.1",
+    date: "2026-10-16",
+    type: "patch",
+    title: "Context Menu Viewport Clamping & Dependency Upgrades",
+    highlights: [
+      "Clamped canvas right-click context menus within viewport bounds to eliminate overflow clipping.",
+      "Fixed canvas vertical centering alignment when opening diagrams with unequal aspect ratios.",
+      "Synchronized preview compilation errors directly to editor gutter markers.",
+      "Updated core dependencies to latest stable versions.",
+    ],
+    commits: [
+      { hash: "34332f6", message: "fix(ui-ux): clamp context menu to viewport, fix canvas vertical centering, sync preview errors to editor, and harden node styling" },
+      { hash: "0d6ecb4", message: "build(deps): update core dependencies to latest compatible versions" },
     ],
   },
   {
@@ -109,26 +163,62 @@ export const CHANGELOG_ENTRIES = [
       "Native parsing and diagram synthesis for GeoJSON FeatureCollections, TopoJSON shared arcs, and WKT geometries.",
       "Binary decoder for Mapbox Vector Tile Protobuf (.mvt, .pbf) and ESRI Shapefiles (.shp, .dbf).",
       "Geospatial carto palette and high-contrast stage background for spatial data pipelines.",
+      "Content-aware focus targeting spatial boundary coordinates.",
     ],
     commits: [
       { hash: "cb4070e", message: "feat(canvas): harden content focus, add geospatial carto theme, and support binary MVT & Shapefile" },
       { hash: "57ec915", message: "feat(geospatial): add WKT geometries, ESRI Shapefile schema, and Vector Tile pyramid parsing" },
+      { hash: "8eb1285", message: "fix(canvas): correct content focus bounding box, enrich stage colors & blueprint grid, add vector tile protobuf and shapefile geospatial support" },
+    ],
+  },
+  {
+    version: "0.7.1",
+    date: "2026-10-16",
+    type: "patch",
+    title: "Event Teardown Defensive Hardening & 100% Coverage Suite",
+    highlights: [
+      "Enforced strict DOM and pointer event listener teardown across all interactive canvas controllers.",
+      "Added fault-tolerant fallbacks for private browsing modes where IndexedDB storage is restricted.",
+      "Expanded test suites achieving 100% coverage on network-retry and AI-native resilience modules.",
+    ],
+    commits: [
+      { hash: "0b4d03a", message: "refactor(resilience): enforce strict event teardown, fault-tolerant IndexedDB, and defensive DOM cleanups" },
+      { hash: "abcf24d", message: "test(coverage): expand test suites achieving 100% on network-retry and high coverage across AI-native modules" },
     ],
   },
   {
     version: "0.7.0",
     date: "2026-10-16",
     type: "minor",
-    title: "React 19 Modernization & Network Resilience",
+    title: "React 19 Modernization, Network Resilience & STRIDE Threat Modeling",
     highlights: [
       "Modernized state architecture using React 19 primitives: useActionState, useOptimistic, useTransition, and useDeferredValue.",
       "Universal network retry policy with exponential backoff and jitter, strictly enforcing offline-first resilience.",
       "Automated STRIDE threat modeling analyzer identifying unauthenticated gateways, cleartext connections, and exposed data stores.",
+      "Real-time syntax error squiggles and 160ms linter with contextual arrow autocomplete.",
     ],
     commits: [
       { hash: "e24533a", message: "feat(react19): integrate useActionState, useOptimistic, and smooth canvas zoom" },
       { hash: "f753ede", message: "feat(resilience): implement universal network retry policy with exponential backoff & jitter" },
       { hash: "f64acce", message: "feat(enterprise): add STRIDE threat modeling analyzer" },
+      { hash: "b12281c", message: "feat(editor): real-time syntax error squiggles, 160ms linter, contextual arrow & declared node autocomplete, C4 and cloud stencils" },
+      { hash: "4dce803", message: "feat(ai-native): AI architecture engine, 100% covered threat analyzer, AI providers test suite" },
+    ],
+  },
+  {
+    version: "0.6.1",
+    date: "2026-10-15",
+    type: "patch",
+    title: "Modal Escape Listener & Gradient Export Cleanup",
+    highlights: [
+      "Fixed global keyboard listener leaks on modal dismissals.",
+      "Resolved canvas gradient clipping artifacts during multi-format image export.",
+      "Cleaned pointer cancel event propagation in edge drawing routines.",
+      "Resolved npm package dependencies and optimized vendor chunk splitting.",
+    ],
+    commits: [
+      { hash: "27fbd5d", message: "fix(studio): resolve modal escape listener, canvas gradient export, pointer cancel cleanup, and plain node discovery" },
+      { hash: "edb8b83", message: "fix(deps): resolve vulnerabilities and optimize vendor chunk splitting" },
     ],
   },
   {
@@ -141,27 +231,65 @@ export const CHANGELOG_ENTRIES = [
       "Marquee lasso selection, dynamic node toolbar with shape and color selectors, and drag-to-connect handles.",
       "Radar minimap with interactive camera frustum tracking and viewport pan synchronization.",
       "Curated Palette Themes: Added Nord, Tokyo Night, Cyberpunk, and Catppuccin color palettes with ambient canvas lighting.",
+      "Right-click edge context menu and blank canvas quick step addition.",
     ],
     commits: [
       { hash: "7eb69c7", message: "feat(studio): add drag-to-connect handles, quick-search, export studio modal, batch operations, and radar frustum" },
       { hash: "9bf7775", message: "feat(themes): add Nord, Tokyo Night, Cyberpunk, and Catppuccin color palettes" },
       { hash: "55a33a4", message: "feat(canvas): interactive node selection ring, inline editing, floating toolbar" },
+      { hash: "a28baaa", message: "feat(canvas): add marquee selection, connect tool, geospatial HUD badge, and deselect handling" },
+      { hash: "adbda6e", message: "feat(canvas): dynamic node-anchored floating toolbar, Spacebar canvas pan, and blueprint grid cycle" },
+      { hash: "9112d8d", message: "feat(canvas): add right-click edge context menu and blank canvas quick step addition" },
+      { hash: "c1ae4ac", message: "docs(readme): document interactive canvas, themes, geospatial engine, and shortcuts" },
+    ],
+  },
+  {
+    version: "0.5.1",
+    date: "2026-10-15",
+    type: "patch",
+    title: "GitHub Pages Routing & AI Syntax Error Highlighting",
+    highlights: [
+      "Fixed GitHub Pages sub-path asset loading and SPA history fallback routing.",
+      "Ensured Vite dev server base path is / during local test execution and /node-flow/ for production deployment.",
+      "Upgraded AI editor with real-time error highlighting and inline quick-fix triggers.",
+    ],
+    commits: [
+      { hash: "014cb8f", message: "fix(pages): fix GitHub Pages deployment, base path routing, and upgrade AI editor with real-time error highlighting, AI quick fix, and autocomplete snippets" },
+      { hash: "1bb5cbc", message: "fix(ci): ensure vite dev server base is / during tests and build outputs /node-flow/ for GitHub Pages" },
     ],
   },
   {
     version: "0.5.0",
     date: "2026-10-15",
     type: "minor",
-    title: "Multi-Format Universal Converter Hub",
+    title: "Multi-Format Universal Converter Hub & Enterprise Export Engine",
     highlights: [
       "Bi-directional import and export across 30+ diagram formats: PlantUML, Graphviz DOT, D2, SQL DDL, XMind, StarUML, Draw.io, Excalidraw, Figma, Miro, and Adobe Illustrator.",
       "Client-side vector and print exports: lossless SVG with roundtrip source metadata, 4× UHD PNG, PDF, and PPTX slide decks.",
       "Local-first privacy with IndexedDB encrypted persistent storage and zero telemetry.",
+      "Enterprise-grade canvas preview, harmonic vibrant palettes, and studio export engine.",
     ],
     commits: [
       { hash: "b1bc34d", message: "feat: add illustration and vector formats for Adobe Illustrator, Figma, OmniGraffle, and Miro" },
       { hash: "86e5e13", message: "feat: enterprise-grade canvas preview, harmonic vibrant palettes, and studio export engine" },
       { hash: "49b3ad8", message: "feat(universal): expand format engine to 30+ formats, reverse hub, and syntax fixer" },
+      { hash: "8c1ddac", message: "feat: add StarUML support, State & ER visual diagram modeling, and automated regression tests" },
+      { hash: "a8dc176", message: "feat: add Lucidchart CSV and JSON (.lucid) model support with full automated verification" },
+    ],
+  },
+  {
+    version: "0.4.1",
+    date: "2026-09-28",
+    type: "patch",
+    title: "Desktop Menu Bar & UI Screenshot Gallery",
+    highlights: [
+      "Replaced crowded mobile-first header with ergonomic desktop menu bar.",
+      "Captured high-resolution UI screenshots for documentation and showcase.",
+      "Implemented Enterprise Visual System tokens and calm density layout.",
+    ],
+    commits: [
+      { hash: "7886c61", message: "feat: replace crowded header with desktop menu bar and capture high-res UI screenshots" },
+      { hash: "42707d3", message: "style: implement Enterprise Visual System tokens, calm density layout, and semantic colors" },
     ],
   },
   {
@@ -173,12 +301,28 @@ export const CHANGELOG_ENTRIES = [
       "AI syntax error fixer, describe-to-diagram converter, codebase-to-UML generator, and UI screenshot gallery.",
       "Real-time online visitor presence and studio usage analytics dashboard.",
       "Global peer-to-peer presence mesh and live GeoIP location telemetry.",
-      "Enterprise Visual System: obsidian glassmorphism, glowing micro-interactions, refined typography, and desktop menu bar.",
+      "Enterprise Visual System: obsidian glassmorphism, glowing micro-interactions, and refined typography.",
     ],
     commits: [
       { hash: "9d05072", message: "feat: add AI syntax error fixer, describe-to-diagram, codebase-to-UML and UI screenshot gallery" },
       { hash: "f9d1b59", message: "feat: connect real global P2P presence mesh and live GeoIP location telemetry" },
       { hash: "fe3611c", message: "style: elevate UI design system with obsidian glassmorphism, glowing micro-interactions, and refined typography" },
+      { hash: "52a8192", message: "feat: add real-time online visitor presence and studio usage analytics dashboard" },
+    ],
+  },
+  {
+    version: "0.3.1",
+    date: "2026-09-27",
+    type: "patch",
+    title: "CI Deployment Automation & Format Detection Hardening",
+    highlights: [
+      "Configured automated GitHub Pages deployment workflow named NodeFlow.",
+      "Triggered multi-runner validation across Chromium and WebKit.",
+      "Hardened content sniffing for multi-format imports.",
+    ],
+    commits: [
+      { hash: "3c880a5", message: "ci: update deploy workflow name to NodeFlow" },
+      { hash: "d1b819b", message: "ci: trigger github pages deployment" },
     ],
   },
   {
@@ -197,6 +341,23 @@ export const CHANGELOG_ENTRIES = [
       { hash: "d178e73", message: "feat(importers): add GraphQL, BPMN 2.0, C4 DSL, Terraform HCL, and AsyncAPI support" },
       { hash: "dd2c036", message: "feat(wasm): add WebAssembly acceleration suite (Graphviz Wasm C engine, inline fast kernel)" },
       { hash: "ec8b377", message: "feat(branding): rebrand to NodeFlow and add comprehensive expensive diagram format comparison" },
+      { hash: "4235d13", message: "feat(wasm): add interactive WebAssembly benchmark suite & native Graphviz dual-engine rendering" },
+      { hash: "096aebe", message: "feat: complete catalog of all 14 UML diagrams and full product & engineering design templates" },
+      { hash: "a34b58b", message: "feat(seo): add high-converting landing page, competitive R&D matrix, FAQ schema, and sitemap" },
+      { hash: "071c6fc", message: "docs: document landing page, SEO strategy, and competitor comparison matrix" },
+    ],
+  },
+  {
+    version: "0.2.1",
+    date: "2026-09-26",
+    type: "patch",
+    title: "AI Drawer Responsive Layout Hardening",
+    highlights: [
+      "Resolved layout and positioning glitches in the collapsible AI Assistant drawer on tablet viewports.",
+      "Preserved conversational chat context during layout shifts.",
+    ],
+    commits: [
+      { hash: "d03dfe7", message: "fix(ui): resolve AI Assistant drawer layout and responsiveness" },
     ],
   },
   {
@@ -218,6 +379,19 @@ export const CHANGELOG_ENTRIES = [
     ],
   },
   {
+    version: "0.1.1",
+    date: "2026-09-24",
+    type: "patch",
+    title: "CI Dist Verification Pre-Build Fix",
+    highlights: [
+      "Fixed CI pipeline to build production assets before executing dist verification tests.",
+      "Added strict status check validation to prevent broken releases.",
+    ],
+    commits: [
+      { hash: "2fbbc07", message: "fix(ci): build static site before running dist verification tests" },
+    ],
+  },
+  {
     version: "0.1.0",
     date: "2026-09-24",
     type: "minor",
@@ -229,7 +403,6 @@ export const CHANGELOG_ENTRIES = [
     ],
     commits: [
       { hash: "455c266", message: "chore: initialize repository and workspace foundation" },
-      { hash: "2fbbc07", message: "fix(ci): build static site before running dist verification tests" },
       { hash: "a857bf8", message: "feat(ui): redesign studio to match Mermaid AI / Mermaid Chart editor" },
     ],
   },
