@@ -5,14 +5,24 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.3.1] - 2026-10-17
+
+### Added
+- **Full Historical Changelog Engine**: Extended platform changelog and interactive `/changelog` visual page back to the very first commit (2026-09-24), capturing all release milestones with verified git commit references and semantic grouping.
+- **Logic & UI Separation via Modern React Patterns**:
+  - Extracted `useExportStudio` hook (`src/hooks/useExportStudio.js`) and decomposed `ExportStudioModal.jsx` into `ExportPreviewPane.jsx` and `ExportControlsPane.jsx` (reduced from 391 lines to 82 lines).
+  - Extracted `useEditorDiagnostics` hook (`src/hooks/useEditorDiagnostics.js`) and `EditorDiagnosticsBanner` component (`src/components/editor/EditorDiagnosticsBanner.jsx`), decoupling CodeMirror view rendering from diagnostic state and repair side-effects.
+
+### Changed
+- Bumped package release to `v1.3.1` with synchronized release dates across documentation, metadata, and `/changelog`.
+
+---
+
 ## [1.3.0] - 2026-10-17
 
 ### Added
 - **Context-Aware Autocomplete**: Scoped keyword completions per diagram family (flowchart, sequence, class, state, er), added 8 node shape snippet templates after arrow operators, and suppressed keyword popups inside string literals or bracket labels.
 - **Enhanced Canvas Content Selectors**: Added pie chart, quadrant point, git graph commit, block element, and legend selectors to `CANVAS_CONTENT_SELECTOR` for comprehensive, multi-diagram framing accuracy.
-- **Logic / UI Separation & React Patterns**:
-  - Extracted `useExportStudio` hook (`src/hooks/useExportStudio.js`) and decomposed `ExportStudioModal.jsx` into `ExportPreviewPane` and `ExportControlsPane` (reduced from 391 lines to 82 lines).
-  - Extracted `useEditorDiagnostics` hook (`src/hooks/useEditorDiagnostics.js`) and `EditorDiagnosticsBanner` component (`src/components/editor/EditorDiagnosticsBanner.jsx`), decoupling CodeMirror view rendering from diagnostic state and repair side-effects.
 
 ### Fixed
 - **Editor Focus Retention**: Prevented CodeMirror instance destruction on parent re-renders and keystrokes, preserving cursor position, selection, and active input state.
@@ -103,6 +113,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **14-Family Visual Modeling**: Visual editing support for Flowcharts, Sequence, Class, State, ER, Mindmaps, GitGraph, Pie, Journey, Kanban, Gantt, Quadrant, Timeline, and Sankey.
 - **Direct Canvas Manipulation**: Marquee lasso selection, dynamic floating node toolbar, and interactive drag-to-connect ports.
 - **Interactive Radar Minimap**: Real-time viewport camera frustum tracking with click-to-jump navigation.
+- **Curated Palette Themes**: Added Nord, Tokyo Night, Cyberpunk, and Catppuccin color palettes with ambient canvas lighting.
 
 ---
 
@@ -115,14 +126,50 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [0.4.0] - 2026-09-28
+
+### Added
+- **AI Syntax Error Fixer & Synthesizer**: describe-to-diagram converter, codebase-to-UML generator, and auto-repairing syntax engine.
+- **Telemetry & Presence Mesh**: Global peer-to-peer presence mesh with live GeoIP telemetry and studio usage analytics dashboard.
+- **Enterprise Design System**: Obsidian glassmorphism tokens, glowing micro-interactions, desktop menubar, and calm density layout.
+
+---
+
+## [0.3.0] - 2026-09-27
+
+### Added
+- **Universal Importer Expansion**: Added GraphQL, BPMN 2.0, C4 DSL, Terraform HCL, AsyncAPI, FreeMind (`.mm`), and OPML (`.opml`) conversion.
+- **WebAssembly Acceleration Suite**: High-performance Graphviz Wasm C engine, inline fast kernel, and interactive benchmark suite.
+- **Enterprise Landing & Brand**: Rebranded platform to NodeFlow with interactive competitive comparison matrix and SEO metadata.
+
+---
+
+## [0.2.0] - 2026-09-26
+
+### Added
+- **Interactive Node Inspector**: Real-time property modification, version snapshots, and template categorization.
+- **In-Browser LLM Execution**: Integrated local Qwen2.5-Coder model via WebAssembly / WebGPU.
+- **Pro Export Studio**: Vector PDF rendering, standalone self-contained HTML generation, and presentation mode.
+- **Design Tokens**: Full Tailwind CSS v4 support with shadcn tokens and CVA components.
+
+---
+
+## [0.1.0] - 2026-09-24
+
+### Added
+- **Platform Inception**: Initial Vite and React studio foundation with real-time Mermaid preview and SVG export.
+- **Automated CI Validation**: Static build verification and syntax regression testing pipelines.
+
+---
+
 ## [Upcoming Roadmap]
 
-### [1.3.0] - Q4 2026
+### [1.4.0] - Q4 2026
 - **WebGPU Local LLMs**: Air-gapped AI diagram generation running entirely on client GPUs with zero external API calls.
 - **Smart Orthogonal Edge Routing**: Obstacle-avoiding edge paths with custom waypoint controls.
 - **P2P Collaboration**: Real-time multi-cursor collaboration powered by WebRTC and CRDTs with zero server persistence.
 
-### [1.4.0] - Q1 2027
+### [2.0.0] - Q1 2027
 - **AST Bi-directional Compiler**: High-fidelity AST replacing regex parser for 100% lossless multi-format roundtripping.
 - **Live Cloud Infrastructure Sync**: Direct imports from AWS CloudFormation and Terraform state files.
 - **Architecture Drift Detection**: Continuous compliance audit comparing live cloud topologies against approved designs.

@@ -1,5 +1,20 @@
 export const CHANGELOG_ENTRIES = [
   {
+    version: "1.3.1",
+    date: "2026-10-17",
+    type: "patch",
+    title: "React Architectural Patterns, Logic De-coupling & Complete Historical Changelog",
+    highlights: [
+      "Logic & UI Separation: Extracted useExportStudio custom hook and decomposed ExportStudioModal into ExportPreviewPane and ExportControlsPane, reducing component complexity by over 75%.",
+      "Decoupled Diagnostics Banner: Extracted useEditorDiagnostics custom hook and EditorDiagnosticsBanner component, isolating CodeMirror view rendering from diagnostic state and repair side-effects.",
+      "Comprehensive Historical Changelog Engine: Extended platform changelog and interactive /changelog page back to the very first commit (2026-09-24), grouping all major, minor, and patch milestones.",
+      "Package Version Bump: Synchronized package.json to v1.3.1 and aligned semantic version badges across the changelog timeline.",
+    ],
+    commits: [
+      { hash: "1322a17", message: "refactor(react): separate logic from UI using custom hooks and presentational sub-components" },
+    ],
+  },
+  {
     version: "1.3.0",
     date: "2026-10-17",
     type: "minor",
@@ -11,10 +26,9 @@ export const CHANGELOG_ENTRIES = [
       "Line-Targeted Diagnostics: Upgraded explainError in syntax-error-db.js to prioritize the exact reported error line, providing high-precision cause explanations and 1-click line repair.",
       "Context-Aware Autocomplete: Suppressed keywords inside string literals and bracket labels, added node shape snippets, and scoped keywords to active diagram types.",
       "Canvas Content Framing: Extended CANVAS_CONTENT_SELECTOR to include pie charts, quadrant points, commits, block elements, and legends for 100% framing pass.",
-      "Logic & UI Separation: Extracted useExportStudio and useEditorDiagnostics custom hooks, decomposing complex dialogs and editors into focused presentational panes (ExportPreviewPane, ExportControlsPane, EditorDiagnosticsBanner).",
     ],
     commits: [
-      { hash: "HEAD", message: "fix(editor): focus retention, deterministic line quick fix, contextual autocomplete, and framing selectors" },
+      { hash: "9f33eab", message: "fix(editor): focus retention, deterministic line quick fix, contextual autocomplete, and framing selectors" },
     ],
   },
   {
@@ -126,9 +140,11 @@ export const CHANGELOG_ENTRIES = [
       "Interactive visual modeling across all 14 diagram families: Flowchart, Sequence, Class, State, ER, Mindmap, GitGraph, Pie, Journey, Kanban, Gantt, Quadrant, Timeline, and Sankey.",
       "Marquee lasso selection, dynamic node toolbar with shape and color selectors, and drag-to-connect handles.",
       "Radar minimap with interactive camera frustum tracking and viewport pan synchronization.",
+      "Curated Palette Themes: Added Nord, Tokyo Night, Cyberpunk, and Catppuccin color palettes with ambient canvas lighting.",
     ],
     commits: [
       { hash: "7eb69c7", message: "feat(studio): add drag-to-connect handles, quick-search, export studio modal, batch operations, and radar frustum" },
+      { hash: "9bf7775", message: "feat(themes): add Nord, Tokyo Night, Cyberpunk, and Catppuccin color palettes" },
       { hash: "55a33a4", message: "feat(canvas): interactive node selection ring, inline editing, floating toolbar" },
     ],
   },
@@ -145,13 +161,83 @@ export const CHANGELOG_ENTRIES = [
     commits: [
       { hash: "b1bc34d", message: "feat: add illustration and vector formats for Adobe Illustrator, Figma, OmniGraffle, and Miro" },
       { hash: "86e5e13", message: "feat: enterprise-grade canvas preview, harmonic vibrant palettes, and studio export engine" },
+      { hash: "49b3ad8", message: "feat(universal): expand format engine to 30+ formats, reverse hub, and syntax fixer" },
+    ],
+  },
+  {
+    version: "0.4.0",
+    date: "2026-09-28",
+    type: "minor",
+    title: "AI Synthesis & Enterprise Visual Design System",
+    highlights: [
+      "AI syntax error fixer, describe-to-diagram converter, codebase-to-UML generator, and UI screenshot gallery.",
+      "Real-time online visitor presence and studio usage analytics dashboard.",
+      "Global peer-to-peer presence mesh and live GeoIP location telemetry.",
+      "Enterprise Visual System: obsidian glassmorphism, glowing micro-interactions, refined typography, and desktop menu bar.",
+    ],
+    commits: [
+      { hash: "9d05072", message: "feat: add AI syntax error fixer, describe-to-diagram, codebase-to-UML and UI screenshot gallery" },
+      { hash: "f9d1b59", message: "feat: connect real global P2P presence mesh and live GeoIP location telemetry" },
+      { hash: "fe3611c", message: "style: elevate UI design system with obsidian glassmorphism, glowing micro-interactions, and refined typography" },
+    ],
+  },
+  {
+    version: "0.3.0",
+    date: "2026-09-27",
+    type: "minor",
+    title: "Universal Importers Suite & WebAssembly Acceleration",
+    highlights: [
+      "Universal Importer: Added XMind read/write, PlantUML, Outline, CSV, Graphviz DOT, D2 Lang, and SQL DDL to ER converters.",
+      "Extended format support for GraphQL, BPMN 2.0, C4 DSL, Terraform HCL, AsyncAPI, FreeMind (.mm), and OPML (.opml).",
+      "WebAssembly acceleration suite: Graphviz Wasm C engine, inline fast kernel, hardware detection, and interactive benchmark suite.",
+      "Rebranded to NodeFlow with SEO landing page and competitive expensive diagram matrix.",
+    ],
+    commits: [
+      { hash: "f363f96", message: "feat(importers): add Universal Importer with XMind read/write, PlantUML, Outline, and CSV converters" },
+      { hash: "d178e73", message: "feat(importers): add GraphQL, BPMN 2.0, C4 DSL, Terraform HCL, and AsyncAPI support" },
+      { hash: "dd2c036", message: "feat(wasm): add WebAssembly acceleration suite (Graphviz Wasm C engine, inline fast kernel)" },
+      { hash: "ec8b377", message: "feat(branding): rebrand to NodeFlow and add comprehensive expensive diagram format comparison" },
+    ],
+  },
+  {
+    version: "0.2.0",
+    date: "2026-09-26",
+    type: "minor",
+    title: "Interactive Inspector, In-Browser AI & Pro Export Studio",
+    highlights: [
+      "Interactive node inspector, version snapshots, template filtering, and profile popover.",
+      "Integrated in-browser Qwen2.5-Coder model via WebAssembly / WebGPU.",
+      "Full Tailwind CSS v4 support with shadcn design tokens and CVA components.",
+      "Pro Export Studio with vector PDF, standalone interactive HTML, presentation mode, and embed generator.",
+    ],
+    commits: [
+      { hash: "ad09e51", message: "feat: complete interactive functionality with node inspector, version snapshots, template filtering" },
+      { hash: "2b0c5d6", message: "feat(ai): integrate real in-browser Qwen2.5-Coder model via WebAssembly / WebGPU" },
+      { hash: "ab50b1f", message: "feat(design-system): full Tailwind CSS v4 support with shadcn tokens and CVA components" },
+      { hash: "ce91e88", message: "feat(export): add Pro Export Studio, vector PDF, standalone interactive HTML, presentation mode" },
+    ],
+  },
+  {
+    version: "0.1.0",
+    date: "2026-09-24",
+    type: "minor",
+    title: "Platform Foundation & Interactive Mermaid Studio",
+    highlights: [
+      "Initial Vite + React studio architecture with live Mermaid preview and SVG export.",
+      "Automated CI static build verification and regression test pipelines.",
+      "Interactive studio layout matching modern diagramming editors.",
+    ],
+    commits: [
+      { hash: "455c266", message: "chore: initialize repository and workspace foundation" },
+      { hash: "2fbbc07", message: "fix(ci): build static site before running dist verification tests" },
+      { hash: "a857bf8", message: "feat(ui): redesign studio to match Mermaid AI / Mermaid Chart editor" },
     ],
   },
 ];
 
 export const UPCOMING_ROADMAP = [
   {
-    version: "1.3.0",
+    version: "1.4.0",
     targetDate: "Q4 2026",
     title: "WebGPU Local LLM & Interactive Canvas Edge Routing",
     goals: [
@@ -161,7 +247,7 @@ export const UPCOMING_ROADMAP = [
     ],
   },
   {
-    version: "1.4.0",
+    version: "2.0.0",
     targetDate: "Q1 2027",
     title: "Full AST Bi-directional Engine & Live Cloud Sync",
     goals: [

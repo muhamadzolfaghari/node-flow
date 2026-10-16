@@ -38,6 +38,8 @@ export default function Changelog() {
           <div className="relative border-l border-border/80 ml-3 sm:ml-4 pl-6 sm:pl-8 space-y-12">
             {CHANGELOG_ENTRIES.map((entry) => {
               const isMajor = entry.type === "major";
+              const isMinor = entry.type === "minor";
+              const tone = isMajor ? "indigo" : isMinor ? "green" : "amber";
               return (
                 <article key={entry.version} className="relative group">
                   {/* Timeline dot */}
@@ -45,7 +47,9 @@ export default function Changelog() {
                     className={`absolute -left-[31px] sm:-left-[39px] top-1 size-5 rounded-full border-2 transition ${
                       isMajor
                         ? "border-primary bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-                        : "border-border bg-card group-hover:border-primary/80"
+                        : isMinor
+                        ? "border-emerald-500/80 bg-emerald-500/20 group-hover:border-emerald-400"
+                        : "border-amber-500/80 bg-amber-500/20 group-hover:border-amber-400"
                     }`}
                   />
 
@@ -55,7 +59,7 @@ export default function Changelog() {
                       v{entry.version}
                     </span>
                     <Badge
-                      variant={isMajor ? "default" : "secondary"}
+                      tone={tone}
                       className="uppercase font-mono text-[10px]"
                     >
                       {entry.type}

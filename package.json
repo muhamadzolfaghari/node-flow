@@ -1,6 +1,6 @@
 {
   "name": "node-flow",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "NodeFlow \u2014 Free universal visual diagramming and architecture studio supporting Mermaid, XMind, Draw.io, PlantUML, Graphviz, D2, SQL DDL, and Markdown.",
   "type": "module",
   "scripts": {
