@@ -1,4 +1,5 @@
 export { FORMATS, getFormat, FILE_ACCEPT } from "./formats-config.js";
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 
 export function detectFormat(name = "", source = "") {
   const lower = name.toLowerCase();
@@ -274,7 +275,7 @@ export async function compileDocument(document) {
 }
 
 export async function importDocument(file) {
-  if (file.size > 15 * 1024 * 1024)
+  if (file.size > MAX_FILE_SIZE_BYTES)
     throw new Error(`${file.name} exceeds the 15 MB per-file limit.`);
   if (file.name.toLowerCase().endsWith(".xmind")) {
     const buffer = await file.arrayBuffer();
