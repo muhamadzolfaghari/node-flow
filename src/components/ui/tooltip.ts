@@ -1,0 +1,1 @@
+.tooltip { font-size: 0.875rem; }

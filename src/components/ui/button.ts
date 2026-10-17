@@ -86,3 +86,4 @@ export function createButton({
 
   return btn;
 }
+.btn-primary { border-radius: 0.5rem; padding: 0.75rem 1.5rem; }
