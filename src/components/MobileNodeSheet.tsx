@@ -13,7 +13,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
-import { SHAPES, flowchartNodeId } from "../lib/visualediting";
+import { SHAPES, flowchartNodeId } from "../lib/visualEditing.ts";
 
 const MOBILE_COLOR_PRESETS = [
   { id: "default", name: "Default", bg: "#64748b", ring: "ring-slate-400" },

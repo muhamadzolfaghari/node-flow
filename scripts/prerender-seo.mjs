@@ -7,9 +7,9 @@
 // Each page links into the single-page app, which stays the interactive product.
 import { mkdir, writeFile, access } from "node:fs/promises";
 import path from "node:path";
-import { DIAGRAM_TEMPLATES } from "../src/components/templates.js";
-import { FORMATS } from "../src/lib/formats.js";
-import { FAQS } from "../src/data/content.js";
+import { DIAGRAM_TEMPLATES } from "../src/components/templates.ts";
+import { FORMATS } from "../src/lib/formats.ts";
+import { FAQS } from "../src/data/content.ts";
 
 const SITE = (process.env.SITE_URL || "https://muhamadzolfaghari.github.io/node-flow").replace(/\/+$/, "");
 const DIST = path.resolve("dist");

@@ -1,4 +1,4 @@
-import { renderGraphvizWasm } from './wasm/wasm-accelerator.js';
+import { renderGraphvizWasm } from './wasm/wasmAccelerator.ts';
 
 /**
  * Mermaid & WebAssembly Graphviz renderer manager for DiagramAtlas
@@ -30,8 +30,8 @@ export function isGraphvizDot(code) {
   return /^\s*(strict\s+)?(di)?graph\b/i.test(firstLine) && /[{;]/.test(clean);
 }
 
-export { getThemeVariables } from './theme-variables.js';
-import { getThemeVariables } from './theme-variables.js';
+export { getThemeVariables } from './themeVariables.ts';
+import { getThemeVariables } from './themeVariables.ts';
 
 
 export async function initMermaid(theme = 'dark') {

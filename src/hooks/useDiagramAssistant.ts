@@ -1,8 +1,8 @@
 import { useRef, useState, useCallback } from "react";
-import { fixMermaidSyntax, testMermaidSyntax } from "../utils/ai-syntax-fixer.js";
-import { aiProviders, assistantModeToProvider } from "../features/ai/providers.js";
-import { optimizeAiPrompt } from "../utils/ai-token-optimizer.js";
-import { runAiHealthDiagnostics } from "../utils/ai-health-check.js";
+import { fixMermaidSyntax, testMermaidSyntax } from "../utils/aiSyntaxFixer.ts";
+import { aiProviders, assistantModeToProvider } from "../features/ai/providers.ts";
+import { optimizeAiPrompt } from "../utils/aiTokenOptimizer.ts";
+import { runAiHealthDiagnostics } from "../utils/aiHealthCheck.ts";
 
 export function useDiagramAssistant() {
   const engine = useRef(null);

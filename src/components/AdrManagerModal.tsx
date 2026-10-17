@@ -22,8 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "./ui.jsx";
-import { DEFAULT_ADRS } from "../data/default-adrs.js";
+} from "./ui.tsx";
+import { DEFAULT_ADRS } from "../data/defaultadrs.ts";
 
 export default function AdrManagerModal({
   isOpen,

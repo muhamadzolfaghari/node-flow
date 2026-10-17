@@ -1,6 +1,6 @@
-import { formatMermaidCode } from '../utils/mermaid-formatter.js';
-import { testMermaidSyntax } from '../utils/ai-syntax-fixer.js';
-import { isGraphvizDot } from '../utils/mermaid-renderer.js';
+import { formatMermaidCode } from '../utils/mermaidFormatter.ts';
+import { testMermaidSyntax } from '../utils/aiSyntaxFixer.ts';
+import { isGraphvizDot } from '../utils/mermaidrenderer.ts';
 
 export class EditorController {
   constructor(options) {

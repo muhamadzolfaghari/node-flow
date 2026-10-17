@@ -5,23 +5,23 @@
  * has to hold all 51. This module is the public entry point: it exports the combined list
  * in the original order plus the id lookup.
  */
-import { TEMPLATES as umlSpecification1 } from "../data/templates/uml-specification-1.js";
-import { TEMPLATES as umlSpecification2 } from "../data/templates/uml-specification-2.js";
-import { TEMPLATES as umlSpecification3 } from "../data/templates/uml-specification-3.js";
-import { TEMPLATES as productAndDesign1 } from "../data/templates/product-and-design-1.js";
-import { TEMPLATES as productAndDesign2 } from "../data/templates/product-and-design-2.js";
-import { TEMPLATES as architectureAndCloud1 } from "../data/templates/architecture-and-cloud-1.js";
-import { TEMPLATES as engineeringAndData1 } from "../data/templates/engineering-and-data-1.js";
-import { TEMPLATES as architectureAndCloud2 } from "../data/templates/architecture-and-cloud-2.js";
-import { TEMPLATES as engineeringAndData2 } from "../data/templates/engineering-and-data-2.js";
-import { TEMPLATES as softwareArchitecture } from "../data/templates/software-architecture.js";
-import { TEMPLATES as businessAndOperations1 } from "../data/templates/business-and-operations-1.js";
-import { TEMPLATES as businessAndOperations2 } from "../data/templates/business-and-operations-2.js";
-import { TEMPLATES as qaAndTesting } from "../data/templates/qa-and-testing.js";
-import { TEMPLATES as productAndDesign3 } from "../data/templates/product-and-design-3.js";
-import { TEMPLATES as businessAndOperations3 } from "../data/templates/business-and-operations-3.js";
-import { TEMPLATES as educationAndResearch } from "../data/templates/education-and-research.js";
-import { TEMPLATES as engineeringAndData3 } from "../data/templates/engineering-and-data-3.js";
+import { TEMPLATES as umlSpecification1 } from "../data/templates/umlspecification1.ts";
+import { TEMPLATES as umlSpecification2 } from "../data/templates/umlspecification2.ts";
+import { TEMPLATES as umlSpecification3 } from "../data/templates/umlspecification3.ts";
+import { TEMPLATES as productAndDesign1 } from "../data/templates/productanddesign1.ts";
+import { TEMPLATES as productAndDesign2 } from "../data/templates/productanddesign2.ts";
+import { TEMPLATES as architectureAndCloud1 } from "../data/templates/architectureandcloud1.ts";
+import { TEMPLATES as engineeringAndData1 } from "../data/templates/engineeringanddata1.ts";
+import { TEMPLATES as architectureAndCloud2 } from "../data/templates/architectureandcloud2.ts";
+import { TEMPLATES as engineeringAndData2 } from "../data/templates/engineeringanddata2.ts";
+import { TEMPLATES as softwareArchitecture } from "../data/templates/softwarearchitecture.ts";
+import { TEMPLATES as businessAndOperations1 } from "../data/templates/businessandoperations1.ts";
+import { TEMPLATES as businessAndOperations2 } from "../data/templates/businessandoperations2.ts";
+import { TEMPLATES as qaAndTesting } from "../data/templates/qaandtesting.ts";
+import { TEMPLATES as productAndDesign3 } from "../data/templates/productanddesign3.ts";
+import { TEMPLATES as businessAndOperations3 } from "../data/templates/businessandoperations3.ts";
+import { TEMPLATES as educationAndResearch } from "../data/templates/educationandresearch.ts";
+import { TEMPLATES as engineeringAndData3 } from "../data/templates/engineeringanddata3.ts";
 
 export const DIAGRAM_TEMPLATES = [
   ...umlSpecification1,

@@ -31,16 +31,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "../components/ui.jsx";
+} from "../components/ui.tsx";
 import { useWorkspace } from "../hooks/useWorkspace.tsx";
 import {
   createProject,
   parseProject,
   serializeProject,
   uid,
-} from "../lib/workspace.js";
-import { StorageManager } from "../components/storage.js";
-import { Exporter } from "../components/exporter.js";
+} from "../lib/workspace.ts";
+import { StorageManager } from "../components/storage.ts";
+import { Exporter } from "../components/exporter.ts";
 import { ProjectDialog } from "../components/ProjectDialog.tsx";
 export default function Saved() {
   const { workspace, setWorkspace, addProject } = useWorkspace(),

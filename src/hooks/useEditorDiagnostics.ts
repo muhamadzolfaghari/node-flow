@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { EditorView } from "@codemirror/view";
-import { fixAnySyntax, parseErrorDetails } from "../utils/universal-fixer.js";
-import { repairReportedLine } from "../utils/ai-syntax-fixer.js";
-import { explainError } from "../utils/syntax-error-db.js";
+import { fixAnySyntax, parseErrorDetails } from "../utils/universalFixer.ts";
+import { repairReportedLine } from "../utils/aiSyntaxFixer.ts";
+import { explainError } from "../utils/syntaxErrorDB.ts";
 
 /**
  * Custom hook to separate syntax diagnostics, error explanations,
@@ -117,8 +117,18 @@ export function useEditorDiagnostics({
       const reportedError = status.raw || status.error || previewError || "";
       const result = await fixAnySyntax(docText, docFmt, reportedError);
       if (result.success && result.fixedCode && result.fixedCode !== docText) {
+        // Compute minimal diff range instead of replacing entire document
+        let start = 0;
+        let end = Math.min(docText.length, result.fixedCode.length);
+        while (start < end && docText[start] === result.fixedCode[start]) start++;
+        while (end > start && docText[end - 1] === result.fixedCode[end - 1]) end--;
+
         view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: result.fixedCode },
+          changes: { from: start, to: end, insert: result.fixedCode.slice(start, end) },
+          selection: {
+            anchor: Math.min(start + (result.fixedCode.length - docText.length), result.fixedCode.length),
+            head: Math.min(start + (result.fixedCode.length - docText.length), result.fixedCode.length),
+          },
         });
         if (onChange) {
           onChange(currentIdRef.current, result.fixedCode);
@@ -152,8 +162,17 @@ export function useEditorDiagnostics({
     try {
       const lineRepair = await repairReportedLine(docText, status.raw || status.error || "");
       if (lineRepair && lineRepair.code && lineRepair.code !== docText) {
+        let start = 0;
+        let end = Math.min(docText.length, lineRepair.code.length);
+        while (start < end && docText[start] === lineRepair.code[start]) start++;
+        while (end > start && docText[end - 1] === lineRepair.code[end - 1]) end--;
+
         view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: lineRepair.code },
+          changes: { from: start, to: end, insert: lineRepair.code.slice(start, end) },
+          selection: {
+            anchor: Math.min(start + (lineRepair.code.length - docText.length), lineRepair.code.length),
+            head: Math.min(start + (lineRepair.code.length - docText.length), lineRepair.code.length),
+          },
         });
         if (onChange) {
           onChange(currentIdRef.current, lineRepair.code);

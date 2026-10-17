@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -96,19 +97,20 @@ import {
   TabsTrigger,
   TabsContent,
   ContextMenu,
-} from "../components/ui.jsx";
-import CodeEditor from "../components/CodeEditor.jsx";
-import CanvasStage, { GridToggle } from "../components/CanvasStage.jsx";
-import DiagnosticsPanel from "../components/DiagnosticsPanel.jsx";
-import MobileEditorBar from "../components/MobileEditorBar.jsx";
-import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/app-theme.js";
-import { DIAGRAM_TEMPLATES, getTemplateById } from "../components/templates.js";
+} from "../components/ui.tsx";
+import CodeEditor from "../components/CodeEditor.tsx";
+import CanvasStage, { GridToggle } from "../components/CanvasStage.tsx";
+import DiagnosticsPanel from "../components/DiagnosticsPanel.tsx";
+import MobileEditorBar from "../components/MobileEditorBar.tsx";
+import ContentMenu from "../components/ContentMenu.tsx";
+import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/appTheme.ts";
+import { DIAGRAM_TEMPLATES, getTemplateById } from "../components/templates.ts";
 import {
   FORMATS,
   FILE_ACCEPT,
   getFormat,
   importDocument,
-} from "../lib/formats";
+} from "../lib/formats.ts";
 import {
   createDocument,
   createProject,
@@ -116,20 +118,20 @@ import {
   parseProject,
   serializeProject,
   uid,
-} from "../lib/workspace.js";
+} from "../lib/workspace.ts";
 import { useWorkspace } from "../hooks/useWorkspace.tsx";
-import { useDocumentPreview } from "../hooks/useDocumentPreview.js";
-import { useDiagramAssistant } from "../hooks/useDiagramAssistant.js";
-import { Exporter } from "../components/exporter.js";
-import ExportStudioModal from "../components/ExportStudioModal.jsx";
-import CloudStencilModal from "../components/CloudStencilModal.jsx";
-import ThreatModelModal from "../components/ThreatModelModal.jsx";
-import ShowcaseModal from "../components/ShowcaseModal.jsx";
-import GitHubSyncDialog from "../components/GitHubSyncDialog.jsx";
-import { enterpriseStorage } from "../lib/indexeddb-storage.js";
-import { StorageManager } from "../components/storage.js";
-import { formatMermaidCode } from "../utils/mermaid-formatter.js";
-import { SUPPORTED_DIAGRAM_TYPES } from "../utils/importers/describe-to-diagram.js";
+import { useDocumentPreview } from "../hooks/useDocumentPreview.ts";
+import { useDiagramAssistant } from "../hooks/useDiagramAssistant.ts";
+import { Exporter } from "../components/exporter.ts";
+import ExportStudioModal from "../components/ExportStudioModal.tsx";
+import CloudStencilModal from "../components/CloudStencilModal.tsx";
+import ThreatModelModal from "../components/ThreatModelModal.tsx";
+import ShowcaseModal from "../components/ShowcaseModal.tsx";
+import GitHubSyncDialog from "../components/GitHubSyncDialog.tsx";
+import { enterpriseStorage } from "../lib/indexedDBStorage.ts";
+import { StorageManager } from "../components/storage.ts";
+import { formatMermaidCode } from "../utils/mermaidFormatter.ts";
+import { SUPPORTED_DIAGRAM_TYPES } from "../utils/importers/describeToDiagram.ts";
 import {
   isFlowchart,
   flowchartNodes,
@@ -269,9 +271,9 @@ import {
   addArchitectureEdge,
   deleteArchitectureEdge,
   flowchartNodeId,
-} from "../lib/visualediting";
-import { BLANK, AI_STARTERS } from "./StudioConstants.js";
-import { cn } from "../lib/utils.js";
+} from "../lib/visualediting.ts";
+import { BLANK, AI_STARTERS } from "./StudioConstants.ts";
+import { cn } from "../lib/utils.ts";
 import { Menu, Item } from "../features/studio/components/Menu.tsx";
 import { ExplorerPanel } from "../features/studio/components/ExplorerPanel.tsx";
 
@@ -608,23 +610,26 @@ export default function Studio() {
     setToast(message);
     setToastUndo(undo);
   };
-  const updateSource = (id, source) => {
-    updateProject((p) => {
-      const targetDocId = id || document?.id || p.activeId || p.documents[0]?.id;
-      const existing = p.documents.find((d) => d.id === targetDocId);
-      if (existing && existing.source === source) {
-        return p;
-      }
-      return {
-        ...p,
-        documents: p.documents.map((d) =>
-          d.id === targetDocId
-            ? { ...d, source, updatedAt: new Date().toISOString() }
-            : d,
-        ),
-      };
-    });
-  };
+  const updateSource = useCallback(
+    (id, source) => {
+      updateProject((p) => {
+        const targetDocId = id || document?.id || p.activeId || p.documents[0]?.id;
+        const existing = p.documents.find((d) => d.id === targetDocId);
+        if (existing && existing.source === source) {
+          return p;
+        }
+        return {
+          ...p,
+          documents: p.documents.map((d) =>
+            d.id === targetDocId
+              ? { ...d, source, updatedAt: new Date().toISOString() }
+              : d,
+          ),
+        };
+      });
+    },
+    [updateProject, document?.id],
+  );
   const openDocument = (id) => {
     updateProject((p) => ({
       ...p,
@@ -941,7 +946,7 @@ export default function Studio() {
       if (kind === "source") {
         if (document.format === "xmind") {
           const { exportMermaidToXmindBlob } =
-            await import("../utils/importers/xmind.js");
+            await import("../utils/importers/xmind.ts");
           Exporter.downloadBlob(
             await exportMermaidToXmindBlob(document.source, title),
             document.name,
@@ -1007,7 +1012,7 @@ export default function Studio() {
         });
       else if (kind === "copy") await Exporter.copyMarkdown(preview.code);
       else if (kind === "plantuml" || kind === "dot" || kind === "d2" || kind === "sql" || kind === "dbml" || kind === "xmi" || kind === "ts" || kind === "opml" || kind === "md" || kind === "openapi" || kind === "prisma" || kind === "graphql" || kind === "terraform") {
-        const mod = await import("../utils/exporters/mermaid-export.js");
+        const mod = await import("../utils/exporters/mermaidExport.ts");
         const map = {
           plantuml: ["mermaidToPlantUml", "puml"],
           dot: ["mermaidToDot", "dot"],
@@ -1030,7 +1035,7 @@ export default function Studio() {
         if (!/^\s*mindmap/m.test(preview.code))
           throw new Error("XMind export requires a mindmap.");
         const { exportMermaidToXmindBlob } =
-          await import("../utils/importers/xmind.js");
+          await import("../utils/importers/xmind.ts");
         Exporter.downloadBlob(
           await exportMermaidToXmindBlob(preview.code, title),
           `${title}.xmind`,
@@ -5930,6 +5935,9 @@ export default function Studio() {
               <Item onSelect={projectBackup}>Project backup (.atlas)</Item>
             </DropdownMenuContent>
           </DropdownMenu>
+          <div className="ml-2 flex items-center">
+            <ContentMenu containerRef={preview?.containerRef || canvasRef} title={document?.name?.replace(/\.[^.]+$/, "") || "diagram"} />
+          </div>
         </div>
       </div>
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -6816,6 +6824,33 @@ export default function Studio() {
                           ),
                         );
                         say(`Connected ${cleanFromId} → ${cleanToId}`);
+                      } catch (e) {
+                        say(e.message);
+                      }
+                    }}
+                    onRepointEdge={(from, oldTo, newTo) => {
+                      if (!isFlowchart(document)) return;
+                      const cleanFrom = flowchartNodeId(from);
+                      const cleanOldTo = flowchartNodeId(oldTo);
+                      const cleanNewTo = flowchartNodeId(newTo);
+                      if (!cleanFrom || !cleanOldTo || !cleanNewTo) return;
+                      if (cleanNewTo === cleanFrom) return;
+                      try {
+                        let src = deleteFlowchartEdge(
+                          document.source,
+                          cleanFrom,
+                          cleanOldTo,
+                        );
+                        src = connectFlowchartNodes(
+                          src,
+                          cleanFrom,
+                          cleanNewTo,
+                          "",
+                          edgeArrow || "solid",
+                        );
+                        updateSource(document.id, src);
+                        setSelected(null);
+                        say(`Repointed ${cleanFrom} → ${cleanNewTo}`);
                       } catch (e) {
                         say(e.message);
                       }

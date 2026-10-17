@@ -12,7 +12,7 @@ import {
   Compass,
   CheckCircle2,
 } from "lucide-react";
-import { scanNodeDeclarations } from "../lib/visualediting";
+import { scanNodeDeclarations } from "../lib/visualediting.ts";
 
 const STORYBOARD_CATEGORIES = [
   {

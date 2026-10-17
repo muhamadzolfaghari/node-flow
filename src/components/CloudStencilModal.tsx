@@ -12,7 +12,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
-import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
+import { CLOUD_STENCILS } from "../lib/indexedDBStorage.ts";
 
 const CATEGORIES = ["All", "AWS", "GCP", "Azure", "Kubernetes", "Databases", "Observability", "Security"];
 

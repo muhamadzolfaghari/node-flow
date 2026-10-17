@@ -17,8 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "./ui.jsx";
-import { generateTerraform, generateDockerCompose } from "../utils/iac-synthesizer.js";
+} from "./ui.tsx";
+import { generateTerraform, generateDockerCompose } from "../utils/iacSynthesizer.ts";
 
 export default function IacExportModal({
   isOpen,

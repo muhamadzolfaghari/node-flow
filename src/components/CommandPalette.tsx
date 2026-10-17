@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, FilePlus, Shapes, X } from "lucide-react";
-import { DIAGRAM_TEMPLATES } from "./templates.js";
+import { DIAGRAM_TEMPLATES } from "./templates.ts";
 
 export default function CommandPalette({ open, onClose }) {
   const [q, setQ] = useState("");

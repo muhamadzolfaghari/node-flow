@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { FORMATS } from "../src/lib/formats.js";
+import { FORMATS } from "../src/lib/formats.ts";
 const external = process.env.ATLAS_TEST_URL;
 const base = external || "http://127.0.0.1:4175";
 const server = external

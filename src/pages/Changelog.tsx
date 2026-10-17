@@ -12,7 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Badge, Button, Card, CardContent, Input } from "../components/ui.tsx";
-import { CHANGELOG_ENTRIES, UPCOMING_ROADMAP } from "../data/changelog-data.js";
+import { CHANGELOG_ENTRIES, UPCOMING_ROADMAP } from "../data/changelogdata.ts";
 
 function ChangelogStats({ counts }) {
   return (

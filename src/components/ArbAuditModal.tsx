@@ -19,8 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "./ui.jsx";
-import { runArbAudit } from "../utils/arb-auditor.js";
+} from "./ui.tsx";
+import { runArbAudit } from "../utils/arbAuditor.ts";
 
 export default function ArbAuditModal({
   isOpen,

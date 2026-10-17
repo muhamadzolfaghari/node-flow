@@ -1,6 +1,6 @@
-import { describeToDiagram } from "../../utils/importers/describe-to-diagram.js";
-import { optimizeAiPrompt } from "../../utils/ai-token-optimizer.js";
-import { fetchWithRetry } from "../../utils/network-retry.js";
+import { describeToDiagram } from "../../utils/importers/describeToDiagram.ts";
+import { optimizeAiPrompt } from "../../utils/aiTokenOptimizer.ts";
+import { fetchWithRetry } from "../../utils/networkRetry.ts";
 
 const DEFAULT_TEMPERATURE = 0.2;
 const MAX_LOCAL_TOKENS = 2048;

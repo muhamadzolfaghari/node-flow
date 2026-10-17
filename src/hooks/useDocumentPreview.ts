@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useTransition } from "react";
-import { compileDocument } from "../lib/formats";
-import { initMermaid, renderMermaid } from "../utils/mermaid-renderer.js";
+import { compileDocument } from "../lib/formats.ts";
+import { initMermaid, renderMermaid } from "../utils/mermaidrenderer.ts";
 export function useDocumentPreview(document, theme, view) {
   const containerRef = useRef(null);
   const [isPending, startTransition] = useTransition();

@@ -1,4 +1,4 @@
-import { FORMATS, getFormat } from "./formats.js";
+import { FORMATS, getFormat } from "./formats.ts";
 export const WORKSPACE_KEY = "diagramatlas_workspace_v1";
 export const uid = () =>
   globalThis.crypto?.randomUUID?.() ||

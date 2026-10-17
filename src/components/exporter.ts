@@ -10,7 +10,7 @@
  * - Embed snippets (GitHub Markdown, HTML, SVG Data URI)
  */
 
-import { embedSourceInSvg } from '../utils/importers/svg-metadata.js';
+import { embedSourceInSvg } from '../utils/importers/svgmetadata.js';
 
 export const ENTERPRISE_SVG_EMBED_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');

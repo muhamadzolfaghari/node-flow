@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button, Input } from "../../../components/ui.tsx";
-import { cn } from "../../../lib/utils.js";
+import { cn } from "../../../lib/utils.ts";
 
 export function ExplorerPanel({
   project,

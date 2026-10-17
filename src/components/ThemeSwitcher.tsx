@@ -6,8 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "./ui.jsx";
-import { APP_THEMES, applyTheme, getStoredTheme, setTheme } from "../lib/app-theme.js";
+} from "./ui.tsx";
+import { APP_THEMES, applyTheme, getStoredTheme, setTheme } from "../lib/appTheme.ts";
 
 export default function ThemeSwitcher() {
   const [theme, setCurrent] = useState(getStoredTheme);

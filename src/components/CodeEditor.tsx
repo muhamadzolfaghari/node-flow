@@ -19,12 +19,12 @@ import { autocompletion, snippetCompletion } from "@codemirror/autocomplete";
 import { linter, lintGutter } from "@codemirror/lint";
 import { undo, redo } from "@codemirror/commands";
 import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
-import { getFormat } from "../lib/formats";
-import { testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
-import { formatMermaidCode } from "../utils/mermaid-formatter.js";
-import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
-import { scanNodeDeclarations } from "../lib/visualediting";
-import { useEditorDiagnostics } from "../hooks/useEditorDiagnostics.js";
+import { getFormat } from "../lib/formats.ts";
+import { testMermaidSyntax, parseErrorDetails } from "../utils/universalFixer.ts";
+import { formatMermaidCode } from "../utils/mermaidFormatter.ts";
+import { CLOUD_STENCILS } from "../lib/indexedDBStorage.ts";
+import { scanNodeDeclarations } from "../lib/visualediting.ts";
+import { useEditorDiagnostics } from "../hooks/useEditorDiagnostics.ts";
 import { EditorDiagnosticsBanner } from "./editor/EditorDiagnosticsBanner.tsx";
 
 // Diagram types list for tokenizer & completions
@@ -457,11 +457,13 @@ const CodeEditor = forwardRef(function CodeEditor(
 ) {
   const host = useRef(null);
   const editor = useRef(null);
-  const latest = useRef({ document, onChange, previewError });
   const states = useRef(new Map());
   const currentId = useRef(document?.id);
+  const latest = useRef({ document, onChange, previewError, currentId });
+  latest.current = { document, onChange, previewError, currentId };
   const compartment = useRef(new Compartment());
   const lastSentTextRef = useRef(document?.source ?? "");
+  const isUserTypingRef = useRef(false);
 
   // Encapsulated Syntax Diagnostics, Fix & Explanation Logic
   const {
@@ -510,7 +512,7 @@ const CodeEditor = forwardRef(function CodeEditor(
         } else {
           // Derived format verification
           try {
-            const { compileDocument } = await import("../lib/formats.js");
+            const { compileDocument } = await import("../lib/formats.ts");
             const compiled = await compileDocument({ format: fmt, source: code });
             const v = await testMermaidSyntax(compiled.code);
             if (!v.valid) error = v.error;
@@ -722,6 +724,7 @@ const CodeEditor = forwardRef(function CodeEditor(
             if (update.docChanged) {
               const newText = update.state.doc.toString();
               lastSentTextRef.current = newText;
+              isUserTypingRef.current = true;
               const targetDocId = latest.current.document?.id || currentId.current;
               pendingChangeRef.current = { id: targetDocId, text: newText };
               if (!changeRafRef.current) {
@@ -732,6 +735,7 @@ const CodeEditor = forwardRef(function CodeEditor(
                     pendingChangeRef.current = null;
                     latest.current.onChange(id, text);
                   }
+                  isUserTypingRef.current = false;
                 });
               }
             }
@@ -771,6 +775,7 @@ const CodeEditor = forwardRef(function CodeEditor(
       parent: host.current,
     });
     if (host.current) host.current._editorView = editor.current;
+    editor.current.focus();
     currentId.current = initialDoc?.id;
     lastLanguageRef.current = `${initialDoc?.format || "mermaid"}:${initialDoc?.name || ""}`;
     return () => {
@@ -798,6 +803,10 @@ const CodeEditor = forwardRef(function CodeEditor(
       return;
     }
 
+    // Suppress external sync while user is actively typing to avoid
+    // overwriting keystrokes and resetting the cursor to the start.
+    if (isUserTypingRef.current) return;
+
     // 2. If the document.source matches what was sent from this CodeMirror instance
     // or matches what the editor already contains, skip re-dispatching to preserve
     // cursor position, selection, undo tree, and typing flow.
@@ -809,15 +818,22 @@ const CodeEditor = forwardRef(function CodeEditor(
     // 3. Genuine external change to document source (template loaded, AI quick fix, visual drag-and-drop)
     lastSentTextRef.current = document.source;
     const curSel = view.state.selection;
+    const { anchor, head } = curSel.main;
+
+    // Compute the minimal differing range so we don't clobber the whole
+    // document (which would reset cursor/selection to the start).
+    let start = 0;
+    let end = Math.min(currentDocText.length, document.source.length);
+    while (start < end && currentDocText[start] === document.source[start]) start++;
+    while (end > start && currentDocText[end - 1] === document.source[end - 1]) end--;
+
+    const clampedAnchor = Math.min(anchor, document.source.length);
+    const clampedHead = Math.min(head, document.source.length);
+
     view.dispatch({
-      changes: {
-        from: 0,
-        to: currentDocText.length,
-        insert: document.source,
-      },
-      selection: curSel
-        ? { anchor: Math.min(curSel.main.anchor, document.source.length) }
-        : undefined,
+      changes: { from: start, to: end, insert: document.source.slice(start, end) },
+      selection: { anchor: clampedAnchor, head: clampedHead },
+      effects: EditorView.scrollIntoView(clampedAnchor, { y: "nearest" }),
     });
 
     // 4. Reconfigure language compartment only if format or filename changed

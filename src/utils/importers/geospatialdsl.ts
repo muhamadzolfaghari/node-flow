@@ -1,4 +1,4 @@
-import { getGeomIcon, escapeLabel } from "./geospatial-helpers.js";
+import { getGeomIcon, escapeLabel } from "./geospatialhelpers.ts";
 
 export function parseVectorTileProtoToMermaid(protoCode) {
   let code = `classDiagram\n`;

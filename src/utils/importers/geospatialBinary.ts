@@ -1,4 +1,4 @@
-import { getGeomIcon, escapeLabel } from "./geospatial-helpers.js";
+import { getGeomIcon, escapeLabel } from "./geospatialhelpers.ts";
 
 export function parseBinaryGeospatialToMermaid(bytes, filename = "") {
   // Check for ESRI Shapefile (.shp) file magic (9994 / 0x0000270a in big-endian)

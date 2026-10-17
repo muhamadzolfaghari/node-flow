@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button, Badge, Input } from "./ui.tsx";
 
-import { STRIDE_CATEGORIES, analyzeDiagramThreats } from "../utils/threat-model-analyzer.js";
+import { STRIDE_CATEGORIES, analyzeDiagramThreats } from "../utils/threatModelAnalyzer.ts";
 
 export default function ThreatModelModal({ isOpen, onClose, diagramSource, diagramName = "Architecture" }) {
   const [selectedCategory, setSelectedCategory] = useState("ALL");

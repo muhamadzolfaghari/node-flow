@@ -2,7 +2,7 @@
  * Local storage manager for DiagramAtlas
  * Handles automatic draft saving, named diagrams library, and WebAssembly-hashed snapshots.
  */
-import { wasmFastHash } from '../utils/wasm/wasm-accelerator.js';
+import { wasmFastHash } from '../utils/wasm/wasmAccelerator.js';
 
 const STORAGE_KEYS = {
   DRAFT: 'nodeflow_draft_v1',

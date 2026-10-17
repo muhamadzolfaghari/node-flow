@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Sparkles } from "lucide-react";
-import { useExportStudio } from "../hooks/useExportStudio.js";
+import { useExportStudio } from "../hooks/useExportStudio.ts";
 import { ExportPreviewPane } from "./export/ExportPreviewPane.tsx";
 import { ExportControlsPane } from "./export/ExportControlsPane.tsx";
 

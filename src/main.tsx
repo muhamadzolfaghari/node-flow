@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { preload } from "react-dom";
-import App from "./App.jsx";
+import App from "./App.tsx";
 import { WorkspaceProvider } from "./hooks/useWorkspace.tsx";
 import { TooltipProvider } from "./components/ui.tsx";
 import "./index.css";

@@ -10,7 +10,7 @@ import {
   Activity,
   Check,
 } from "lucide-react";
-import { enterpriseStorage, SHOWCASE_CATALOG } from "../lib/indexeddb-storage.js";
+import { enterpriseStorage, SHOWCASE_CATALOG } from "../lib/indexedDBStorage.ts";
 
 export default function ShowcaseModal({
   isOpen,

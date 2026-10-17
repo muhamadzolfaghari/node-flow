@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { cn } from '../../lib/utils.js';
+import { cn } from '../../lib/utils.ts';
 
 export const dialogOverlayVariants = cva(
   'fixed inset-0 z-50 bg-black/75 backdrop-blur-sm transition-opacity duration-200 flex items-center justify-center p-4'

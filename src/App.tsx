@@ -7,15 +7,15 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import Footer from "./components/Footer.jsx";
-const Landing = lazy(() => import("./pages/Landing.jsx"));
-const Studio = lazy(() => import("./pages/Studio.jsx"));
-const Templates = lazy(() => import("./pages/Templates.jsx"));
-const Saved = lazy(() => import("./pages/Saved.jsx"));
-const Compare = lazy(() => import("./pages/Compare.jsx"));
-const Changelog = lazy(() => import("./pages/Changelog.jsx"));
-const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+import Navbar from "./components/Navbar.tsx";
+import Footer from "./components/Footer.tsx";
+const Landing = lazy(() => import("./pages/Landing.tsx"));
+const Studio = lazy(() => import("./pages/Studio.tsx"));
+const Templates = lazy(() => import("./pages/Templates.tsx"));
+const Saved = lazy(() => import("./pages/Saved.tsx"));
+const Compare = lazy(() => import("./pages/Compare.tsx"));
+const Changelog = lazy(() => import("./pages/Changelog.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const PAGE_TITLES = {
   "/": "Visual workspace for diagrams and systems",

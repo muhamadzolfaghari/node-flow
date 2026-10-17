@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Exporter } from "../components/exporter.js";
-import { generateBackstageCatalog } from "../utils/backstage-exporter.js";
+import { Exporter } from "../components/exporter.ts";
+import { generateBackstageCatalog } from "../utils/backstageExporter.ts";
 
 /**
  * Custom hook encapsulating export studio state, live preview generation,

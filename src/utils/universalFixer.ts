@@ -4,7 +4,7 @@
  * + PlantUML, DOT, D2, SQL, GraphQL, OpenAPI/AsyncAPI, XML family,
  * HCL, CSV, Markdown, code stubs. LLM optional last resort.
  */
-import { testMermaidSyntax, fixMermaidSyntax, parseErrorDetails } from './ai-syntax-fixer.js';
+import { testMermaidSyntax, fixMermaidSyntax, parseErrorDetails } from './aiSyntaxFixer.ts';
 
 export async function fixAnySyntax(code, format = 'mermaid', errorMessage = '', opts = {}) {
   if (!code || typeof code !== 'string') return { success: false, error: 'No code provided.' };
@@ -29,7 +29,7 @@ export async function fixAnySyntax(code, format = 'mermaid', errorMessage = '', 
 
   // 3. For derived formats: try compile → if mermaid invalid, fix mermaid side and report
   try {
-    const { compileDocument } = await import('../lib/formats.js');
+    const { compileDocument } = await import('../lib/formats.ts');
     const compiled = await compileDocument({ format, source: cur });
     const v = await testMermaidSyntax(compiled.code);
     if (v.valid) return { success: fixes.length > 0, fixedCode: cur, fixes: fixes.length ? fixes : ['Source looks valid'], method: 'deterministic' };

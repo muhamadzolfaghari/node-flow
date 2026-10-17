@@ -1,4 +1,4 @@
-import { sanitizeMindmapNodeText } from './xmind.js';
+import { sanitizeMindmapNodeText } from './xmind.ts';
 
 /**
  * Converts Markdown Bullet Outlines / Indented Lists / OPML

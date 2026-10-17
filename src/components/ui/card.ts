@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { cn } from '../../lib/utils.js';
+import { cn } from '../../lib/utils.ts';
 
 export const cardVariants = cva(
   'rounded-xl border bg-card text-card-foreground shadow transition-all duration-200',

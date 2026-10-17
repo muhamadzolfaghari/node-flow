@@ -16,8 +16,8 @@ import {
   Input,
   Card,
   CardContent,
-} from "../components/ui.jsx";
-import { FORMATS } from "../lib/formats";
+} from "../components/ui.tsx";
+import { FORMATS } from "../lib/formats.ts";
 export default function Compare() {
   const [q, setQ] = useState(""),
     [family, setFamily] = useState("All");

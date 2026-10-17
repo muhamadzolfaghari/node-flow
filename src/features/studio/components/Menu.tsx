@@ -4,7 +4,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "../../../components/ui.jsx";
+} from "../../../components/ui.tsx";
 
 export function Menu({ label, children }) {
   return (

@@ -1,5 +1,5 @@
 import { createContext, use, useEffect, useRef, useState } from "react";
-import { loadWorkspace, saveWorkspace } from "../lib/workspace.js";
+import { loadWorkspace, saveWorkspace } from "../lib/workspace.ts";
 const WorkspaceContext = createContext(null);
 export function WorkspaceProvider({ children }) {
   const [workspace, setWorkspace] = useState(loadWorkspace),

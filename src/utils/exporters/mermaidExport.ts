@@ -334,5 +334,5 @@ export function mermaidClassToGraphql(mermaid) {
   return out.join('\n');
 }
 
-export { mermaidArchitectureToTerraform } from './terraform-export.js';
+export { mermaidArchitectureToTerraform } from './terraformExport.ts';
 

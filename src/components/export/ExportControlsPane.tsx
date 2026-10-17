@@ -14,7 +14,7 @@ import {
   BACKGROUND_OPTIONS,
   PADDING_OPTIONS,
   SCALE_OPTIONS,
-} from "../../data/export-options.js";
+} from "../../data/exportoptions.ts";
 
 export function ExportControlsPane({
   background,

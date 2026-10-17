@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "./ui.jsx";
+} from "./ui.tsx";
 
 export function ProjectDialog({
   dialog,

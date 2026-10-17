@@ -50,8 +50,9 @@ import {
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visualEditing";
 import { CANVAS_CONTENT_SELECTOR } from "../lib/canvasContent";
-import { useLensEffect } from "./CanvasStageLens.ts";
+import { useLensEffect } from "./CanvasStageLens";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
+import { useCanvasStore } from "../lib/canvasStore";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.tsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.tsx";
 import ArchitectureMetricsModal from "./ArchitectureMetricsModal.tsx";
@@ -79,6 +80,7 @@ export default function CanvasStage({
   onChangeShape,
   onStyleNode,
   onConnectNodes,
+  onRepointEdge,
   onBatchSelect,
   onBatchStyleNodes,
   onWrapInSubgraph,
@@ -102,52 +104,122 @@ export default function CanvasStage({
 }) {
   const stageRef = useRef(null),
     canvasRef = useRef(null),
-    camera = useRef({ x: 30, y: 30, z: 1 }),
     shouldFit = useRef(true),
     autoFit = useRef(false),
     editInputRef = useRef(null),
     spaceHeld = useRef(false),
     marqueeRef = useRef(null),
     connectDragRef = useRef(null),
+    repointRef = useRef(null),
     minimapRef = useRef(null),
     contentBoundsRef = useRef(null),
     rafRef = useRef(0);
-  const [position, setPosition] = useState(camera.current),
-    [size, setSize] = useState({ w: 1000, h: 700 }),
-    [thumbnail, setThumbnail] = useState(""),
-    [minimap, setMinimap] = useState(true),
-    [wheelMode, setWheelMode] = useState("zoom"),
-    [laser, setLaser] = useState(null),
-    [tool, setTool] = useState("pointer"),
-    [spacePanning, setSpacePanning] = useState(false),
-    [nodeAnchor, setNodeAnchor] = useState(null),
-    [isDragging, setIsDragging] = useState(false),
-    [isEditing, setIsEditing] = useState(false),
-    [editLabel, setEditLabel] = useState(""),
-    [showShapes, setShowShapes] = useState(false),
-    [showColors, setShowColors] = useState(false),
-    [showConnect, setShowConnect] = useState(false),
-    [showZoomMenu, setShowZoomMenu] = useState(false),
-    [marquee, setMarquee] = useState(null),
-    [batchSelected, setBatchSelected] = useState(null),
-    [showBatchColors, setShowBatchColors] = useState(false),
-    [connectDrag, setConnectDrag] = useState(null),
-    [searchOpen, setSearchOpen] = useState(false),
-    [searchQuery, setSearchQuery] = useState(""),
-    [searchIndex, setSearchIndex] = useState(0),
-    [minimapViewport, setMinimapViewport] = useState(null),
-    [isSimulating, setIsSimulating] = useState(false),
-    [showStencilsDrawer, setShowStencilsDrawer] = useState(false),
-    [showMetricsModal, setShowMetricsModal] = useState(false),
-    [showAdrModal, setShowAdrModal] = useState(false),
-    [showDiffModal, setShowDiffModal] = useState(false),
-    [showFinOps, setShowFinOps] = useState(false),
-    [activeLens, setActiveLens] = useState("standard"),
-    [selectedAdrId, setSelectedAdrId] = useState(null),
-    [showIacModal, setShowIacModal] = useState(false),
-    [showArbModal, setShowArbModal] = useState(false),
-    [showStoryboard, setShowStoryboard] = useState(false),
-    [showMoreTools, setShowMoreTools] = useState(false);
+  const {
+    camera,
+    setCamera,
+    fitCamera,
+    tool,
+    setTool,
+    wheelMode,
+    setWheelMode,
+    minimap,
+    setMinimap,
+    activeLens,
+    setActiveLens,
+    isSimulating,
+    setIsSimulating,
+    selectedId,
+    setSelectedId,
+    isEditing,
+    setIsEditing,
+    editLabel,
+    setEditLabel,
+    showShapes,
+    setShowShapes,
+    showColors,
+    setShowColors,
+    showConnect,
+    setShowConnect,
+    showZoomMenu,
+    setShowZoomMenu,
+    showBatchColors,
+    setShowBatchColors,
+    showMetricsModal,
+    setShowMetricsModal,
+    showAdrModal,
+    setShowAdrModal,
+    showDiffModal,
+    setShowDiffModal,
+    showFinOps,
+    setShowFinOps,
+    showIacModal,
+    setShowIacModal,
+    showArbModal,
+    setShowArbModal,
+    showStencilsDrawer,
+    setShowStencilsDrawer,
+    showStoryboard,
+    setShowStoryboard,
+    showMoreTools,
+    setShowMoreTools,
+    searchOpen,
+    setSearchOpen,
+    searchQuery,
+    setSearchQuery,
+    searchIndex,
+    setSearchIndex,
+    nodeAnchorX,
+    nodeAnchorY,
+    nodeAnchorElLeft,
+    nodeAnchorElTop,
+    nodeAnchorElWidth,
+    nodeAnchorElHeight,
+    setNodeAnchor,
+    batchSelectedIds,
+    setBatchSelectedIds,
+    marqueeLeft,
+    marqueeTop,
+    marqueeWidth,
+    marqueeHeight,
+    setMarquee,
+    connectDrag,
+    setConnectDrag,
+    laserX,
+    laserY,
+    setLaser,
+    thumbnail,
+    setThumbnail,
+    canvasSizeW,
+    canvasSizeH,
+    setCanvasSize,
+    spacePanning,
+    setSpacePanning,
+    isDragging,
+    setIsDragging,
+  } = useCanvasStore();
+
+  const nodeAnchor =
+    nodeAnchorX || nodeAnchorY || nodeAnchorElWidth || nodeAnchorElHeight
+      ? {
+          x: nodeAnchorX,
+          y: nodeAnchorY,
+          elLeft: nodeAnchorElLeft,
+          elTop: nodeAnchorElTop,
+          elWidth: nodeAnchorElWidth,
+          elHeight: nodeAnchorElHeight,
+        }
+      : null;
+
+  const marquee =
+    marqueeLeft || marqueeTop || marqueeWidth || marqueeHeight
+      ? { left: marqueeLeft, top: marqueeTop, width: marqueeWidth, height: marqueeHeight }
+      : null;
+
+  const laser = laserX !== null || laserY !== null ? { x: laserX, y: laserY } : null;
+
+  const size = { w: canvasSizeW, h: canvasSizeH };
+
+  const position = { ...camera };
 
   const [mobileViewport, setMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -185,6 +257,7 @@ export default function CanvasStage({
     onChangeShape,
     onStyleNode,
     onConnectNodes,
+    onRepointEdge,
     onBatchSelect,
     onBatchStyleNodes,
     onWrapInSubgraph,
@@ -209,6 +282,7 @@ export default function CanvasStage({
     onChangeShape,
     onStyleNode,
     onConnectNodes,
+    onRepointEdge,
     onBatchSelect,
     onBatchStyleNodes,
     onWrapInSubgraph,
@@ -354,8 +428,8 @@ export default function CanvasStage({
     const dx = expectedCx - (drawn.left + drawn.right) / 2;
     const dy = expectedCy - (drawn.top + drawn.bottom) / 2;
     if (Math.abs(dx) <= MIN_NOTICEABLE_SHIFT && Math.abs(dy) <= MIN_NOTICEABLE_SHIFT) return;
-    camera.current.x += dx;
-    camera.current.y += dy;
+    camera.x += dx;
+    camera.y += dy;
     apply();
   };
 
@@ -524,19 +598,19 @@ export default function CanvasStage({
   // event queued a re-render of this whole component, which is what made zooming
   // feel steppy on large diagrams.
   const apply = () => {
-    const cam = camera.current;
+    const cam = camera;
     if (canvasRef.current)
       canvasRef.current.style.transform = `translate3d(${cam.x}px,${cam.y}px,0) scale(${cam.z})`;
     if (stageRef.current)
       stageRef.current.style.backgroundPosition = `${cam.x}px ${cam.y}px`;
     if (rafRef.current) return;
     if (typeof requestAnimationFrame !== "function") {
-      setPosition({ ...camera.current });
+      setCamera({ ...camera });
       return;
     }
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = 0;
-      setPosition({ ...camera.current });
+      setCamera({ ...camera });
     });
   };
 
@@ -544,7 +618,7 @@ export default function CanvasStage({
     // Prime the imperatively-managed grid background to match the initial camera,
     // and drop any pending frame on unmount so a gesture cannot set state after it.
     if (stageRef.current)
-      stageRef.current.style.backgroundPosition = `${camera.current.x}px ${camera.current.y}px`;
+      stageRef.current.style.backgroundPosition = `${camera.x}px ${camera.y}px`;
     return () => {
       if (rafRef.current && typeof cancelAnimationFrame === "function") {
         cancelAnimationFrame(rafRef.current);
@@ -561,7 +635,7 @@ export default function CanvasStage({
     if (s.clientWidth < 100 || s.clientHeight < 100) return false;
     const b = getContentBounds();
     contentBoundsRef.current = b;
-    setSize({ w: b.w, h: b.h });
+    setCanvasSize(b.w, b.h);
     const paddingX = Math.min(96, Math.max(36, s.clientWidth * 0.08));
     const topInset = 54;
     const bottomInset = 64;
@@ -579,11 +653,11 @@ export default function CanvasStage({
     );
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
-    camera.current = {
+    setCamera({
       x: s.clientWidth / 2 - cx * z,
       y: topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * z,
       z,
-    };
+    });
     apply();
     nudgeToDrawnContent(s, topInset, bottomInset);
     return true;
@@ -597,8 +671,10 @@ export default function CanvasStage({
     const cy = b.y + b.h / 2;
     const topInset = 54;
     const bottomInset = 64;
-    camera.current.x = s.clientWidth / 2 - cx * camera.current.z;
-    camera.current.y = topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * camera.current.z;
+    setCamera({
+      x: s.clientWidth / 2 - cx * camera.z,
+      y: topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * camera.z,
+    });
     apply();
   };
   const zoomBy = (factor, cx, cy) => {
@@ -607,17 +683,17 @@ export default function CanvasStage({
     autoFit.current = false;
     const ax = cx ?? s.clientWidth / 2,
       ay = cy ?? s.clientHeight / 2;
-    const old = camera.current;
+    const old = camera;
     const z = Math.max(0.04, Math.min(6, old.z * factor));
-    camera.current = {
+    setCamera({
       x: ax - ((ax - old.x) * z) / old.z,
       y: ay - ((ay - old.y) * z) / old.z,
       z,
-    };
+    });
     apply();
   };
   const reset = () => {
-    camera.current.z = 1;
+    setCamera({ z: 1 });
     center();
   };
   useImperativeHandle(ref, () => ({
@@ -652,7 +728,7 @@ export default function CanvasStage({
     // would cost more than the render it replaced.
     const bounds = getContentBounds();
     contentBoundsRef.current = bounds;
-    setSize((prev) => (prev.w === bounds.w && prev.h === bounds.h ? prev : { w: bounds.w, h: bounds.h }));
+    setCanvasSize((prev) => (prev.w === bounds.w && prev.h === bounds.h ? prev : { w: bounds.w, h: bounds.h }));
     setThumbnail((prev) => {
       const next = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
       return prev === next ? prev : next;
@@ -675,7 +751,7 @@ export default function CanvasStage({
     svg.querySelectorAll(".is-selected").forEach((el) => {
       el.classList.remove("is-selected");
     });
-    if (selected?.id) {
+    if (selected.id) {
       let target = null;
       try {
         target = svg.querySelector(`[id="${CSS.escape(selected.id)}"]`);
@@ -696,7 +772,7 @@ export default function CanvasStage({
 
   useEffect(() => {
     if (selected) {
-      setEditLabel(selected.label || selected.id);
+      setEditLabel(selected.id || selected.id);
     } else {
       setIsEditing(false);
       setShowShapes(false);
@@ -705,13 +781,13 @@ export default function CanvasStage({
   }, [selected]);
 
   const updateNodeAnchor = () => {
-    if (!selected?.id || !stageRef.current) {
+    if (!selected.id || !stageRef.current) {
       setNodeAnchor(null);
       return;
     }
     const svg = containerRef.current?.querySelector("svg");
     let target = svg?.querySelector(".is-selected");
-    if (!target && selected?.id) {
+    if (!target && selected.id) {
       try {
         target = svg?.querySelector(`[id="${CSS.escape(selected.id)}"]`);
       } catch {}
@@ -775,10 +851,10 @@ export default function CanvasStage({
     const stageW = stageRef.current.clientWidth || 1000;
     const stageH = stageRef.current.clientHeight || 700;
 
-    const viewX = (0 - camera.current.x) / camera.current.z;
-    const viewY = (0 - camera.current.y) / camera.current.z;
-    const viewW = stageW / camera.current.z;
-    const viewH = stageH / camera.current.z;
+    const viewX = (0 - camera.x) / camera.z;
+    const viewY = (0 - camera.y) / camera.z;
+    const viewW = stageW / camera.z;
+    const viewH = stageH / camera.z;
 
     const left = Math.max(0, Math.min(95, ((viewX - b.x) / totalW) * 100));
     const top = Math.max(0, Math.min(95, ((viewY - b.y) / totalH) * 100));
@@ -811,8 +887,8 @@ export default function CanvasStage({
       const targetDiagramX = b.x + (clickX / rect.width) * b.w;
       const targetDiagramY = b.y + (clickY / rect.height) * b.h;
       if (stageRef.current) {
-        camera.current.x = stageRef.current.clientWidth / 2 - targetDiagramX * camera.current.z;
-        camera.current.y = stageRef.current.clientHeight / 2 - targetDiagramY * camera.current.z;
+        camera.x = stageRef.current.clientWidth / 2 - targetDiagramX * camera.z;
+        camera.y = stageRef.current.clientHeight / 2 - targetDiagramY * camera.z;
         apply();
       }
     };
@@ -827,19 +903,22 @@ export default function CanvasStage({
     window.addEventListener("pointercancel", onUp);
   };
 
-  const startConnectDrag = (e, portSide) => {
+  const startConnectDrag = (e, portSide, fromIdOverride) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!selected?.id || !stageRef.current) return;
+    if (!stageRef.current) return;
+    const fromId = fromIdOverride || selected.id;
+    if (!fromId) return;
     const stageRect = stageRef.current.getBoundingClientRect();
     const startX = e.clientX - stageRect.left;
     const startY = e.clientY - stageRect.top;
     const dragData = {
-      fromId: selected.id,
+      fromId,
       startX,
       startY,
       currentX: startX,
       currentY: startY,
+      mode: "connect",
     };
     connectDragRef.current = dragData;
     setConnectDrag(dragData);
@@ -890,14 +969,25 @@ export default function CanvasStage({
       window.removeEventListener("pointercancel", onPointerUp);
       clearHighlight();
       if (!connectDragRef.current) return;
-      const fromId = connectDragRef.current.fromId;
+      const { fromId: dragFromId, mode } = connectDragRef.current;
       setConnectDrag(null);
       connectDragRef.current = null;
+
+      if (mode === "repoint") {
+        const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
+        if (targetEl && targetEl.id) {
+          const cleanToId = flowchartNodeId(targetEl.id);
+          if (cleanToId && cleanToId !== dragFromId) {
+            callbacks.current.onRepointEdge?.(dragFromId, cleanToId);
+          }
+        }
+        return;
+      }
 
       const targetEl = document.elementFromPoint(evt.clientX, evt.clientY)?.closest("g.node, g.actor, g.entity, g.cluster");
       if (targetEl && targetEl.id) {
         let cleanTargetId = flowchartNodeId(targetEl.id);
-        let cleanFromId = flowchartNodeId(fromId);
+        let cleanFromId = flowchartNodeId(dragFromId);
         if (cleanTargetId !== cleanFromId) {
           callbacks.current.onConnectNodes?.(cleanFromId, cleanTargetId);
         }
@@ -942,11 +1032,11 @@ export default function CanvasStage({
     if (target) {
       const b = target.getBoundingClientRect();
       const stageRect = stageRef.current.getBoundingClientRect();
-      const nodeCenterX = (b.left + b.width / 2 - stageRect.left - camera.current.x) / camera.current.z;
-      const nodeCenterY = (b.top + b.height / 2 - stageRect.top - camera.current.y) / camera.current.z;
+      const nodeCenterX = (b.left + b.width / 2 - stageRect.left - camera.x) / camera.z;
+      const nodeCenterY = (b.top + b.height / 2 - stageRect.top - camera.y) / camera.z;
 
-      camera.current.x = stageRef.current.clientWidth / 2 - nodeCenterX * camera.current.z;
-      camera.current.y = stageRef.current.clientHeight / 2 - nodeCenterY * camera.current.z;
+      camera.x = stageRef.current.clientWidth / 2 - nodeCenterX * camera.z;
+      camera.y = stageRef.current.clientHeight / 2 - nodeCenterY * camera.z;
       apply();
 
       callbacks.current.onSelect?.({ id: node.id, label: node.label });
@@ -973,6 +1063,42 @@ export default function CanvasStage({
       stage.setPointerCapture(e.pointerId);
       moved = false;
       setIsDragging(true);
+
+      // Clicking an existing edge enters repoint mode: drag the edge end to another node.
+      const edgeTarget = globalThis.document
+        ?.elementFromPoint(e.clientX, e.clientY)
+        ?.closest("g.edgePath, g.edgePaths, g.edgeLabel, path.path");
+      if (edgeTarget && !e.shiftKey && !spaceHeld.current) {
+        const edgeGroup = edgeTarget.closest("g.edgePath") || edgeTarget;
+        const cls =
+          (typeof edgeGroup.className === "string"
+            ? edgeGroup.className
+            : edgeGroup.className?.baseVal) || "";
+        const match =
+          cls.match(/\bLS-([^\s]+)\s+LE-([^\s]+)\b/) ||
+          edgeGroup.id?.match(/^L[-_]([^-]+)[-_]([^-]+)/);
+        if (match) {
+          repointRef.current = {
+            from: match[1],
+            to: match[2],
+            id: edgeGroup.id,
+          };
+          edgeGroup.classList.add("is-repointing");
+          setConnectDrag({
+            fromId: match[1],
+            startX: e.clientX,
+            startY: e.clientY,
+            currentX: e.clientX,
+            currentY: e.clientY,
+            mode: "repoint",
+          });
+          // Do not pan; the up handler will finalize the repoint.
+          pointers.delete(e.pointerId);
+          stage.releasePointerCapture(e.pointerId);
+          setIsDragging(false);
+          return;
+        }
+      }
 
       // Shift + Drag in Pointer mode triggers Marquee box selection
       if (e.shiftKey && callbacks.current.tool === "pointer" && !spaceHeld.current) {
@@ -1001,8 +1127,8 @@ export default function CanvasStage({
         drag = {
           x: e.clientX,
           y: e.clientY,
-          originX: camera.current.x,
-          originY: camera.current.y,
+          originX: camera.x,
+          originY: camera.y,
         };
     };
     const move = (e) => {
@@ -1038,13 +1164,36 @@ export default function CanvasStage({
       } else if (drag) {
         if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4)
           moved = true;
-        camera.current.x = drag.originX + e.clientX - drag.x;
-        camera.current.y = drag.originY + e.clientY - drag.y;
+        camera.x = drag.originX + e.clientX - drag.x;
+        camera.y = drag.originY + e.clientY - drag.y;
         apply();
       }
     };
     const up = (e) => {
       setIsDragging(false);
+
+      // Finalize edge repoint: drag edge end onto another node to change its target.
+      if (repointRef.current) {
+        const { from, to: oldTo, id: edgeId } = repointRef.current;
+        repointRef.current = null;
+        document
+          .querySelectorAll(".is-repointing")
+          .forEach((el) => el.classList.remove("is-repointing"));
+        setConnectDrag(null);
+        connectDragRef.current = null;
+        const targetEl = globalThis.document
+          .elementFromPoint(e.clientX, e.clientY)
+          ?.closest("g.node, g.actor, g.entity, g.cluster");
+        if (targetEl && targetEl.id) {
+          const cleanToId = flowchartNodeId(targetEl.id);
+          if (cleanToId && cleanToId !== from) {
+            callbacks.current.onRepointEdge?.(edgeId, from, oldTo, cleanToId);
+          }
+        }
+        pointers.delete(e.pointerId);
+        stage.releasePointerCapture(e.pointerId);
+        return;
+      }
 
       // Finish Marquee selection if active
       if (marqueeRef.current) {
@@ -1078,9 +1227,9 @@ export default function CanvasStage({
             }
             if (foundNodes.length === 1) {
               callbacks.current.onSelect?.(foundNodes[0]);
-              setBatchSelected(null);
+              setBatchSelectedIds([]);
             } else if (foundNodes.length > 1) {
-              setBatchSelected(foundNodes);
+              setBatchSelectedIds(foundNodes.map((n) => n.id));
               callbacks.current.onSelect?.(null);
               // highlight all found nodes with .is-selected
               svg.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
@@ -1091,7 +1240,7 @@ export default function CanvasStage({
               callbacks.current.onBatchSelect?.(foundNodes);
             } else {
               callbacks.current.onSelect?.(null);
-              setBatchSelected(null);
+              setBatchSelectedIds([]);
             }
           }
         }
@@ -1130,11 +1279,11 @@ export default function CanvasStage({
               id: node.id,
               label: label || node.id,
             });
-            setBatchSelected(null);
+            setBatchSelectedIds([]);
           } else {
             // Clicking empty canvas deselects active node & batch
             callbacks.current.onSelect?.(null);
-            setBatchSelected(null);
+            setBatchSelectedIds([]);
           }
         }
       }
@@ -1183,8 +1332,8 @@ export default function CanvasStage({
           e.clientY - rect.top,
         );
       } else {
-        camera.current.x -= e.shiftKey ? e.deltaY : e.deltaX;
-        camera.current.y -= e.shiftKey ? 0 : e.deltaY;
+        camera.x -= e.shiftKey ? e.deltaY : e.deltaX;
+        camera.y -= e.shiftKey ? 0 : e.deltaY;
         apply();
       }
     };
@@ -1248,7 +1397,7 @@ export default function CanvasStage({
         setShowColors(false);
         setShowZoomMenu(false);
         setSearchOpen(false);
-        setBatchSelected(null);
+        setBatchSelectedIds([]);
         callbacks.current.onSelect?.(null);
         return;
       }
@@ -1274,9 +1423,9 @@ export default function CanvasStage({
       else if (key === "-") zoomBy(0.8);
       else if (key.startsWith("arrow")) {
         const delta = e.shiftKey ? 100 : 30;
-        camera.current.x +=
+        camera.x +=
           key === "arrowleft" ? delta : key === "arrowright" ? -delta : 0;
-        camera.current.y +=
+        camera.y +=
           key === "arrowup" ? delta : key === "arrowdown" ? -delta : 0;
         apply();
       }
@@ -1382,7 +1531,7 @@ export default function CanvasStage({
                 : ""
         }`}
         style={{ touchAction: "none" }}
-        onPointerLeave={() => setLaser(null)}
+        onPointerLeave={() => setLaser(null, null)}
       >
         <div
           ref={canvasRef}
@@ -1625,7 +1774,7 @@ export default function CanvasStage({
               const title = prompt("Enter Group / Subgraph Title:", "Module");
               if (title !== null) {
                 callbacks.current.onWrapInSubgraph?.(batchSelected.map((n) => n.id), title || "Group");
-                setBatchSelected(null);
+                setBatchSelectedIds([]);
               }
             }}
             className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 font-medium text-foreground hover:bg-accent transition"
@@ -1638,7 +1787,7 @@ export default function CanvasStage({
           <button
             onClick={() => {
               callbacks.current.onBatchDuplicateNodes?.(batchSelected.map((n) => n.id));
-              setBatchSelected(null);
+              setBatchSelectedIds([]);
             }}
             className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 font-medium text-foreground hover:bg-accent transition"
             title="Duplicate selected nodes"
@@ -1651,7 +1800,7 @@ export default function CanvasStage({
             onClick={() => {
               if (confirm(`Delete ${batchSelected.length} selected nodes?`)) {
                 callbacks.current.onBatchDeleteNodes?.(batchSelected.map((n) => n.id));
-                setBatchSelected(null);
+                setBatchSelectedIds([]);
               }
             }}
             className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 font-medium text-rose-400 hover:bg-rose-500/20 transition"
@@ -1663,7 +1812,7 @@ export default function CanvasStage({
 
           <button
             onClick={() => {
-              setBatchSelected(null);
+              setBatchSelectedIds([]);
               callbacks.current.onSelect?.(null);
             }}
             className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition ml-1"
@@ -1712,7 +1861,7 @@ export default function CanvasStage({
                   if (e.key === "Escape") {
                     e.stopPropagation();
                     setIsEditing(false);
-                    setEditLabel(selected.label || selected.id);
+                    setEditLabel(selected.id || selected.id);
                   }
                 }}
                 className="h-6 rounded border border-primary/50 bg-background/95 px-2 py-0.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-36 font-medium"
@@ -1731,7 +1880,7 @@ export default function CanvasStage({
                 type="button"
                 onClick={() => {
                   setIsEditing(false);
-                  setEditLabel(selected.label || selected.id);
+                  setEditLabel(selected.id || selected.id);
                 }}
                 className="rounded p-1 text-muted-foreground hover:text-foreground transition"
                 title="Cancel (Esc)"
@@ -1749,14 +1898,14 @@ export default function CanvasStage({
               title="Click or double-click to rename"
             >
               <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-              <span className="truncate">{selected.label || selected.id}</span>
+              <span className="truncate">{selected.id || selected.id}</span>
               <Pencil className="size-2.5 opacity-60 ml-0.5" />
             </button>
           )}
 
           {/* C4 Drill Down Button */}
           {(() => {
-            const rawId = selected?.id ? flowchartNodeId(selected.id) : null;
+            const rawId = selected.id ? flowchartNodeId(selected.id) : null;
             const targetDocId = rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
             if (!targetDocId) return null;
             return (
@@ -1885,7 +2034,7 @@ export default function CanvasStage({
                   {(() => {
                     const svg = containerRef.current?.querySelector("svg");
                     const otherNodes = [];
-                    if (svg && selected?.id) {
+                    if (svg && selected.id) {
                       svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor").forEach((el) => {
                         if (el.id && el.id !== selected.id) {
                           const l = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim();
@@ -1961,7 +2110,7 @@ export default function CanvasStage({
               ? "bg-rose-600 shadow-[0_0_15px_4px_#e11d48]"
               : "bg-rose-400 shadow-[0_0_15px_4px_#fb7185]"
           }`}
-          style={{ left: laser.x - 6, top: laser.y - 6 }}
+          style={{ left: laserX - 6, top: laserY - 6 }}
         />
       )}
       {minimap && thumbnail && (
@@ -2151,7 +2300,7 @@ export default function CanvasStage({
                 <button
                   key={level}
                   onClick={() => {
-                    camera.current.z = level;
+                    camera.z = level;
                     apply();
                     setShowZoomMenu(false);
                   }}
@@ -2348,7 +2497,7 @@ export default function CanvasStage({
             callbacks.current.onDrillDown?.(nodeId);
           }}
           drillDownDocId={(() => {
-            const rawId = selected?.id ? flowchartNodeId(selected.id) : null;
+            const rawId = selected.id ? flowchartNodeId(selected.id) : null;
             return rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
           })()}
           isFlowchart={documentFormat === "mermaid"}
@@ -2433,7 +2582,3 @@ export function GridToggle({ grid, onChange }) {
     </Button>
   );
 }
-// phase 101-200: type fixes applied
-// Canvas fixes: selection, drag, edge, zoom, grid, render, events, state, mobile
-Performance fix: memoized expensive calculations
-// phase 901-1000: final verification complete

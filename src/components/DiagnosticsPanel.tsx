@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { fixAnySyntax } from "../utils/universal-fixer.js";
-import { explainError } from "../utils/syntax-error-db.js";
+import { fixAnySyntax } from "../utils/universalFixer.ts";
+import { explainError } from "../utils/syntaxErrorDB.ts";
 
 function DiagnosticExplanationList({ explanations }) {
   return (

@@ -23,8 +23,8 @@ import {
   EmptyState,
   Button,
   Input,
-} from "../components/ui.jsx";
-import { DIAGRAM_TEMPLATES } from "../components/templates.js";
+} from "../components/ui.tsx";
+import { DIAGRAM_TEMPLATES } from "../components/templates.ts";
 const icons = {
   er: Database,
   sequence: GitBranch,

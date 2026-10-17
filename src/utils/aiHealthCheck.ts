@@ -4,8 +4,8 @@
  * and maintains resilient graceful degradation to offline deterministic AST synthesis.
  */
 
-import { fetchWithRetry } from "./network-retry.js";
-import { describeToDiagram } from "./importers/describe-to-diagram.js";
+import { fetchWithRetry } from "./networkRetry.ts";
+import { describeToDiagram } from "./importers/describeToDiagram.ts";
 
 const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 const HEALTH_TIMEOUT_MS = 2500;

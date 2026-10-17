@@ -27,12 +27,12 @@ import {
   Cloud,
 } from "lucide-react";
 import { Button, Badge, Card, CardContent } from "../components/ui.tsx";
-import { FORMATS } from "../lib/formats";
-import { DIAGRAM_TEMPLATES } from "../components/templates.js";
-import { FAQS } from "../data/content.js";
-import { useDocumentPreview } from "../hooks/useDocumentPreview.js";
-import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/app-theme.js";
-import { DEMOS, QUICK_STARTS, FEATURES, STEPS } from "../data/landing-data.js";
+import { FORMATS } from "../lib/formats.ts";
+import { DIAGRAM_TEMPLATES } from "../components/templates.ts";
+import { FAQS } from "../data/content.ts";
+import { useDocumentPreview } from "../hooks/useDocumentPreview.ts";
+import { DIAGRAM_THEME_FOR, getStoredTheme, resolveTheme } from "../lib/appTheme.ts";
+import { DEMOS, QUICK_STARTS, FEATURES, STEPS } from "../data/landingdata.ts";
 
 const ROLES = [
   { role: "Product Managers", icon: Target, badge: "PM & Strategy", desc: "User story maps, strategic OKRs, conversion funnels, and feature milestone tracking.", templateId: "pm-story-mapping" },

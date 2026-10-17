@@ -1,5 +1,5 @@
-import { FORMATS, getFormat, FILE_ACCEPT } from "./formats-config.js";
-export { FORMATS, getFormat, FILE_ACCEPT } from "./formats-config.js";
+import { FORMATS, getFormat, FILE_ACCEPT } from "./formatsConfig.ts";
+export { FORMATS, getFormat, FILE_ACCEPT } from "./formatsConfig.ts";
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 
 export function detectFormat(name = "", source = "") {
@@ -108,89 +108,89 @@ export async function compileDocument(document) {
       break;
     case "plantuml":
       code = (
-        await import("../utils/importers/plantuml.js")
+        await import("../utils/importers/plantuml.ts")
       ).parsePlantUmlToMermaid(source);
       break;
     case "d2":
-      code = (await import("../utils/importers/d2.js")).parseD2ToMermaid(
+      code = (await import("../utils/importers/d2.ts")).parseD2ToMermaid(
         source,
       );
       break;
     case "sql":
       code = (
-        await import("../utils/importers/sql-ddl.js")
+        await import("../utils/importers/sqlddl.ts")
       ).parseSqlDdlToMermaid(source);
       break;
     case "dbml":
-      code = (await import("../utils/importers/dbml.js")).parseDbmlToMermaid(source);
+      code = (await import("../utils/importers/dbml.ts")).parseDbmlToMermaid(source);
       break;
     case "prisma":
-      code = (await import("../utils/importers/prisma.js")).parsePrismaToMermaid(source);
+      code = (await import("../utils/importers/prisma.ts")).parsePrismaToMermaid(source);
       break;
     case "protobuf":
-      code = (await import("../utils/importers/protobuf.js")).parseProtoToMermaid(source);
+      code = (await import("../utils/importers/protobuf.ts")).parseProtoToMermaid(source);
       break;
     case "jsonschema":
-      code = (await import("../utils/importers/json-schema.js")).parseJsonSchemaToMermaid(source);
+      code = (await import("../utils/importers/jsonschema.ts")).parseJsonSchemaToMermaid(source);
       break;
     case "graphql":
       code = (
-        await import("../utils/importers/graphql.js")
+        await import("../utils/importers/graphql.ts")
       ).parseGraphQLToMermaid(source);
       break;
     case "openapi":
       code = (
-        await import("../utils/importers/openapi.js")
+        await import("../utils/importers/openapi.ts")
       ).parseOpenApiToMermaid(await specification(source));
       break;
     case "asyncapi":
       code = (
-        await import("../utils/importers/asyncapi.js")
+        await import("../utils/importers/asyncapi.ts")
       ).parseAsyncApiToMermaid(await specification(source));
       break;
     case "yaml":
-      code = (await import("../utils/importers/yaml-generic.js")).parseYamlGenericToMermaid(source);
+      code = (await import("../utils/importers/yamlgeneric.ts")).parseYamlGenericToMermaid(source);
       break;
     case "erd":
-      code = (await import("../utils/importers/yaml-generic.js")).parseErdTextToMermaid(source);
+      code = (await import("../utils/importers/yamlgeneric.ts")).parseErdTextToMermaid(source);
       break;
     case "xmi":
-      code = (await import("../utils/importers/xmi.js")).parseXmiToMermaid(source);
+      code = (await import("../utils/importers/xmi.ts")).parseXmiToMermaid(source);
       break;
     case "sysml":
-      code = (await import("../utils/importers/sysml.js")).parseSysmlToMermaid(source);
+      code = (await import("../utils/importers/sysml.ts")).parseSysmlToMermaid(source);
       break;
     case "archimate":
-      code = (await import("../utils/importers/archimate.js")).parseArchiMateToMermaid(source);
+      code = (await import("../utils/importers/archimate.ts")).parseArchiMateToMermaid(source);
       break;
     case "dmn":
-      code = (await import("../utils/importers/dmn.js")).parseDmnToMermaid(source);
+      code = (await import("../utils/importers/dmn.ts")).parseDmnToMermaid(source);
       break;
     case "drawio":
       code = (
-        await import("../utils/importers/drawio.js")
+        await import("../utils/importers/drawio.ts")
       ).parseDrawioToMermaid(await expandDrawio(source));
       break;
     case "bpmn":
-      code = (await import("../utils/importers/bpmn.js")).parseBpmnToMermaid(
+      code = (await import("../utils/importers/bpmn.ts")).parseBpmnToMermaid(
         source,
       );
       break;
     case "c4":
-      code = (await import("../utils/importers/c4-dsl.js")).parseC4DslToMermaid(
+      code = (await import("../utils/importers/c4dsl.ts")).parseC4DslToMermaid(
         source,
       );
       break;
     case "terraform":
       code = (
-        await import("../utils/importers/terraform.js")
+        await import("../utils/importers/terraform.ts")
       ).parseTerraformToMermaid(source);
       break;
     case "markdown": {
       const fence = source.match(/```mermaid\s*\n([\s\S]*?)```/i);
       code = fence
         ? fence[1]
-        : (await import("../utils/importers/markdown-outline.js")).parseOutline(
+        : (await import("../utils/importers/markdownoutline.ts")).parseOutline(
             source,
             "mindmap",
           );
@@ -198,62 +198,62 @@ export async function compileDocument(document) {
     }
     case "csv":
       code = (
-        await import("../utils/importers/csv-table.js")
+        await import("../utils/importers/csvtable.ts")
       ).parseCsvToMermaid(source);
       break;
     case "visio":
-      code = (await import("../utils/importers/visio-excalidraw.js")).parseVisioToMermaid(source);
+      code = (await import("../utils/importers/visioExcalidraw.ts")).parseVisioToMermaid(source);
       break;
     case "gliffy":
-      code = (await import("../utils/importers/visio-excalidraw.js")).parseGliffyToMermaid(source);
+      code = (await import("../utils/importers/visioExcalidraw.ts")).parseGliffyToMermaid(source);
       break;
     case "excalidraw":
-      code = (await import("../utils/importers/visio-excalidraw.js")).parseExcalidrawToMermaid(source);
+      code = (await import("../utils/importers/visioExcalidraw.ts")).parseExcalidrawToMermaid(source);
       break;
     case "freemind":
     case "opml":
       code = (
-        await import("../utils/importers/freemind.js")
+        await import("../utils/importers/freemind.ts")
       ).parseFreeMindOrOpmlToMermaid(source);
       break;
     case "code":
       code = (
-        await import("../utils/importers/code-to-uml.js")
+        await import("../utils/importers/codeToUML.ts")
       ).parseCodeToClassDiagram(source);
       break;
     case "staruml":
       code = (
-        await import("../utils/importers/staruml.js")
+        await import("../utils/importers/staruml.ts")
       ).parseStarUmlToMermaid(source);
       break;
     case "lucid":
       code = (
-        await import("../utils/importers/lucidchart.js")
+        await import("../utils/importers/lucidchart.ts")
       ).parseLucidchartToMermaid(source);
       break;
     case "illustrator":
       code = (
-        await import("../utils/importers/illustrator.js")
+        await import("../utils/importers/illustrator.ts")
       ).parseIllustratorToMermaid(source);
       break;
     case "figma":
       code = (
-        await import("../utils/importers/figma.js")
+        await import("../utils/importers/figma.ts")
       ).parseFigmaToMermaid(source);
       break;
     case "omnigraffle":
       code = (
-        await import("../utils/importers/omnigraffle.js")
+        await import("../utils/importers/omnigraffle.ts")
       ).parseOmniGraffleToMermaid(source);
       break;
     case "miro":
       code = (
-        await import("../utils/importers/miro.js")
+        await import("../utils/importers/miro.ts")
       ).parseMiroToMermaid(source);
       break;
     case "geojson":
       code = (
-        await import("../utils/importers/geojson.js")
+        await import("../utils/importers/geojson.ts")
       ).parseGeoJsonToMermaid(source);
       break;
     default:
@@ -280,7 +280,7 @@ export async function importDocument(file) {
     throw new Error(`${file.name} exceeds the 15 MB per-file limit.`);
   if (file.name.toLowerCase().endsWith(".xmind")) {
     const buffer = await file.arrayBuffer();
-    const { parseXmindToMermaid } = await import("../utils/importers/xmind.js");
+    const { parseXmindToMermaid } = await import("../utils/importers/xmind.ts");
     const parsed = await parseXmindToMermaid(buffer);
     const bytes = new Uint8Array(buffer);
     let binary = "";
@@ -295,7 +295,7 @@ export async function importDocument(file) {
   }
   if (file.name.toLowerCase().endsWith(".svg")) {
     const svgText = await file.text();
-    const { extractSourceFromSvg } = await import("../utils/importers/svg-metadata.js");
+    const { extractSourceFromSvg } = await import("../utils/importers/svgmetadata.ts");
     const extracted = extractSourceFromSvg(svgText);
     if (!extracted) {
       throw new Error(
@@ -311,7 +311,7 @@ export async function importDocument(file) {
   }
   if (/\.(mvt|pbf|shp|dbf)$/i.test(file.name)) {
     const buffer = await file.arrayBuffer();
-    const { parseGeoJsonToMermaid } = await import("../utils/importers/geojson.js");
+    const { parseGeoJsonToMermaid } = await import("../utils/importers/geojson.ts");
     const mermaidCode = parseGeoJsonToMermaid(buffer, file.name);
     return {
       name: file.name,

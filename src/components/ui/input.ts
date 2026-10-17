@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { cn } from '../../lib/utils.js';
+import { cn } from '../../lib/utils.ts';
 
 /**
  * Standard shadcn/ui Input Variants using Class Variance Authority (CVA).

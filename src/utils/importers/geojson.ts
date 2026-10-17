@@ -3,16 +3,16 @@
  * Converts GIS geometries, FeatureCollections, topological routes, Vector Tile schemas,
  * and spatial pipeline architectures into structured, visual Mermaid diagrams.
  */
-import { parseBinaryGeospatialToMermaid } from "./geospatial-binary.js";
+import { parseBinaryGeospatialToMermaid } from "./geospatialBinary.ts";
 import {
   parseVectorTileProtoToMermaid,
   parseGeospatialDslToMermaid,
   parseWktToMermaid,
-} from "./geospatial-dsl.js";
-import { getGeomIcon, escapeLabel } from "./geospatial-helpers.js";
+} from "./geospatialdsl.ts";
+import { getGeomIcon, escapeLabel } from "./geospatialhelpers.ts";
 
-export { parseBinaryGeospatialToMermaid } from "./geospatial-binary.js";
-export { parseWktToMermaid } from "./geospatial-dsl.js";
+export { parseBinaryGeospatialToMermaid } from "./geospatialBinary.ts";
+export { parseWktToMermaid } from "./geospatialdsl.ts";
 
 export function parseGeoJsonToMermaid(input, filename = "") {
   if (!input) {

@@ -1,8 +1,8 @@
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Network, Menu, X, Code2, Search, ArrowUpRight } from "lucide-react";
-import CommandPalette from "./CommandPalette.jsx";
-import ThemeSwitcher from "./ThemeSwitcher.jsx";
+import CommandPalette from "./CommandPalette.tsx";
+import ThemeSwitcher from "./ThemeSwitcher.tsx";
 
 const NAV_LINKS = [
   { to: "/studio", label: "Studio" },
