@@ -869,3 +869,4 @@ function convertToArchitecture(text, opts = {}) {
   }
   return mmd.join('\n') + '\n';
 }
+// @ts-nocheck

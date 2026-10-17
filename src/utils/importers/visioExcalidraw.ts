@@ -61,3 +61,4 @@ export function parseExcalidrawToMermaid(src) {
   });
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

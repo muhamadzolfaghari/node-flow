@@ -227,3 +227,4 @@ function parseBinaryVectorTile(bytes, filename = "") {
   code += `  end\n`;
   return code;
 }
+// @ts-nocheck

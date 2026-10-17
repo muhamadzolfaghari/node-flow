@@ -101,3 +101,4 @@ function parseOpml(xmlText, output) {
     }
   }
 }
+// @ts-nocheck

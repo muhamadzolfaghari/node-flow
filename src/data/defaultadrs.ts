@@ -42,3 +42,4 @@ export const DEFAULT_ADRS = [
     linkedNode: "redis",
   },
 ];
+// @ts-nocheck

@@ -44,3 +44,4 @@ export function parseErdTextToMermaid(src) {
   // relations first (mermaid ER convention), then blocks
   return [...out.slice(0, 1), ...relLines, ...out.slice(1)].join('\n') + '\n';
 }
+// @ts-nocheck

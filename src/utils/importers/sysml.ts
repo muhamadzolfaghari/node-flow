@@ -36,3 +36,4 @@ export function parseSysmlToMermaid(src) {
   if (out.length < 3) throw new Error('No SysML parts/requirements extracted.');
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

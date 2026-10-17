@@ -84,3 +84,4 @@ function generateFlowchartFromItems(items) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

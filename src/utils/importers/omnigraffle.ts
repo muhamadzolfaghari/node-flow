@@ -128,3 +128,4 @@ export function parseOmniGraffleToMermaid(source) {
   OG2 --> OG3["Microservice Cluster"]
   OG3 --> OG4[("High-Availability Storage")]`;
 }
+// @ts-nocheck

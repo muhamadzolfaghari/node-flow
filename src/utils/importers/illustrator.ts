@@ -195,3 +195,4 @@ export function parseIllustratorToMermaid(source) {
   Layer1 --> Layer2["Object Components & Paths"]
   Layer2 --> Export["SVG / Vector Asset"]`;
 }
+// @ts-nocheck

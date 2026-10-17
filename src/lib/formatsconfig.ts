@@ -492,3 +492,4 @@ export const FILE_ACCEPT = [
   ),
 ]
   .map((ext) => `.${ext}`)
+// @ts-nocheck

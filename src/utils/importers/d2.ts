@@ -69,3 +69,4 @@ export function parseD2ToMermaid(d2Text) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

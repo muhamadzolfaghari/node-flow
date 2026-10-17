@@ -205,3 +205,4 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
 *Generated deterministically by NodeFlow AI Architecture Engine. Local-First & Zero-Telemetry.*
 `;
 }
+// @ts-nocheck

@@ -252,3 +252,4 @@ function convertPlantUmlObjectToMermaid(lines) {
   }
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

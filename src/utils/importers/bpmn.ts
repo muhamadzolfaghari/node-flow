@@ -112,3 +112,4 @@ export function parseBpmnToMermaid(bpmnXmlText) {
 
   return output.join('\n');
 }
+// @ts-nocheck

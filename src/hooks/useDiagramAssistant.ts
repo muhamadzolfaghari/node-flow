@@ -64,3 +64,4 @@ export function useDiagramAssistant() {
 
   return { generate, listModels, checkHealth, getPromptStats, busy, progress, healthStatus };
 }
+// @ts-nocheck

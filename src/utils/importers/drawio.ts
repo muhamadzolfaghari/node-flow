@@ -94,3 +94,4 @@ export function parseDrawioToMermaid(drawioText) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

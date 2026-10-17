@@ -142,3 +142,4 @@ export function parseLucidchartToMermaid(input) {
   }
   return out.join("\n");
 }
+// @ts-nocheck

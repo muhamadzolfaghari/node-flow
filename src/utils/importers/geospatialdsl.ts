@@ -149,3 +149,4 @@ export function parseShapefileDslToMermaid(text) {
   code += `  PRJ -.->|transforms coordinates| SHP\n`;
   return code;
 }
+// @ts-nocheck

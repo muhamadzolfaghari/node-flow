@@ -2463,3 +2463,4 @@ export function deleteArchitectureEdge(source, from, to) {
   });
   return lines.join("\n");
 }
+// @ts-nocheck

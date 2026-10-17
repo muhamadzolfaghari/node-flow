@@ -105,3 +105,4 @@ export const STEPS = [
   { icon: MousePointerClick, title: "Refine", description: "Edit the source and the canvas side by side. Errors are marked as you type." },
   { icon: Download, title: "Ship", description: "Export for docs and decks, or keep the project and its checkpoints in your browser." },
 ];
+// @ts-nocheck

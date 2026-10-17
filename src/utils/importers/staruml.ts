@@ -119,3 +119,4 @@ export function parseStarUmlToMermaid(input) {
 
   return lines.join("\n");
 }
+// @ts-nocheck

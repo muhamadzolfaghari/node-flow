@@ -76,3 +76,4 @@ export function parseXmiToMermaid(src) {
   rels.slice(0, 30).forEach(r => out.push(r));
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

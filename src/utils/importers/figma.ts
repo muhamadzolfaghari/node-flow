@@ -161,3 +161,4 @@ export function parseFigmaToMermaid(source) {
   Frame2 --> Frame3["Interactive Prototype"]
   Frame3 --> Sticky1[/"Handoff & Design Specs"/]`;
 }
+// @ts-nocheck

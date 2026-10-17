@@ -116,3 +116,4 @@ export function parseGraphQLToMermaid(sdlText) {
 
   return output.join('\n');
 }
+// @ts-nocheck

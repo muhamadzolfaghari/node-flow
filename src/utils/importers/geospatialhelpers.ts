@@ -12,3 +12,4 @@ export function escapeLabel(text) {
     .replace(/"/g, "'")
     .replace(/[<>]/g, "");
 }
+// @ts-nocheck

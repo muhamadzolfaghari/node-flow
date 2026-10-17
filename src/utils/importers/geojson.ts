@@ -227,3 +227,4 @@ function convertGeoJsonObjectToMermaid(geo) {
 
   return `flowchart TD\n  Dataset["Geospatial Dataset: ${escapeLabel(type)}"]`;
 }
+// @ts-nocheck

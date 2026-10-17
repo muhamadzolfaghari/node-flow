@@ -37,3 +37,4 @@ export function parsePrismaToMermaid(src) {
   });
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

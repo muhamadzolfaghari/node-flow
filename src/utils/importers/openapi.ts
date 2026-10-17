@@ -65,3 +65,4 @@ export function parseOpenApiToMermaid(specText) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

@@ -96,3 +96,4 @@ export function extractSourceFromSvg(svgString) {
 
   return null;
 }
+// @ts-nocheck

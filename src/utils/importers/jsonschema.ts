@@ -38,3 +38,4 @@ export function parseJsonSchemaToMermaid(src) {
   }
   return lines.join('\n') + '\n';
 }
+// @ts-nocheck

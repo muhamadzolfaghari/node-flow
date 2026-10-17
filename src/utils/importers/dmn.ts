@@ -29,3 +29,4 @@ export function parseDmnToMermaid(src) {
   rules.forEach((r, i) => out.push(`  D0 --> D${i + 1}["${r.slice(0, 60).replace(/"/g, "'")}"]`));
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

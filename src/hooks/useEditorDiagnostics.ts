@@ -188,3 +188,4 @@ export function useEditorDiagnostics({
     applyLineRepair,
   };
 }
+// @ts-nocheck

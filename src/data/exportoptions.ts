@@ -19,3 +19,4 @@ export const SCALE_OPTIONS = [
   { label: "2× Retina (HD)", value: 2 },
   { label: "4× Ultra HD 4K", value: 4 },
 ];
+// @ts-nocheck

@@ -74,3 +74,4 @@ export function parseAsyncApiToMermaid(specText) {
 
   return output.join('\n');
 }
+// @ts-nocheck

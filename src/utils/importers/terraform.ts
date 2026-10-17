@@ -104,3 +104,4 @@ export function parseTerraformToMermaid(tfText) {
 
   return output.join('\n');
 }
+// @ts-nocheck

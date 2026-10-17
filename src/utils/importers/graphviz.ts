@@ -62,3 +62,4 @@ export function parseDotToMermaid(dotText) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

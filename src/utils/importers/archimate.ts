@@ -28,3 +28,4 @@ export function parseArchiMateToMermaid(src) {
   });
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

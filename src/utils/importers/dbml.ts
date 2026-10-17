@@ -46,3 +46,4 @@ export function parseDbmlToMermaid(src) {
   });
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

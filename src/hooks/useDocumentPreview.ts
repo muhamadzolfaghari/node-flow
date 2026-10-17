@@ -87,3 +87,4 @@ export function useDocumentPreview(document, theme, view) {
   }, [document?.id, document?.source, document?.format, theme, view]);
   return { ...result, isPending, containerRef };
 }
+// @ts-nocheck

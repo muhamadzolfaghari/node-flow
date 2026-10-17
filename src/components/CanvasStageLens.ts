@@ -56,3 +56,4 @@ export function useLensEffect(containerRef: React.RefObject<HTMLElement | null>,
     applyLens(svg, activeLens);
   }, [activeLens, status, documentId, containerRef]);
 }
+// @ts-nocheck

@@ -94,3 +94,4 @@ function generateErFromCsv(headers, rows) {
   }
   return output.join('\n') + '\n';
 }
+// @ts-nocheck

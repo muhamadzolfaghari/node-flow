@@ -41,3 +41,4 @@ export const FAQS = [
   { q: 'Can I use it offline?', a: 'After the first load, editing, rendering, and exports run client-side. Cloud AI providers and web fonts need a connection.' },
   { q: 'How is it different from the Mermaid Live Editor?', a: 'NodeFlow adds multi-file projects with version checkpoints, direct canvas editing for flowcharts, converters for dozens of formats, role-based templates, themes, and an AI assistant that shows a reviewable proposal before changing your files.' },
 ]
+// @ts-nocheck

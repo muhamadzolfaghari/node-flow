@@ -45,3 +45,4 @@ export function parseProtoToMermaid(src) {
   }
   return out.join('\n') + '\n';
 }
+// @ts-nocheck

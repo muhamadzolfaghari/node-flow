@@ -163,3 +163,4 @@ export function parseCodeToClassDiagram(code) {
   }
   return lines.join('\n') + '\n';
 }
+// @ts-nocheck

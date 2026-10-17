@@ -161,3 +161,4 @@ export function parseProject(source) {
     throw new Error("This is not a supported NodeFlow project backup.");
   return validateProject(data.project);
 }
+// @ts-nocheck

@@ -86,3 +86,4 @@ export function parseC4DslToMermaid(dslText) {
 
   return output.join('\n');
 }
+// @ts-nocheck

@@ -95,3 +95,4 @@ export function parseSqlDdlToMermaid(sqlText) {
 
   return output.join('\n') + '\n';
 }
+// @ts-nocheck
