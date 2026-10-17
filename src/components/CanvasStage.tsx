@@ -49,8 +49,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { flowchartNodeId, SHAPES } from "../lib/visualEditing";
-import { CANVAS_CONTENT_SELECTOR } from "../lib/canvas-content";
-import { useLensEffect } from "./CanvasStageLens";
+import { CANVAS_CONTENT_SELECTOR } from "../lib/canvasContent";
+import { useLensEffect } from "./CanvasStageLens.ts";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
