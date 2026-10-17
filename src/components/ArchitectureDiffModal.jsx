@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "./ui.jsx";
-import { scanNodeDeclarations } from "../lib/visual-editing.js";
+import { scanNodeDeclarations } from "../lib/visualediting";
 
 function parseEdges(source = "") {
   const edgeRegex = /([a-zA-Z0-9_-]+)\s*(?:-->|-.->|==>|-->>|->>|--)\s*(?:\|([^|\n]*)\|\s*)?([a-zA-Z0-9_-]+)/g;

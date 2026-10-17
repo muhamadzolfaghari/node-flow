@@ -1,13 +1,14 @@
 import { useEffect } from "react";
+import type { RefObject } from "react";
 
-export function applyLens(svg, activeLens) {
+export function applyLens(svg: SVGSVGElement | null, activeLens: string) {
   if (!svg) return;
   svg.querySelectorAll(".lens-dimmed, .lens-highlight-security, .lens-highlight-data, .lens-highlight-resilience").forEach((el) => {
     el.classList.remove("lens-dimmed", "lens-highlight-security", "lens-highlight-data", "lens-highlight-resilience");
   });
   if (activeLens === "standard") return;
-  const allNodes = Array.from(svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor"));
-  const allEdges = Array.from(svg.querySelectorAll("g.edgePath, path.flowchart-link"));
+  const allNodes = Array.from(svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor")) as HTMLElement[];
+  const allEdges = Array.from(svg.querySelectorAll("g.edgePath, path.flowchart-link")) as HTMLElement[];
   if (activeLens === "security") {
     const secKeywords = ["auth", "gateway", "firewall", "ingress", "vault", "token", "waf", "security", "perimeter", "iam"];
     for (const n of allNodes) {
@@ -49,7 +50,7 @@ export function applyLens(svg, activeLens) {
   }
 }
 
-export function useLensEffect(containerRef, activeLens, status, documentId) {
+export function useLensEffect(containerRef: React.RefObject<HTMLElement | null>, activeLens: string, status: string, documentId: string) {
   useEffect(() => {
     const svg = containerRef.current?.querySelector("svg");
     applyLens(svg, activeLens);

@@ -108,7 +108,7 @@ import {
   FILE_ACCEPT,
   getFormat,
   importDocument,
-} from "../lib/formats.js";
+} from "../lib/formats";
 import {
   createDocument,
   createProject,
@@ -269,7 +269,7 @@ import {
   addArchitectureEdge,
   deleteArchitectureEdge,
   flowchartNodeId,
-} from "../lib/visual-editing.js";
+} from "../lib/visualediting";
 import { BLANK, AI_STARTERS } from "./StudioConstants.js";
 import { cn } from "../lib/utils.js";
 import { Menu, Item } from "../features/studio/components/Menu.jsx";

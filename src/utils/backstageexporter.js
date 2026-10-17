@@ -4,7 +4,7 @@
  * into standard Spotify Backstage `catalog-info.yaml` enterprise specifications.
  */
 
-import { scanNodeDeclarations } from "../lib/visual-editing.js";
+import { scanNodeDeclarations } from "../lib/visualediting";
 
 function sanitizeEntityName(str) {
   return (str || "entity")

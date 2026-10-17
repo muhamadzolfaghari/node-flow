@@ -48,9 +48,9 @@ import {
   Compass,
   MoreHorizontal,
 } from "lucide-react";
-import { flowchartNodeId, SHAPES } from "../lib/visual-editing.js";
+import { flowchartNodeId, SHAPES } from "../lib/visualediting";
 import { CANVAS_CONTENT_SELECTOR } from "../lib/canvas-content.js";
-import { useLensEffect } from "./CanvasStageLens.js";
+import { useLensEffect } from "./CanvasStageLens";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";

@@ -27,7 +27,7 @@ import {
   Cloud,
 } from "lucide-react";
 import { Button, Badge, Card, CardContent } from "../components/ui.jsx";
-import { FORMATS } from "../lib/formats.js";
+import { FORMATS } from "../lib/formats";
 import { DIAGRAM_TEMPLATES } from "../components/templates.js";
 import { FAQS } from "../data/content.js";
 import { useDocumentPreview } from "../hooks/useDocumentPreview.js";

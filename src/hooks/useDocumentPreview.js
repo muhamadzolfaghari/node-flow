@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useTransition } from "react";
-import { compileDocument } from "../lib/formats.js";
+import { compileDocument } from "../lib/formats";
 import { initMermaid, renderMermaid } from "../utils/mermaid-renderer.js";
 export function useDocumentPreview(document, theme, view) {
   const containerRef = useRef(null);

@@ -19,11 +19,11 @@ import { autocompletion, snippetCompletion } from "@codemirror/autocomplete";
 import { linter, lintGutter } from "@codemirror/lint";
 import { undo, redo } from "@codemirror/commands";
 import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
-import { getFormat } from "../lib/formats.js";
+import { getFormat } from "../lib/formats";
 import { testMermaidSyntax, parseErrorDetails } from "../utils/universal-fixer.js";
 import { formatMermaidCode } from "../utils/mermaid-formatter.js";
 import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
-import { scanNodeDeclarations } from "../lib/visual-editing.js";
+import { scanNodeDeclarations } from "../lib/visualediting";
 import { useEditorDiagnostics } from "../hooks/useEditorDiagnostics.js";
 import { EditorDiagnosticsBanner } from "./editor/EditorDiagnosticsBanner.jsx";
 
