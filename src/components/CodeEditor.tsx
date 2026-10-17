@@ -25,7 +25,7 @@ import { formatMermaidCode } from "../utils/mermaid-formatter.js";
 import { CLOUD_STENCILS } from "../lib/indexeddb-storage.js";
 import { scanNodeDeclarations } from "../lib/visualediting";
 import { useEditorDiagnostics } from "../hooks/useEditorDiagnostics.js";
-import { EditorDiagnosticsBanner } from "./editor/EditorDiagnosticsBanner.jsx";
+import { EditorDiagnosticsBanner } from "./editor/EditorDiagnosticsBanner.tsx";
 
 // Diagram types list for tokenizer & completions
 const diagramHeaders = [

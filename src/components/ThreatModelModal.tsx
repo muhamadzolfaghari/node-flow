@@ -17,7 +17,7 @@ import {
   Database,
   Globe,
 } from "lucide-react";
-import { Button, Badge, Input } from "./ui.jsx";
+import { Button, Badge, Input } from "./ui.tsx";
 
 import { STRIDE_CATEGORIES, analyzeDiagramThreats } from "../utils/threat-model-analyzer.js";
 

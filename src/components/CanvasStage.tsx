@@ -51,7 +51,7 @@ import {
 import { flowchartNodeId, SHAPES } from "../lib/visualediting";
 import { CANVAS_CONTENT_SELECTOR } from "../lib/canvas-content.js";
 import { useLensEffect } from "./CanvasStageLens";
-import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.jsx";
+import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
 import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";

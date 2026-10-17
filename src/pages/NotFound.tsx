@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Network } from "lucide-react";
-import { Button, Badge } from "../components/ui.jsx";
+import { Button, Badge } from "../components/ui.tsx";
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-5 py-20 text-center">

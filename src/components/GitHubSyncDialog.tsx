@@ -10,7 +10,7 @@ import {
   FolderGit2,
   Lock,
 } from "lucide-react";
-import { Input, Button } from "./ui.jsx";
+import { Input, Button } from "./ui.tsx";
 
 function GithubIcon(props) {
   return (

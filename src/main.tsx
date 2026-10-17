@@ -2,8 +2,8 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { preload } from "react-dom";
 import App from "./App.jsx";
-import { WorkspaceProvider } from "./hooks/useWorkspace.jsx";
-import { TooltipProvider } from "./components/ui.jsx";
+import { WorkspaceProvider } from "./hooks/useWorkspace.tsx";
+import { TooltipProvider } from "./components/ui.tsx";
 import "./index.css";
 
 preload("https://fonts.googleapis.com", { as: "style" });

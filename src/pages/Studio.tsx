@@ -117,7 +117,7 @@ import {
   serializeProject,
   uid,
 } from "../lib/workspace.js";
-import { useWorkspace } from "../hooks/useWorkspace.jsx";
+import { useWorkspace } from "../hooks/useWorkspace.tsx";
 import { useDocumentPreview } from "../hooks/useDocumentPreview.js";
 import { useDiagramAssistant } from "../hooks/useDiagramAssistant.js";
 import { Exporter } from "../components/exporter.js";
@@ -272,8 +272,8 @@ import {
 } from "../lib/visualediting";
 import { BLANK, AI_STARTERS } from "./StudioConstants.js";
 import { cn } from "../lib/utils.js";
-import { Menu, Item } from "../features/studio/components/Menu.jsx";
-import { ExplorerPanel } from "../features/studio/components/ExplorerPanel.jsx";
+import { Menu, Item } from "../features/studio/components/Menu.tsx";
+import { ExplorerPanel } from "../features/studio/components/ExplorerPanel.tsx";
 
 export default function Studio() {
   const [params] = useSearchParams(),

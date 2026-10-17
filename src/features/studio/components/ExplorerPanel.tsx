@@ -14,7 +14,7 @@ import {
   Trash2,
   Sparkles,
 } from "lucide-react";
-import { Button, Input } from "../../../components/ui.jsx";
+import { Button, Input } from "../../../components/ui.tsx";
 import { cn } from "../../../lib/utils.js";
 
 export function ExplorerPanel({

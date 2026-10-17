@@ -32,7 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "../components/ui.jsx";
-import { useWorkspace } from "../hooks/useWorkspace.jsx";
+import { useWorkspace } from "../hooks/useWorkspace.tsx";
 import {
   createProject,
   parseProject,
@@ -41,7 +41,7 @@ import {
 } from "../lib/workspace.js";
 import { StorageManager } from "../components/storage.js";
 import { Exporter } from "../components/exporter.js";
-import { ProjectDialog } from "../components/ProjectDialog.jsx";
+import { ProjectDialog } from "../components/ProjectDialog.tsx";
 export default function Saved() {
   const { workspace, setWorkspace, addProject } = useWorkspace(),
     nav = useNavigate(),
