@@ -165,7 +165,7 @@ export default function FlowSimulatorOverlay({
 
   useEffect(() => {
     if (!active || !containerRef?.current) {
-      setActivePackets([]);
+      setActivePackets((prev) => (prev.length === 0 ? prev : []));
       return;
     }
 

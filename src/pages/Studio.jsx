@@ -729,6 +729,10 @@ export default function Studio() {
   const updateSource = (id, source) => {
     updateProject((p) => {
       const targetDocId = id || document?.id || p.activeId || p.documents[0]?.id;
+      const existing = p.documents.find((d) => d.id === targetDocId);
+      if (existing && existing.source === source) {
+        return p;
+      }
       return {
         ...p,
         documents: p.documents.map((d) =>
@@ -7281,38 +7285,43 @@ export default function Studio() {
           )}
         </div>
       )}
-      <Dialog open={explorer && width < 1024} onOpenChange={setExplorer}>
-        <DialogContent className="flex h-[70vh] flex-col gap-0 overflow-hidden p-0">
-          <DialogHeader className="border-b p-4">
-            <DialogTitle>Project files</DialogTitle>
-            <DialogDescription>
-              Select a file to edit in your workspace.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1">{explorerPanel}</div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={inspector && width < 1280} onOpenChange={setInspector}>
-        <DialogContent className="flex h-[75vh] flex-col gap-0 overflow-hidden p-0">
-          <DialogHeader className="border-b p-4">
-            <DialogTitle>Inspector & history</DialogTitle>
-            <DialogDescription>
-              File settings, visual tools, and version checkpoints.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1">{inspectorPanel}</div>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={!!dialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setRenameId(null);
-            setAiProposal(null);
-            setDialog(null);
-          }
-        }}
-      >
+      {explorer && width < 1024 && (
+        <Dialog open={explorer && width < 1024} onOpenChange={setExplorer}>
+          <DialogContent className="flex h-[70vh] flex-col gap-0 overflow-hidden p-0">
+            <DialogHeader className="border-b p-4">
+              <DialogTitle>Project files</DialogTitle>
+              <DialogDescription>
+                Select a file to edit in your workspace.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="min-h-0 flex-1">{explorerPanel}</div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {inspector && width < 1280 && (
+        <Dialog open={inspector && width < 1280} onOpenChange={setInspector}>
+          <DialogContent className="flex h-[75vh] flex-col gap-0 overflow-hidden p-0">
+            <DialogHeader className="border-b p-4">
+              <DialogTitle>Inspector & history</DialogTitle>
+              <DialogDescription>
+                File settings, visual tools, and version checkpoints.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="min-h-0 flex-1">{inspectorPanel}</div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {Boolean(dialog) && (
+        <Dialog
+          open={!!dialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRenameId(null);
+              setAiProposal(null);
+              setDialog(null);
+            }
+          }}
+        >
         <DialogContent
           className={cn(
             "max-h-[85vh] overflow-auto",
@@ -7971,6 +7980,7 @@ export default function Studio() {
           )}
         </DialogContent>
       </Dialog>
+      )}
       {toast && (
         <div
           role="status"
@@ -7995,77 +8005,87 @@ export default function Studio() {
         items={contextMenu.items}
         onClose={() => setContextMenu((c) => ({ ...c, isOpen: false }))}
       />
-      <ExportStudioModal
-        isOpen={isExportStudioOpen}
-        onClose={() => setIsExportStudioOpen(false)}
-        containerRef={preview.containerRef}
-        title={document?.name?.replace(/\.[^.]+$/, "") || "diagram"}
-        source={document?.source || ""}
-        format={document?.format || "mermaid"}
-        currentTheme={theme}
-      />
-      <CloudStencilModal
-        isOpen={isStencilOpen}
-        onClose={() => setIsStencilOpen(false)}
-        onInsertSnippet={(snippet) => {
-          if (document?.id) {
-            updateSource(
-              document.id,
-              (document.source || "") +
-              (document.source?.endsWith("\n") ? "" : "\n") +
-              snippet +
-              "\n"
-            );
-            say("Cloud stencil inserted into diagram");
-          } else {
+      {isExportStudioOpen && (
+        <ExportStudioModal
+          isOpen={isExportStudioOpen}
+          onClose={() => setIsExportStudioOpen(false)}
+          containerRef={preview.containerRef}
+          title={document?.name?.replace(/\.[^.]+$/, "") || "diagram"}
+          source={document?.source || ""}
+          format={document?.format || "mermaid"}
+          currentTheme={theme}
+        />
+      )}
+      {isStencilOpen && (
+        <CloudStencilModal
+          isOpen={isStencilOpen}
+          onClose={() => setIsStencilOpen(false)}
+          onInsertSnippet={(snippet) => {
+            if (document?.id) {
+              updateSource(
+                document.id,
+                (document.source || "") +
+                (document.source?.endsWith("\n") ? "" : "\n") +
+                snippet +
+                "\n"
+              );
+              say("Cloud stencil inserted into diagram");
+            } else {
+              newFiles([
+                {
+                  name: "cloud-architecture.mmd",
+                  format: "mermaid",
+                  source: `flowchart TD\n  ${snippet}\n`,
+                },
+              ]);
+              say("Created new cloud diagram with stencil");
+            }
+          }}
+        />
+      )}
+      {isThreatModelOpen && (
+        <ThreatModelModal
+          isOpen={isThreatModelOpen}
+          onClose={() => setIsThreatModelOpen(false)}
+          diagramSource={document?.source || ""}
+          diagramName={document?.name || "Architecture"}
+        />
+      )}
+      {isShowcaseOpen && (
+        <ShowcaseModal
+          isOpen={isShowcaseOpen}
+          onClose={() => setIsShowcaseOpen(false)}
+          onLoadShowcase={(sc) => {
+            const fname = `${sc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.mmd`;
             newFiles([
               {
-                name: "cloud-architecture.mmd",
-                format: "mermaid",
-                source: `flowchart TD\n  ${snippet}\n`,
+                name: fname,
+                format: sc.format || "mermaid",
+                source: sc.code,
               },
             ]);
-            say("Created new cloud diagram with stencil");
-          }
-        }}
-      />
-      <ThreatModelModal
-        isOpen={isThreatModelOpen}
-        onClose={() => setIsThreatModelOpen(false)}
-        diagramSource={document?.source || ""}
-        diagramName={document?.name || "Architecture"}
-      />
-      <ShowcaseModal
-        isOpen={isShowcaseOpen}
-        onClose={() => setIsShowcaseOpen(false)}
-        onLoadShowcase={(sc) => {
-          const fname = `${sc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.mmd`;
-          newFiles([
-            {
-              name: fname,
-              format: sc.format || "mermaid",
-              source: sc.code,
-            },
-          ]);
-          say(`Loaded enterprise showcase: ${sc.title}`);
-        }}
-      />
-      <GitHubSyncDialog
-        isOpen={isGitHubSyncOpen}
-        onClose={() => setIsGitHubSyncOpen(false)}
-        currentDocument={document}
-        onPull={(content, path) => {
-          const fname = path.split("/").pop() || "diagram.mmd";
-          newFiles([
-            {
-              name: fname,
-              format: "mermaid",
-              source: content,
-            },
-          ]);
-          say(`Pulled ${fname} from GitHub!`);
-        }}
-      />
+            say(`Loaded enterprise showcase: ${sc.title}`);
+          }}
+        />
+      )}
+      {isGitHubSyncOpen && (
+        <GitHubSyncDialog
+          isOpen={isGitHubSyncOpen}
+          onClose={() => setIsGitHubSyncOpen(false)}
+          currentDocument={document}
+          onPull={(content, path) => {
+            const fname = path.split("/").pop() || "diagram.mmd";
+            newFiles([
+              {
+                name: fname,
+                format: "mermaid",
+                source: content,
+              },
+            ]);
+            say(`Pulled ${fname} from GitHub!`);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -107,11 +107,14 @@ export async function fixMermaidSyntax(code, errorMessage = '', opts = {}) {
  * is validated; the least destructive passing candidate wins.
  */
 export async function repairReportedLine(code, errorMessage = '') {
-  if (!code || typeof code !== 'string') return null;
   const parsed = parseErrorDetails(errorMessage, code);
-  const lineNumber = parsed?.line || Number(String(errorMessage).match(/(?:line|Line)\s*[:#]?\s*(\d+)/i)?.[1]) || 1;
+  let lineNumber = parsed?.line || Number(String(errorMessage).match(/(?:line|Line)\s*[:#]?\s*(\d+)/i)?.[1]) || 1;
   const lines = code.split('\n');
-  if (lineNumber < 1 || lineNumber > lines.length) return null;
+  if (lineNumber === lines.length + 1) {
+    lineNumber = lines.length;
+  } else if (lineNumber > lines.length || lineNumber < 1) {
+    return null;
+  }
   const index = lineNumber - 1;
   const original = lines[index];
   if (original === undefined) return null;
@@ -133,6 +136,15 @@ export async function repairReportedLine(code, errorMessage = '') {
     candidates.push({
       fix: `Closed unclosed bracket ']' on line ${lineNumber}`,
       line: `${original}${']'.repeat(opens - closes)}`,
+    });
+  }
+
+  // Missing node ID before brackets e.g. A --> [label] -> A --> Node_2[label]
+  const missingNodeId = original.replace(/([^-])(-->|-.->|==>|---|===)\s*(\[[^\]\n]+\]|\([^\)\n]+\)|\{[^\}\n]+\})/g, `$1$2 Node_${lineNumber}$3`);
+  if (missingNodeId !== original) {
+    candidates.push({
+      fix: `Added missing node identifier before brackets on line ${lineNumber}`,
+      line: missingNodeId,
     });
   }
 

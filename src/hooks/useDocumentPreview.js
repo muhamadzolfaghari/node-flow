@@ -15,23 +15,27 @@ export function useDocumentPreview(document, theme, view) {
   useEffect(() => {
     const my = ++seq.current;
     const previous = cache.current.get(document?.id);
-    if (containerRef.current)
-      containerRef.current.innerHTML = previous?.svg || "";
-    setResult((r) => ({
-      ...r,
-      error: "",
-      status: { state: "rendering", message: "Building preview…", ms: 0 },
-    }));
+    if (containerRef.current && previous?.svg)
+      containerRef.current.innerHTML = previous.svg;
     const timer = setTimeout(async () => {
       if (!document || !document.source.trim()) {
-        setResult({
-          code: "",
-          warnings: [],
-          error: "",
-          status: { state: "idle", message: "Empty file", ms: 0 },
+        startTransition(() => {
+          setResult({
+            code: "",
+            warnings: [],
+            error: "",
+            status: { state: "idle", message: "Empty file", ms: 0 },
+          });
         });
         return;
       }
+      startTransition(() => {
+        setResult((r) => ({
+          ...r,
+          error: "",
+          status: { state: "rendering", message: "Building preview…", ms: 0 },
+        }));
+      });
       const start = performance.now();
       try {
         const compiled = await compileDocument(document);

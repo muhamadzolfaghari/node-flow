@@ -704,10 +704,11 @@ export default function CanvasStage({
     // would cost more than the render it replaced.
     const bounds = getContentBounds();
     contentBoundsRef.current = bounds;
-    setSize({ w: bounds.w, h: bounds.h });
-    setThumbnail(
-      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`,
-    );
+    setSize((prev) => (prev.w === bounds.w && prev.h === bounds.h ? prev : { w: bounds.w, h: bounds.h }));
+    setThumbnail((prev) => {
+      const next = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+      return prev === next ? prev : next;
+    });
     if (needsFit) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -784,19 +785,32 @@ export default function CanvasStage({
           const below = elRect.bottom - stageRect.top + 12;
           // Sit above the node; flip underneath when the top edge has no room.
           const y = above >= 8 ? above : Math.min(below, stageRect.height - 56);
-          setNodeAnchor({
-            x,
-            y,
-            elLeft: elRect.left - stageRect.left,
-            elTop: elRect.top - stageRect.top,
-            elWidth: elRect.width,
-            elHeight: elRect.height,
+          setNodeAnchor((prev) => {
+            if (
+              prev &&
+              Math.abs(prev.x - x) < 0.5 &&
+              Math.abs(prev.y - y) < 0.5 &&
+              Math.abs(prev.elLeft - (elRect.left - stageRect.left)) < 0.5 &&
+              Math.abs(prev.elTop - (elRect.top - stageRect.top)) < 0.5 &&
+              Math.abs(prev.elWidth - elRect.width) < 0.5 &&
+              Math.abs(prev.elHeight - elRect.height) < 0.5
+            ) {
+              return prev;
+            }
+            return {
+              x,
+              y,
+              elLeft: elRect.left - stageRect.left,
+              elTop: elRect.top - stageRect.top,
+              elWidth: elRect.width,
+              elHeight: elRect.height,
+            };
           });
           return;
         }
       } catch {}
     }
-    setNodeAnchor(null);
+    setNodeAnchor((prev) => (prev === null ? prev : null));
   };
 
   useEffect(() => {
@@ -823,7 +837,18 @@ export default function CanvasStage({
     const width = Math.max(5, Math.min(100 - left, (viewW / totalW) * 100));
     const height = Math.max(5, Math.min(100 - top, (viewH / totalH) * 100));
 
-    setMinimapViewport({ left, top, width, height });
+    setMinimapViewport((prev) => {
+      if (
+        prev &&
+        Math.abs(prev.left - left) < 0.1 &&
+        Math.abs(prev.top - top) < 0.1 &&
+        Math.abs(prev.width - width) < 0.1 &&
+        Math.abs(prev.height - height) < 0.1
+      ) {
+        return prev;
+      }
+      return { left, top, width, height };
+    });
   }, [position, status, documentId]);
 
   const handleMinimapPointerDown = (e) => {
@@ -2432,14 +2457,9 @@ export default function CanvasStage({
 }
 function Tool({ title, children, ...props }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={title} {...props}>
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{title}</TooltipContent>
-    </Tooltip>
+    <Button variant="ghost" size="icon-sm" title={title} aria-label={title} {...props}>
+      {children}
+    </Button>
   );
 }
 export function GridToggle({ grid, onChange }) {

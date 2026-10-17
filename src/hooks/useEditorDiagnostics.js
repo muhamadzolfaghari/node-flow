@@ -28,20 +28,35 @@ export function useEditorDiagnostics({
   const syntaxStatusRef = useRef(syntaxStatus);
   syntaxStatusRef.current = syntaxStatus;
 
+  const setSyntaxStatusSafe = useCallback((newStatusOrFn) => {
+    setSyntaxStatus((prev) => {
+      const next = typeof newStatusOrFn === "function" ? newStatusOrFn(prev) : newStatusOrFn;
+      if (
+        prev.valid === next.valid &&
+        prev.error === next.error &&
+        prev.line === next.line &&
+        prev.raw === next.raw
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
+
   // Synchronize live preview render errors to editor syntax status
   useEffect(() => {
     if (previewError) {
       const details = parseErrorDetails(previewError, document?.source || "");
-      setSyntaxStatus({
+      setSyntaxStatusSafe({
         valid: false,
         error: details?.message || previewError,
         line: details?.line || 1,
         raw: details?.raw || previewError,
       });
-    } else if (!previewError && !syntaxStatusRef.current.valid && syntaxStatusRef.current.raw === previewError) {
-      setSyntaxStatus({ valid: true, error: null, line: null, raw: null });
+    } else if (!previewError && !syntaxStatusRef.current.valid && !syntaxStatusRef.current.error) {
+      setSyntaxStatusSafe({ valid: true, error: null, line: null, raw: null });
     }
-  }, [previewError, document?.source]);
+  }, [previewError, document?.source, setSyntaxStatusSafe]);
 
   // Explanations from the syntax error database
   const explanations = useMemo(() => {
@@ -160,7 +175,7 @@ export function useEditorDiagnostics({
 
   return {
     syntaxStatus,
-    setSyntaxStatus,
+    setSyntaxStatus: setSyntaxStatusSafe,
     fixBusy,
     fixSuccessMsg,
     fixFailMsg,

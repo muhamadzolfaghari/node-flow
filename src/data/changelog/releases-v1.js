@@ -1,5 +1,21 @@
 export const RELEASES_V1 = [
   {
+    version: "1.3.3",
+    date: "2026-10-17",
+    type: "patch",
+    title: "Canvas & Editor Zero-Loop Interactivity, Native Primitives & Real-Browser Verification",
+    highlights: [
+      "Eliminated Maximum Update Depth Exceeded: Replaced Radix Popper and RovingFocusGroup primitives with high-performance native React DropdownMenu, Tabs, and Tooltip, eliminating layout effect cascades.",
+      "requestAnimationFrame Keystroke Batching: Coalesced rapid CodeMirror transactions using rAF, ensuring fluid 120 FPS typing without intermediate render churn or passive effect collision.",
+      "Passive Effect Decoupling: Removed synchronous setState from useWorkspace and useDocumentPreview useEffect handlers, isolating autosave status and compilation debouncing.",
+      "Universal Syntax & Quick Fix Enhancement: Upgraded repairReportedLine with missing node identifier generation (A --> [broken] to A --> Node_N[broken]), bracket/parentheses balancing, and accurate EOF line clamping.",
+      "Automated End-to-End Real Browser Suite: Added scripts/interactive-canvas-editor-test.mjs validating typing, live canvas SVG re-rendering, node selection, canvas pan/zoom, and one-click AI Quick Fix in Puppeteer with zero console errors.",
+    ],
+    commits: [
+      { hash: "HEAD", message: "fix(canvas-editor): eliminate update depth loop with native primitives and rAF batching; verify real browser interactivity" },
+    ],
+  },
+  {
     version: "1.3.2",
     date: "2026-10-17",
     type: "patch",

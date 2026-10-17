@@ -6,9 +6,10 @@ import { WorkspaceProvider } from "./hooks/useWorkspace.jsx";
 import { TooltipProvider } from "./components/ui.jsx";
 import "./index.css";
 
-// React 19 Native Resource Preloading for Google Fonts & Styles
 preload("https://fonts.googleapis.com", { as: "style" });
 preload("https://fonts.gstatic.com", { as: "font", crossOrigin: "anonymous" });
+
+
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

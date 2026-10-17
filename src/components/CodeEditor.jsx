@@ -723,8 +723,16 @@ const CodeEditor = forwardRef(function CodeEditor(
               const newText = update.state.doc.toString();
               lastSentTextRef.current = newText;
               const targetDocId = latest.current.document?.id || currentId.current;
-              if (latest.current.onChange) {
-                latest.current.onChange(targetDocId, newText);
+              pendingChangeRef.current = { id: targetDocId, text: newText };
+              if (!changeRafRef.current) {
+                changeRafRef.current = requestAnimationFrame(() => {
+                  changeRafRef.current = 0;
+                  if (pendingChangeRef.current && latest.current.onChange) {
+                    const { id, text } = pendingChangeRef.current;
+                    pendingChangeRef.current = null;
+                    latest.current.onChange(id, text);
+                  }
+                });
               }
             }
           }),
@@ -732,6 +740,21 @@ const CodeEditor = forwardRef(function CodeEditor(
       }),
     [syntaxLinter, runAiFix]
   );
+
+  const changeRafRef = useRef(0);
+  const pendingChangeRef = useRef(null);
+
+  const flushPendingChange = useCallback(() => {
+    if (changeRafRef.current) {
+      cancelAnimationFrame(changeRafRef.current);
+      changeRafRef.current = 0;
+    }
+    if (pendingChangeRef.current && latest.current.onChange) {
+      const { id, text } = pendingChangeRef.current;
+      pendingChangeRef.current = null;
+      latest.current.onChange(id, text);
+    }
+  }, []);
 
   // Create the view once per mount.
   const hasDocument = Boolean(document);
@@ -747,9 +770,12 @@ const CodeEditor = forwardRef(function CodeEditor(
       state: createState(initialDoc),
       parent: host.current,
     });
+    if (host.current) host.current._editorView = editor.current;
     currentId.current = initialDoc?.id;
     lastLanguageRef.current = `${initialDoc?.format || "mermaid"}:${initialDoc?.name || ""}`;
     return () => {
+      flushPendingChange();
+      if (host.current) host.current._editorView = null;
       editor.current?.destroy();
       editor.current = null;
     };

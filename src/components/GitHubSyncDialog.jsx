@@ -36,11 +36,14 @@ export default function GitHubSyncDialog({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (currentDocument?.name) {
-      setPath(currentDocument.name);
-      setCommitMessage(`Update ${currentDocument.name} via NodeFlow`);
+    if (isOpen && currentDocument?.name) {
+      setPath((prev) => (prev === currentDocument.name ? prev : currentDocument.name));
+      setCommitMessage((prev) => {
+        const next = `Update ${currentDocument.name} via NodeFlow`;
+        return prev === next ? prev : next;
+      });
     }
-  }, [currentDocument]);
+  }, [isOpen, currentDocument?.name]);
 
   if (!isOpen) return null;
 

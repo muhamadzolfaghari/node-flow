@@ -5,6 +5,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.3.3] - 2026-10-17
+
+### Fixed
+- **Eliminated Maximum Update Depth Exceeded**: Replaced Radix `DropdownMenu`, `Tabs`, and `Tooltip` with zero-dependency native React components, eradicating `RovingFocusGroup` and `PopperAnchor` layout effect cascades.
+- **requestAnimationFrame Keystroke Batching**: Batched rapid CodeMirror document change events using `requestAnimationFrame` before dispatching to React state, ensuring 120 FPS fluid typing and preventing concurrent render collisions.
+- **Autosave & Compilation Passive Effect Decoupling**: Removed synchronous `setState` invocations from `useWorkspace` and `useDocumentPreview` `useEffect` handlers, preventing cyclic passive effect flushes while typing.
+- **Universal Syntax & Quick Fix Enhancement**: Enhanced `repairReportedLine` with missing node identifier generation (`A --> [broken]` to `A --> Node_N[broken]`), bracket/parentheses balancing, and strict EOF line clamping.
+
+### Added
+- **Automated Real Browser Interactivity Suite**: Created `scripts/interactive-canvas-editor-test.mjs` verifying CodeMirror typing, live canvas SVG re-rendering, node selection, canvas pan/zoom, and one-click AI Quick Fix in headless Chrome with zero console errors.
+
+---
+
 ## [1.3.2] - 2026-10-17
 
 ### Added

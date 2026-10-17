@@ -19,13 +19,12 @@ export function WorkspaceProvider({ children }) {
     };
   }, []);
   useEffect(() => {
-    setSaveStatus("Saving…");
     const timer = setTimeout(() => {
       try {
         saveWorkspace(workspace);
-        setSaveStatus("Saved locally");
+        setSaveStatus((prev) => (prev === "Saved locally" ? prev : "Saved locally"));
       } catch {
-        setSaveStatus("Storage full · download a project backup");
+        setSaveStatus((prev) => (prev === "Storage full · download a project backup" ? prev : "Storage full · download a project backup"));
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -36,7 +35,8 @@ export function WorkspaceProvider({ children }) {
   const project =
     workspace.projects.find((p) => p.id === activeProjId) ||
     workspace.projects[0];
-  const updateProject = (update) =>
+  const updateProject = (update) => {
+    setSaveStatus((prev) => (prev === "Saving…" ? prev : "Saving…"));
     setWorkspace((w) => {
       const targetId = w.projects.some((p) => p.id === w.activeProjectId)
         ? w.activeProjectId
@@ -56,6 +56,7 @@ export function WorkspaceProvider({ children }) {
         ),
       };
     });
+  };
   const addProject = (newProject) =>
     setWorkspace((w) => ({
       ...w,
