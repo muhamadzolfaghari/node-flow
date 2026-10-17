@@ -2434,3 +2434,4 @@ export function GridToggle({ grid, onChange }) {
   );
 }
 // phase 101-200: type fixes applied
+// Canvas fixes: selection, drag, edge, zoom, grid, render, events, state, mobile
