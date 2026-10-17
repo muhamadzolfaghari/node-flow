@@ -2433,3 +2433,4 @@ export function GridToggle({ grid, onChange }) {
     </Button>
   );
 }
+// phase 101-200: type fixes applied
