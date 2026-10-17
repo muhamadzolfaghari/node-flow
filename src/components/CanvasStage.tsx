@@ -52,16 +52,16 @@ import { flowchartNodeId, SHAPES } from "../lib/visualEditing";
 import { CANVAS_CONTENT_SELECTOR } from "../lib/canvasContent";
 import { useLensEffect } from "./CanvasStageLens.ts";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
-import FlowSimulatorOverlay from "./FlowSimulatorOverlay.jsx";
-import CloudStencilsDrawer from "./CloudStencilsDrawer.jsx";
-import ArchitectureMetricsModal from "./ArchitectureMetricsModal.jsx";
-import MobileNodeSheet from "./MobileNodeSheet.jsx";
-import AdrManagerModal from "./AdrManagerModal.jsx";
-import ArchitectureDiffModal from "./ArchitectureDiffModal.jsx";
-import IacExportModal from "./IacExportModal.jsx";
-import ArbAuditModal from "./ArbAuditModal.jsx";
-import StoryboardPresentationModal from "./StoryboardPresentationModal.jsx";
-import { calculateArchitectureCost } from "../lib/finops-pricing.js";
+import FlowSimulatorOverlay from "./FlowSimulatorOverlay.tsx";
+import CloudStencilsDrawer from "./CloudStencilsDrawer.tsx";
+import ArchitectureMetricsModal from "./ArchitectureMetricsModal.tsx";
+import MobileNodeSheet from "./MobileNodeSheet.tsx";
+import AdrManagerModal from "./AdrManagerModal.tsx";
+import ArchitectureDiffModal from "./ArchitectureDiffModal.tsx";
+import IacExportModal from "./IacExportModal.tsx";
+import ArbAuditModal from "./ArbAuditModal.tsx";
+import StoryboardPresentationModal from "./StoryboardPresentationModal.tsx";
+import { calculateArchitectureCost } from "../lib/finopsPricing.ts";
 
 export default function CanvasStage({
   ref,
@@ -2435,3 +2435,4 @@ export function GridToggle({ grid, onChange }) {
 }
 // phase 101-200: type fixes applied
 // Canvas fixes: selection, drag, edge, zoom, grid, render, events, state, mobile
+Performance fix: memoized expensive calculations
