@@ -245,3 +245,4 @@ Production files are generated in `dist/`, with the GitHub Pages base path `/nod
 ## License
 
 MIT, as declared in `package.json`. Dependencies retain their individual licenses.
+# Mermaid Studio - Updated
