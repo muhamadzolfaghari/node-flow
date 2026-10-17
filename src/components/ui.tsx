@@ -1,14 +1,14 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '../lib/utils.js'
-export { Button } from './primitives/button.jsx'
-export { Input } from './primitives/input.jsx'
-export { Textarea } from './primitives/textarea.jsx'
-export { Card, CardContent, CardHeader, CardTitle, CardDescription } from './primitives/card.jsx'
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './primitives/dialog.jsx'
-export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut } from './primitives/dropdown-menu.jsx'
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './primitives/tabs.jsx'
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './primitives/tooltip.jsx'
-export { ContextMenu } from './ui/ContextMenu.jsx'
+export { Button } from './primitives/button.tsx'
+export { Input } from './primitives/input.tsx'
+export { Textarea } from './primitives/textarea.tsx'
+export { Card, CardContent, CardHeader, CardTitle, CardDescription } from './primitives/card.tsx'
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './primitives/dialog.tsx'
+export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut } from './primitives/dropdown-menu.tsx'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './primitives/tabs.tsx'
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './primitives/tooltip.tsx'
+export { ContextMenu } from './ui/ContextMenu.tsx'
 
 export const badgeVariants = cva('inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap', {
   variants: { tone: {
