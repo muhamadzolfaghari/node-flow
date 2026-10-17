@@ -103,6 +103,102 @@ export async function fixMermaidSyntax(code, errorMessage = '', opts = {}) {
 }
 
 /**
+ * Translates C/JS/Python comments to Mermaid syntax:
+ * // comment -> %% comment
+ * # comment  -> %% comment
+ */
+export function normalizeComments(line) {
+  let l = line;
+  if (/^\s*\/\//.test(l)) {
+    return l.replace(/^\s*\/\/\s*/, (m) => m.replace('//', '%% '));
+  }
+  if (/^\s*#(?!\!|\[)/.test(l)) {
+    return l.replace(/^\s*#\s*/, (m) => m.replace('#', '%% '));
+  }
+  if (/\s+\/\/\s+/.test(l) && !/".*?\/\/.*?"/.test(l)) {
+    return l.replace(/\s+\/\/\s+(.*)$/, ' %% $1');
+  }
+  return l;
+}
+
+/**
+ * Standardizes reserved keyword identifiers used as node names (e.g. 'end', 'subgraph', 'graph', 'flowchart')
+ */
+export function sanitizeReservedKeywords(line) {
+  if (/^\s*end(?:\s*%%.*)?\s*$/i.test(line)) return line;
+  let res = line;
+  const kw = '(?:end|subgraph|graph|flowchart)';
+  const reAfter = new RegExp('(-->|-.->|==>|---|===|<--|<-->)\\s*\\b(' + kw + ')\\b(?=\\s*(?:\\[|\\(|\\{|$|\\s))', 'gi');
+  res = res.replace(reAfter, (m, arrow, word) => `${arrow} ${word.toLowerCase()}_node`);
+  const reBefore = new RegExp('^(\\s*)\\b(' + kw + ')\\b(?=\\s*(?:\\[|\\(|\\{|-->|-.->|==>|---|===|<--|<-->))', 'gi');
+  res = res.replace(reBefore, (m, indent, word) => `${indent}${word.toLowerCase()}_node`);
+  return res;
+}
+
+/**
+ * Converts sequence-style colon labels in flowcharts to pipe syntax:
+ * A --> B: label  ->  A -->|label| B
+ * A[Client] --> B[Server]: GET /users  ->  A[Client] -->|GET /users| B[Server]
+ */
+export function normalizeFlowchartColonLabels(line) {
+  return line.replace(
+    /(\S+(?:\[.*?\]|\(.*?\)|{.*?})?)\s*(-->|-.->|==>|---|===|<--|<-->)\s*(\S+(?:\[.*?\]|\(.*?\)|{.*?})?)\s*:\s*([^;\n%]+)$/,
+    (m, src, arrow, dst, label) => `${src} ${arrow}|${label.trim()}| ${dst}`
+  );
+}
+
+/**
+ * Repairs chained and single arrows in flowcharts:
+ * A -> B -> C -> D  ->  A --> B --> C --> D
+ * A <-> B           ->  A <--> B
+ * A <- B            ->  A <-- B
+ * A ->> B (in flowchart) -> A --> B
+ */
+export function normalizeFlowchartArrows(line) {
+  let l = line;
+  l = l.replace(/<->/g, '<-->');
+  l = l.replace(/(?<![<-])<-(?!-)/g, '<--');
+  l = l.replace(/(?<![-<.=])->>(?![-.=>])/g, '-->');
+  l = l.replace(/(?<![-<.=])->(?![-.=>])/g, '-->');
+  return l;
+}
+
+/**
+ * Repairs cylinder & rounded nodes containing nested parentheses:
+ * A[(PostgreSQL (v14))] -> A[("PostgreSQL (v14)")]
+ * A((Circle (Inner)))   -> A(("Circle (Inner)"))
+ */
+export function normalizeNestedParensInShapes(line) {
+  let l = line;
+  l = l.replace(/(\b\w+)\s*\[\(\s*(?!")(.*?)(?<!")\s*\)\]/g, (m, id, inner) => {
+    if (inner.includes('(') || inner.includes(')') || inner.includes(':')) {
+      return `${id}[("${inner.trim()}")]`;
+    }
+    return m;
+  });
+  l = l.replace(/(\b\w+)\s*\(\(\s*(?!")(.*?)(?<!")\s*\)\)/g, (m, id, inner) => {
+    if (inner.includes('(') || inner.includes(')') || inner.includes(':')) {
+      return `${id}(("${inner.trim()}"))`;
+    }
+    return m;
+  });
+  return l;
+}
+
+/**
+ * Repairs unbalanced quotes inside node brackets:
+ * A["Label] --> B -> A["Label"] --> B
+ * A[Label"] --> B -> A["Label"] --> B
+ */
+export function normalizeUnclosedQuotesInBrackets(line) {
+  let l = line;
+  l = l.replace(/(\b\w+)\s*\["([^"\]\n]+)\]/g, (m, id, text) => `${id}["${text}"]`);
+  l = l.replace(/(\b\w+)\s*\[([^"\]\n]+)"\]/g, (m, id, text) => `${id}["${text}"]`);
+  l = l.replace(/(\b\w+)\s*\("([^"\)\n]+)\)/g, (m, id, text) => `${id}("${text}")`);
+  return l;
+}
+
+/**
  * Tries targeted edits on the line the parser complains about. Each candidate
  * is validated; the least destructive passing candidate wins.
  */
@@ -121,7 +217,80 @@ export async function repairReportedLine(code, errorMessage = '') {
 
   const candidates = [];
 
-  // 1. Missing closing delimiter on line
+  // 1. Comments normalization
+  const commentsFixed = normalizeComments(original);
+  if (commentsFixed !== original) {
+    candidates.push({
+      fix: `Converted code comment to Mermaid %% comment on line ${lineNumber}`,
+      line: commentsFixed,
+    });
+  }
+
+  // 2. Chained and single arrows in flowchart
+  const arrowsFixed = normalizeFlowchartArrows(original);
+  if (arrowsFixed !== original) {
+    candidates.push({
+      fix: `Replaced invalid or chained arrows with standard connectors on line ${lineNumber}`,
+      line: arrowsFixed,
+    });
+  }
+
+  // 3. Sequence-style colon labels: A --> B: label -> A -->|label| B
+  const colonFixed = normalizeFlowchartColonLabels(original);
+  if (colonFixed !== original) {
+    candidates.push({
+      fix: `Converted sequence-style colon label to flowchart pipe syntax on line ${lineNumber}`,
+      line: colonFixed,
+    });
+  }
+
+  // 4. Reserved keywords in node names: start --> end -> start --> end_node
+  const reservedFixed = sanitizeReservedKeywords(original);
+  if (reservedFixed !== original) {
+    candidates.push({
+      fix: `Renamed reserved keyword node identifier on line ${lineNumber}`,
+      line: reservedFixed,
+    });
+  }
+
+  // 5. Unclosed quotes inside node brackets: A["Label] -> A["Label"]
+  const unclosedQuotesFixed = normalizeUnclosedQuotesInBrackets(original);
+  if (unclosedQuotesFixed !== original) {
+    candidates.push({
+      fix: `Closed unclosed quote inside node label on line ${lineNumber}`,
+      line: unclosedQuotesFixed,
+    });
+  }
+
+  // 6. Cylinders & rounded shapes with nested parens: A[(DB (v1))] -> A[("DB (v1)")]
+  const parensFixed = normalizeNestedParensInShapes(original);
+  if (parensFixed !== original) {
+    candidates.push({
+      fix: `Quoted nested parentheses in shape on line ${lineNumber}`,
+      line: parensFixed,
+    });
+  }
+
+  // 7. Combined pipeline fix on the reported line
+  const combinedLine = normalizeUnclosedQuotesInBrackets(
+    normalizeNestedParensInShapes(
+      sanitizeReservedKeywords(
+        normalizeFlowchartColonLabels(
+          normalizeFlowchartArrows(
+            normalizeComments(original)
+          )
+        )
+      )
+    )
+  );
+  if (combinedLine !== original) {
+    candidates.push({
+      fix: `Repaired syntax structure on line ${lineNumber}`,
+      line: combinedLine,
+    });
+  }
+
+  // 8. Missing closing delimiter on line
   const unclosedBeforeArrow = original.replace(/(\[[^\]\n]+?)\s*(-->|-.->|==>|---|===)/g, '$1] $2');
   if (unclosedBeforeArrow !== original) {
     candidates.push({
@@ -157,7 +326,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 2. Unbalanced double quotes on line
+  // 9. Unbalanced double quotes on line
   const quotes = (original.match(/"/g) || []).length;
   if (quotes % 2 !== 0) {
     const lastBracketIdx = original.search(/[\]\)\}]$/);
@@ -173,7 +342,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 3. Unquoted special characters inside brackets e.g. A[Title: Subtitle (v2)] -> A["Title: Subtitle (v2)"]
+  // 10. Unquoted special characters inside brackets e.g. A[Title: Subtitle (v2)] -> A["Title: Subtitle (v2)"]
   const unquotedBracket = original.replace(/(\w+)\s*\[([^\]"\n]*[:()&,+{}<>/][^\]"\n]*)\]/g, '$1["$2"]');
   if (unquotedBracket !== original) {
     candidates.push({
@@ -182,7 +351,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 4. Single arrow in flowchart or sequence
+  // 11. Single arrow in flowchart or sequence
   if (!original.includes('-->') && original.includes('->')) {
     candidates.push({
       fix: `Replaced single arrow '->' with '-->' on line ${lineNumber}`,
@@ -194,7 +363,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 5. Pipe label spacing: --> |text| -> -->|text|
+  // 12. Pipe label spacing: --> |text| -> -->|text|
   if (/-->\s*\|\s*[^|]*\s*\|\s*/.test(original)) {
     candidates.push({
       fix: `Normalized pipe label spacing on line ${lineNumber}`,
@@ -202,7 +371,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 6. Trailing semicolon: A --> B; -> A --> B
+  // 13. Trailing semicolon: A --> B; -> A --> B
   if (/;\s*$/.test(original)) {
     candidates.push({
       fix: `Removed trailing semicolon on line ${lineNumber}`,
@@ -210,7 +379,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 7. Sequence message missing colon: A->>B message -> A->>B: message
+  // 14. Sequence message missing colon: A->>B message -> A->>B: message
   const seqMsg = original.replace(/^(\s*\w+\s*(?:->>|-->>|-\)|--\))\s*\w+)\s+([^:\s][^:\n]*)$/, '$1: $2');
   if (seqMsg !== original) {
     candidates.push({
@@ -219,7 +388,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 8. Line 1 diagram header fixes
+  // 15. Line 1 diagram header fixes
   if (lineNumber === 1) {
     if (/^\s*graph\b/i.test(original)) {
       candidates.push({
@@ -235,7 +404,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     }
   }
 
-  // 9. Removed stray text after closed bracket
+  // 16. Removed stray text after closed bracket
   const stray = original.replace(/^(.*[\]\)\}])\s+[^\]\)\}\s][^\]\)\}]*$/, '$1');
   if (stray !== original) {
     candidates.push({
@@ -244,7 +413,7 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 10. Removed trailing token on line
+  // 17. Removed trailing token on line
   const lessWord = original.replace(/\s+\S+\s*$/, '');
   if (lessWord !== original) {
     candidates.push({
@@ -253,12 +422,15 @@ export async function repairReportedLine(code, errorMessage = '') {
     });
   }
 
-  // 11. Commented out the invalid line
-  const indent = original.match(/^\s*/)?.[0] || '';
-  candidates.push({
-    fix: `Commented out the invalid line ${lineNumber}`,
-    line: `${indent}%% ${original.trim()}`,
-  });
+  // 18. ONLY comment out line as absolute last resort if it contains NO diagram structure
+  const hasDiagramStructure = /(?:-->|-.->|==>|---|===|->>|-->>|<--|<-->|->|<-|\[.*\]|\(.*\)|\{.*\}|subgraph|participant|actor|class|classDef|style|state|journey|gantt|pie|kanban)/i.test(original);
+  if (!hasDiagramStructure && original.trim().length > 0) {
+    const indent = original.match(/^\s*/)?.[0] || '';
+    candidates.push({
+      fix: `Commented out unrecognized non-diagram text on line ${lineNumber}`,
+      line: `${indent}%% ${original.trim()}`,
+    });
+  }
 
   for (const candidate of candidates) {
     if (candidate.line === original || !candidate.line.trim()) continue;
