@@ -48,7 +48,7 @@ import {
   Compass,
   MoreHorizontal,
 } from "lucide-react";
-import { flowchartNodeId, SHAPES } from "../lib/visualediting";
+import { flowchartNodeId, SHAPES } from "../lib/visualEditing";
 import { CANVAS_CONTENT_SELECTOR } from "../lib/canvas-content";
 import { useLensEffect } from "./CanvasStageLens";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
