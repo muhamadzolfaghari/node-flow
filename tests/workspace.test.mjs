@@ -9,7 +9,7 @@ import {
   loadWorkspace,
   saveWorkspace,
   WORKSPACE_KEY,
-} from "../src/lib/workspace.js";
+} from "../src/lib/workspace.ts";
 const storage = () => {
   const map = new Map();
   return {

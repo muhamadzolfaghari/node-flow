@@ -118,17 +118,21 @@ export function useEditorDiagnostics({
       const result = await fixAnySyntax(docText, docFmt, reportedError);
       if (result.success && result.fixedCode && result.fixedCode !== docText) {
         // Compute minimal diff range instead of replacing entire document
+        const fixed: string = result.fixedCode;
         let start = 0;
-        let end = Math.min(docText.length, result.fixedCode.length);
-        while (start < end && docText[start] === result.fixedCode[start]) start++;
-        while (end > start && docText[end - 1] === result.fixedCode[end - 1]) end--;
+        const minLen = Math.min(docText.length, fixed.length);
+        while (start < minLen && docText[start] === fixed[start]) start++;
+        let oldEnd = docText.length;
+        let newEnd = fixed.length;
+        while (oldEnd > start && newEnd > start && docText[oldEnd - 1] === fixed[newEnd - 1]) {
+          oldEnd--;
+          newEnd--;
+        }
+        const cursor = newEnd;
 
         view.dispatch({
-          changes: { from: start, to: end, insert: result.fixedCode.slice(start, end) },
-          selection: {
-            anchor: Math.min(start + (result.fixedCode.length - docText.length), result.fixedCode.length),
-            head: Math.min(start + (result.fixedCode.length - docText.length), result.fixedCode.length),
-          },
+          changes: { from: start, to: oldEnd, insert: fixed.slice(start, newEnd) },
+          selection: { anchor: cursor, head: cursor },
         });
         if (onChange) {
           onChange(currentIdRef.current, result.fixedCode);

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
   embedSourceInSvg,
   extractSourceFromSvg,
-} from "../src/utils/importers/svg-metadata.js";
-import { importDocument } from "../src/lib/formats.js";
+} from "../src/utils/importers/svgmetadata.ts";
+import { importDocument } from "../src/lib/formats.ts";
 
 test("embedSourceInSvg injects metadata and comment into SVG", () => {
   const initialSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300"><g><rect width="100" height="50"/></g></svg>`;

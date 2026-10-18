@@ -4,7 +4,7 @@ import {
   SHOWCASE_CATALOG,
   CLOUD_STENCILS,
   enterpriseStorage,
-} from "../src/lib/indexeddb-storage.js";
+} from "../src/lib/indexedDBStorage.ts";
 
 test("Enterprise Showcases catalog contains valid enterprise architectures", () => {
   assert.ok(Array.isArray(SHOWCASE_CATALOG));

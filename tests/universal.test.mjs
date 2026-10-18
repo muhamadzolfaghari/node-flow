@@ -10,7 +10,7 @@ global.XMLSerializer = dom.window.XMLSerializer;
 const { default: mermaid } = await import("mermaid");
 mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
 
-const { compileDocument, detectFormat, FORMATS } = await import("../src/lib/formats.js");
+const { compileDocument, detectFormat, FORMATS } = await import("../src/lib/formats.ts");
 
 test("registry covers 30+ formats", () => {
   assert.ok(FORMATS.length >= 30, `expected 30+ formats, got ${FORMATS.length}`);
@@ -46,7 +46,7 @@ test("content sniffing for new formats", () => {
 });
 
 test("plantuml full grammar: activity/usecase/deployment", async () => {
-  const { parsePlantUmlToMermaid } = await import("../src/utils/importers/plantuml.js");
+  const { parsePlantUmlToMermaid } = await import("../src/utils/importers/plantuml.ts");
   const act = parsePlantUmlToMermaid("@startuml\nstart\n:Order food;\nif (paid?) then (yes)\n:Ship;\nstop\n@enduml");
   assert.match(act, /flowchart TD/);
   assert.notEqual(await mermaid.parse(act), false);
@@ -55,7 +55,7 @@ test("plantuml full grammar: activity/usecase/deployment", async () => {
 });
 
 test("bpmn expanded: lanes + message flows", async () => {
-  const { parseBpmnToMermaid } = await import("../src/utils/importers/bpmn.js");
+  const { parseBpmnToMermaid } = await import("../src/utils/importers/bpmn.ts");
   const xml = `<definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="p"><bpmn:laneSet><bpmn:lane name="Sales"><bpmn:flowNodeRef>t1</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:userTask id="t1" name="Call"/><bpmn:serviceTask id="t2" name="Ship"/><bpmn:sequenceFlow id="f" sourceRef="t1" targetRef="t2"/><bpmn:messageFlow id="m" sourceRef="t1" targetRef="t2" name="notify"/></bpmn:process></definitions>`;
   const out = parseBpmnToMermaid(xml);
   assert.match(out, /Sales/);
@@ -63,19 +63,19 @@ test("bpmn expanded: lanes + message flows", async () => {
 });
 
 test("c4 expanded + openapi schemas-only + asyncapi v3", async () => {
-  const { parseC4DslToMermaid } = await import("../src/utils/importers/c4-dsl.js");
+  const { parseC4DslToMermaid } = await import("../src/utils/importers/c4dsl.ts");
   const c4 = parseC4DslToMermaid('Person(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses")\nComponent(c, "C")\nRel(b, c, "Has")');
   assert.match(c4, /Component/);
-  const { parseOpenApiToMermaid } = await import("../src/utils/importers/openapi.js");
+  const { parseOpenApiToMermaid } = await import("../src/utils/importers/openapi.ts");
   const cls = parseOpenApiToMermaid(JSON.stringify({ info: { title: "T" }, paths: {}, components: { schemas: { User: { properties: { id: { type: "string" } } } } } }));
   assert.match(cls, /classDiagram/);
-  const { parseAsyncApiToMermaid } = await import("../src/utils/importers/asyncapi.js");
+  const { parseAsyncApiToMermaid } = await import("../src/utils/importers/asyncapi.ts");
   const seq = parseAsyncApiToMermaid(JSON.stringify({ info: { title: "E" }, channels: { "o.c": { address: "o/c", messages: { m1: { name: "M1" } } } }, operations: { sendO: { action: "send" } } }));
   assert.match(seq, /sequenceDiagram/);
 });
 
 test("code-to-uml: kotlin/swift/php/ruby/cpp", async () => {
-  const { parseCodeToClassDiagram } = await import("../src/utils/importers/code-to-uml.js");
+  const { parseCodeToClassDiagram } = await import("../src/utils/importers/codeToUML.ts");
   const src = `data class User(val id: String)\nclass Admin : User\ninterface Repo\nstruct Point {\n x: Float\n}`;
   const out = parseCodeToClassDiagram(src);
   assert.match(out, /classDiagram/);
@@ -83,14 +83,14 @@ test("code-to-uml: kotlin/swift/php/ruby/cpp", async () => {
 });
 
 test("error DB has 60+ entries and lookup works", async () => {
-  const { ERROR_DB, lookupErrors } = await import("../src/utils/syntax-error-db.js");
+  const { ERROR_DB, lookupErrors } = await import("../src/utils/syntaxErrorDB.ts");
   assert.ok(ERROR_DB.length >= 60, `got ${ERROR_DB.length}`);
   const hits = lookupErrors("flowchart TD\n  A -> B", "mermaid");
   assert.ok(hits.some(h => h.id === "mermaid-flow-single-arrow"));
 });
 
 test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
-  const { fixAnySyntax, parseErrorDetails } = await import("../src/utils/universal-fixer.js");
+  const { fixAnySyntax, parseErrorDetails } = await import("../src/utils/universalFixer.ts");
   const f1 = await fixAnySyntax("flowchart TD\n  A -> B", "mermaid");
   assert.equal(f1.success, true);
   assert.match(f1.fixedCode, /-->/);
@@ -115,7 +115,7 @@ test("universal fixer repairs mermaid + plantuml + csv + sql", async () => {
 });
 
 test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi/prisma/graphql/terraform", async () => {
-  const mod = await import("../src/utils/exporters/mermaid-export.js");
+  const mod = await import("../src/utils/exporters/mermaidExport.ts");
   const seq = "sequenceDiagram\n  A->>B: GET /items\n  A->>B: POST /items";
   assert.match(mod.mermaidToPlantUml(seq), /@startuml/);
   const openapi = JSON.parse(mod.mermaidSequenceToOpenApiStub(seq, "Store API"));
@@ -145,8 +145,8 @@ test("reverse hub: mermaid -> plantuml/dot/d2/sql/dbml/xmi/ts/opml/openapi/prism
 });
 
 test("StarUML (.mdj) import and compilation to Mermaid classDiagram", async () => {
-  const { detectFormat, compileDocument } = await import("../src/lib/formats.js");
-  const { parseStarUmlToMermaid } = await import("../src/utils/importers/staruml.js");
+  const { detectFormat, compileDocument } = await import("../src/lib/formats.ts");
+  const { parseStarUmlToMermaid } = await import("../src/utils/importers/staruml.ts");
 
   const starUmlSample = JSON.stringify({
     _type: "Project",
@@ -201,8 +201,8 @@ test("StarUML (.mdj) import and compilation to Mermaid classDiagram", async () =
 });
 
 test("Lucidchart JSON and CSV import and compilation to Mermaid flowchart", async () => {
-  const { detectFormat, compileDocument } = await import("../src/lib/formats.js");
-  const { parseLucidchartToMermaid } = await import("../src/utils/importers/lucidchart.js");
+  const { detectFormat, compileDocument } = await import("../src/lib/formats.ts");
+  const { parseLucidchartToMermaid } = await import("../src/utils/importers/lucidchart.ts");
 
   const lucidJson = JSON.stringify({
     pages: [
@@ -243,7 +243,7 @@ test("Lucidchart JSON and CSV import and compilation to Mermaid flowchart", asyn
 
 test("AI describeToDiagram: comprehensive multi-format synthesis (C4, Sankey, Kanban, Requirement, Packet, Architecture)", async () => {
   const { describeToDiagram, detectDiagramType, SUPPORTED_DIAGRAM_TYPES } = await import(
-    "../src/utils/importers/describe-to-diagram.js"
+    "../src/utils/importers/describeToDiagram.ts"
   );
 
   assert.ok(SUPPORTED_DIAGRAM_TYPES.some((t) => t.id === "c4"));

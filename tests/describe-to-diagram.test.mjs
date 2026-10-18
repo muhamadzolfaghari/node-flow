@@ -4,7 +4,7 @@ import {
   detectDiagramType,
   describeToDiagram,
   SUPPORTED_DIAGRAM_TYPES,
-} from "../src/utils/importers/describe-to-diagram.js";
+} from "../src/utils/importers/describeToDiagram.ts";
 
 test("SUPPORTED_DIAGRAM_TYPES catalog covers 19 diagram types", () => {
   assert.ok(SUPPORTED_DIAGRAM_TYPES.length >= 19);

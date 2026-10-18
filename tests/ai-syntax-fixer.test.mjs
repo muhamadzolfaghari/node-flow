@@ -6,7 +6,7 @@ import {
   testMermaidSyntax,
   applyMermaidIfValid,
   parseErrorDetails,
-} from "../src/utils/ai-syntax-fixer.js";
+} from "../src/utils/aiSyntaxFixer.ts";
 
 test("parseErrorDetails parses line numbers, column carats, and clean error messages", () => {
   const err1 = `Parse error on line 4:
@@ -159,7 +159,7 @@ test("repairReportedLine repairs unclosed brackets, unquoted labels, single arro
 });
 
 test("explainError prioritizes the reported error line with exact actionable diagnosis", async () => {
-  const { explainError } = await import("../src/utils/syntax-error-db.js");
+  const { explainError } = await import("../src/utils/syntaxErrorDB.ts");
   const code = `flowchart TD\n  A[Auth: User (v1)] --> B`;
   const explanations = explainError(code, "mermaid", "Parse error on line 2: unexpected token");
   assert.ok(explanations.length > 0);

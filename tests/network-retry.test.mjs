@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchWithRetry } from "../src/utils/network-retry.js";
+import { fetchWithRetry } from "../src/utils/networkRetry.ts";
 
 test("fetchWithRetry succeeds on first attempt", async () => {
   let callCount = 0;

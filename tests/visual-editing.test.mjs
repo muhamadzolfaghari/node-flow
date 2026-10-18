@@ -126,7 +126,7 @@ import {
   deleteArchitectureService,
   addArchitectureEdge,
   deleteArchitectureEdge,
-} from "../src/lib/visual-editing.js";
+} from "../src/lib/visualEditing.ts";
 test("canvas label edits preserve unrelated source and shape", () => {
   const source =
     "flowchart LR\n A[Client] --> B([Service])\n %% Keep this comment";

@@ -5,7 +5,7 @@ import {
   extractDiagramSource,
   aiProviders,
   assistantModeToProvider,
-} from "../src/features/ai/providers.js";
+} from "../src/features/ai/providers.ts";
 
 test("buildUserPrompt constructs comprehensive prompt with context and repair history", () => {
   const basic = buildUserPrompt("Create a login sequence diagram");

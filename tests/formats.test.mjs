@@ -7,7 +7,7 @@ import {
   compileDocument,
   detectFormat,
   importDocument,
-} from "../src/lib/formats.js";
+} from "../src/lib/formats.ts";
 const dom = new JSDOM("<!doctype html><body></body>");
 global.window = dom.window;
 global.document = dom.window.document;
@@ -206,7 +206,7 @@ test("TopoJSON shared arcs topology compiles to Mermaid flowchart", async () => 
 });
 
 
-import { flowchartNodeId, renameFlowchartNode } from "../src/lib/visual-editing.js";
+import { flowchartNodeId, renameFlowchartNode } from "../src/lib/visualEditing.ts";
 
 test("flowchartNodeId strips Mermaid render prefixes and suffixes", () => {
   assert.equal(flowchartNodeId("mermaid-render-4-flowchart-Client-0"), "Client");
@@ -219,7 +219,7 @@ test("renameFlowchartNode edits inline declarations inside edges", () => {
   assert.match(out, /A\["Uno"\] --> B\[Two\]/);
 });
 
-import { deleteFlowchartNode } from "../src/lib/visual-editing.js";
+import { deleteFlowchartNode } from "../src/lib/visualEditing.ts";
 
 test("deleteFlowchartNode keeps the other endpoint declared inline", () => {
   const out = deleteFlowchartNode('flowchart LR\n  A{"One"} --> B[Two label]\n  B --> C', "A");
@@ -233,7 +233,7 @@ import {
   getFlowchartNodeShape,
   changeFlowchartNodeShape,
   flowchartEdges,
-} from "../src/lib/visual-editing.js";
+} from "../src/lib/visualEditing.ts";
 
 const SHAPE_SOURCE = `flowchart LR
   A[Start] --> B{Ok?}
@@ -274,7 +274,7 @@ test("shape and label edits declare a bare node at its first mention", () => {
 });
 
 test("geospatial WKT, Shapefile schema, and Vector Tile pyramid compile to valid Mermaid", async () => {
-  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.js");
+  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.ts");
 
   // 1. WKT (Well-Known Text)
   const wktSample = `POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))\nLINESTRING (30 10, 10 30, 40 40)\nPOINT (30 10)`;
@@ -297,7 +297,7 @@ test("geospatial WKT, Shapefile schema, and Vector Tile pyramid compile to valid
 });
 
 test("binary Shapefile and Vector Tile buffers parse into valid Mermaid diagrams", async () => {
-  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.js");
+  const { parseGeoJsonToMermaid } = await import("../src/utils/importers/geojson.ts");
 
   // 1. Synthesize binary Shapefile header (100 bytes)
   const shpBuffer = new ArrayBuffer(100);

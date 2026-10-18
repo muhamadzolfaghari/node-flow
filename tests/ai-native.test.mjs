@@ -4,12 +4,12 @@ import {
   estimateTokens,
   compressMermaidSource,
   optimizeAiPrompt,
-} from "../src/utils/ai-token-optimizer.js";
+} from "../src/utils/aiTokenOptimizer.ts";
 import {
   checkInstantHealth,
   runAiHealthDiagnostics,
-} from "../src/utils/ai-health-check.js";
-import { buildUserPrompt } from "../src/features/ai/providers.js";
+} from "../src/utils/aiHealthCheck.ts";
+import { buildUserPrompt } from "../src/features/ai/providers.ts";
 
 test("AI Token Optimizer: estimateTokens measures token counts", () => {
   assert.equal(estimateTokens(""), 0);

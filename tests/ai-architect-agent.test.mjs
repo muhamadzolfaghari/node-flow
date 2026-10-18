@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   analyzeArchitecture,
   generateArchitectureDoc,
-} from "../src/utils/ai-architect-agent.js";
+} from "../src/utils/aiArchitectAgent.ts";
 
 test("analyzeArchitecture handles empty or invalid source inputs", () => {
   const empty = analyzeArchitecture("");

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fixAnySyntax } from "../src/utils/universal-fixer.js";
+import { fixAnySyntax } from "../src/utils/universalFixer.ts";
 
 test("fixAnySyntax repairs plantuml with missing @startuml/@enduml tags", async () => {
   const puml = "Alice -> Bob: Request";

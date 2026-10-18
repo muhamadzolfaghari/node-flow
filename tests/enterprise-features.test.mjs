@@ -4,10 +4,10 @@ import {
   calculateArchitectureCost,
   matchNodePricing,
   CLOUD_PRICING_CATALOG,
-} from "../src/lib/finops-pricing.js";
-import { generateBackstageCatalog } from "../src/utils/backstage-exporter.js";
-import { generateTerraform, generateDockerCompose } from "../src/utils/iac-synthesizer.js";
-import { runArbAudit } from "../src/utils/arb-auditor.js";
+} from "../src/lib/finopsPricing.ts";
+import { generateBackstageCatalog } from "../src/utils/backstageExporter.ts";
+import { generateTerraform, generateDockerCompose } from "../src/utils/iacSynthesizer.ts";
+import { runArbAudit } from "../src/utils/arbAuditor.ts";
 
 test("FinOps: matchNodePricing recognizes cloud compute, database, and storage", () => {
   const eksPrice = matchNodePricing("eks_cluster", "Production EKS");

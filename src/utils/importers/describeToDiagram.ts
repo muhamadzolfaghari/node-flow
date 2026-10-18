@@ -703,11 +703,20 @@ function convertToQuadrant(text, opts = {}) {
 // Helper Utilities
 // ─────────────────────────────────────────────────────────────────────────────
 function parseTextToSteps(text) {
-  return text
-    .split(/\n+|(?<=[.!?])\s+|(?:\s*->\s*)|(?:\s*-->\s*)/)
-    .map((l) => l.trim())
-    .map((l) => l.replace(/^[-*•\d.]+\s*/, ''))
-    .filter((l) => l.length > 2 && !l.startsWith('//') && !l.startsWith('%%'));
+  const clean = (parts) =>
+    parts
+      .map((l) => l.trim())
+      .map((l) => l.replace(/^(?:[-*•]|\d+[.)])\s+/, ''))
+      .filter((l) => l.length > 2 && !l.startsWith('//') && !l.startsWith('%%'));
+
+  const steps = clean(text.split(/\n+|(?<=[.!?])\s+|(?:\s*->\s*)|(?:\s*-->\s*)/));
+  if (steps.length > 1) return steps;
+
+  // A single sentence has no natural step breaks; fall back to its clauses.
+  const clauses = clean(
+    text.split(/\s*,\s*(?:and\s+|then\s+)?|\s+(?:and then|then|and|with)\s+/i),
+  );
+  return clauses.length > 1 ? clauses : steps;
 }
 
 function cleanLabel(s) {

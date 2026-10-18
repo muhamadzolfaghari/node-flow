@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildUserPrompt, extractDiagramSource } from "../src/features/ai/providers.js";
+import { buildUserPrompt, extractDiagramSource } from "../src/features/ai/providers.ts";
 
 test("buildUserPrompt returns the bare prompt without context", () => {
   assert.equal(buildUserPrompt("add a cache"), "add a cache");
