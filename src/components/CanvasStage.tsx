@@ -3,6 +3,7 @@ import React, {
   useRef,
   useState,
   useImperativeHandle,
+  useMemo,
 } from "react";
 import {
   Minus,
@@ -115,8 +116,8 @@ export default function CanvasStage({
     contentBoundsRef = useRef(null),
     rafRef = useRef(0);
   const {
-    camera,
-    setCamera,
+    camera: storeCamera,
+    setCamera: storeSetCamera,
     fitCamera,
     tool,
     setTool,
@@ -198,6 +199,23 @@ export default function CanvasStage({
     setIsDragging,
   } = useCanvasStore();
 
+  // Pan/zoom handlers mutate the camera in place and call apply(); keep one stable
+  // mutable object so every closure sees the same values, and mirror it to the store.
+  const cameraRef = useRef({ ...storeCamera });
+  const camera = cameraRef.current;
+  const setCamera = (c) => {
+    Object.assign(cameraRef.current, c);
+    storeSetCamera(c);
+  };
+  const batchSelected = batchSelectedIds.map((id) => ({ id }));
+  const [minimapViewport, setMinimapViewport] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [selectedAdrId] = useState<string | null>(null);
+
   const nodeAnchor =
     nodeAnchorX || nodeAnchorY || nodeAnchorElWidth || nodeAnchorElHeight
       ? {
@@ -219,7 +237,7 @@ export default function CanvasStage({
 
   const size = { w: canvasSizeW, h: canvasSizeH };
 
-  const position = { ...camera };
+  const position = useMemo(() => ({ x: camera.x, y: camera.y, z: camera.z }), [camera.x, camera.y, camera.z]);
 
   const [mobileViewport, setMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -709,7 +727,7 @@ export default function CanvasStage({
     openIac: () => setShowIacModal(true),
     openArb: () => setShowArbModal(true),
     openStoryboard: () => setShowStoryboard(true),
-    toggleFinOps: () => setShowFinOps((v) => !v),
+    toggleFinOps: () => setShowFinOps(!showFinOps),
     setLens: (lens) => setActiveLens(lens),
   }));
   const lastRenderSig = useRef("");
@@ -728,11 +746,10 @@ export default function CanvasStage({
     // would cost more than the render it replaced.
     const bounds = getContentBounds();
     contentBoundsRef.current = bounds;
-    setCanvasSize((prev) => (prev.w === bounds.w && prev.h === bounds.h ? prev : { w: bounds.w, h: bounds.h }));
-    setThumbnail((prev) => {
-      const next = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
-      return prev === next ? prev : next;
-    });
+    const cur = useCanvasStore.getState();
+    if (cur.canvasSizeW !== bounds.w || cur.canvasSizeH !== bounds.h) setCanvasSize(bounds.w, bounds.h);
+    const nextThumb = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+    if (cur.thumbnail !== nextThumb) setThumbnail(nextThumb);
     if (needsFit) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -751,18 +768,18 @@ export default function CanvasStage({
     svg.querySelectorAll(".is-selected").forEach((el) => {
       el.classList.remove("is-selected");
     });
-    if (selected.id) {
+    if (selected?.id) {
       let target = null;
       try {
-        target = svg.querySelector(`[id="${CSS.escape(selected.id)}"]`);
+        target = svg.querySelector(`[id="${CSS.escape(selected?.id)}"]`);
       } catch {}
       if (!target) {
         try {
-          target = svg.querySelector(`#${CSS.escape(selected.id)}`);
+          target = svg.querySelector(`#${CSS.escape(selected?.id)}`);
         } catch {}
       }
       if (!target) {
-        target = document.getElementById(selected.id);
+        target = document.getElementById(selected?.id);
       }
       if (target) {
         target.classList.add("is-selected");
@@ -772,7 +789,7 @@ export default function CanvasStage({
 
   useEffect(() => {
     if (selected) {
-      setEditLabel(selected.id || selected.id);
+      setEditLabel(selected?.label || selected?.id);
     } else {
       setIsEditing(false);
       setShowShapes(false);
@@ -781,17 +798,17 @@ export default function CanvasStage({
   }, [selected]);
 
   const updateNodeAnchor = () => {
-    if (!selected.id || !stageRef.current) {
-      setNodeAnchor(null);
+    if (!selected?.id || !stageRef.current) {
+      if (useCanvasStore.getState().nodeAnchorElWidth || useCanvasStore.getState().nodeAnchorElHeight) setNodeAnchor(null);
       return;
     }
     const svg = containerRef.current?.querySelector("svg");
     let target = svg?.querySelector(".is-selected");
-    if (!target && selected.id) {
+    if (!target && selected?.id) {
       try {
-        target = svg?.querySelector(`[id="${CSS.escape(selected.id)}"]`);
+        target = svg?.querySelector(`[id="${CSS.escape(selected?.id)}"]`);
       } catch {}
-      if (!target) target = document.getElementById(selected.id);
+      if (!target) target = document.getElementById(selected?.id);
     }
     if (target && stageRef.current) {
       try {
@@ -809,7 +826,11 @@ export default function CanvasStage({
           const below = elRect.bottom - stageRect.top + 12;
           // Sit above the node; flip underneath when the top edge has no room.
           const y = above >= 8 ? above : Math.min(below, stageRect.height - 56);
-          setNodeAnchor((prev) => {
+          const st = useCanvasStore.getState();
+          const prev = st.nodeAnchorX || st.nodeAnchorY || st.nodeAnchorElWidth || st.nodeAnchorElHeight
+            ? { x: st.nodeAnchorX, y: st.nodeAnchorY, elLeft: st.nodeAnchorElLeft, elTop: st.nodeAnchorElTop, elWidth: st.nodeAnchorElWidth, elHeight: st.nodeAnchorElHeight }
+            : null;
+          {
             if (
               prev &&
               Math.abs(prev.x - x) < 0.5 &&
@@ -819,22 +840,22 @@ export default function CanvasStage({
               Math.abs(prev.elWidth - elRect.width) < 0.5 &&
               Math.abs(prev.elHeight - elRect.height) < 0.5
             ) {
-              return prev;
+              return;
             }
-            return {
+            setNodeAnchor({
               x,
               y,
               elLeft: elRect.left - stageRect.left,
               elTop: elRect.top - stageRect.top,
               elWidth: elRect.width,
               elHeight: elRect.height,
-            };
-          });
+            });
+          }
           return;
         }
       } catch {}
     }
-    setNodeAnchor((prev) => (prev === null ? prev : null));
+    if (useCanvasStore.getState().nodeAnchorElWidth || useCanvasStore.getState().nodeAnchorElHeight) setNodeAnchor(null);
   };
 
   useEffect(() => {
@@ -907,7 +928,7 @@ export default function CanvasStage({
     e.stopPropagation();
     e.preventDefault();
     if (!stageRef.current) return;
-    const fromId = fromIdOverride || selected.id;
+    const fromId = fromIdOverride || selected?.id;
     if (!fromId) return;
     const stageRect = stageRef.current.getBoundingClientRect();
     const startX = e.clientX - stageRect.left;
@@ -1358,7 +1379,7 @@ export default function CanvasStage({
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && (key === "p" || (e.shiftKey && key === "o"))) {
         e.preventDefault();
-        setSearchOpen((prev) => !prev);
+        setSearchOpen(!useCanvasStore.getState().searchOpen);
         return;
       }
       if ((e.ctrlKey || e.metaKey) && key === "d") {
@@ -1861,7 +1882,7 @@ export default function CanvasStage({
                   if (e.key === "Escape") {
                     e.stopPropagation();
                     setIsEditing(false);
-                    setEditLabel(selected.id || selected.id);
+                    setEditLabel(selected?.label || selected?.id);
                   }
                 }}
                 className="h-6 rounded border border-primary/50 bg-background/95 px-2 py-0.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-36 font-medium"
@@ -1880,7 +1901,7 @@ export default function CanvasStage({
                 type="button"
                 onClick={() => {
                   setIsEditing(false);
-                  setEditLabel(selected.id || selected.id);
+                  setEditLabel(selected?.label || selected?.id);
                 }}
                 className="rounded p-1 text-muted-foreground hover:text-foreground transition"
                 title="Cancel (Esc)"
@@ -1898,15 +1919,15 @@ export default function CanvasStage({
               title="Click or double-click to rename"
             >
               <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-              <span className="truncate">{selected.id || selected.id}</span>
+              <span className="truncate">{selected?.label || selected?.id}</span>
               <Pencil className="size-2.5 opacity-60 ml-0.5" />
             </button>
           )}
 
           {/* C4 Drill Down Button */}
           {(() => {
-            const rawId = selected.id ? flowchartNodeId(selected.id) : null;
-            const targetDocId = rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
+            const rawId = selected?.id ? flowchartNodeId(selected?.id) : null;
+            const targetDocId = rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected?.id) : null;
             if (!targetDocId) return null;
             return (
               <button
@@ -2034,9 +2055,9 @@ export default function CanvasStage({
                   {(() => {
                     const svg = containerRef.current?.querySelector("svg");
                     const otherNodes = [];
-                    if (svg && selected.id) {
+                    if (svg && selected?.id) {
                       svg.querySelectorAll("g.node, g.entity, g.cluster, g.actor").forEach((el) => {
-                        if (el.id && el.id !== selected.id) {
+                        if (el.id && el.id !== selected?.id) {
                           const l = el.querySelector(".nodeLabel, .label, text, title")?.textContent?.trim();
                           otherNodes.push({ id: el.id, label: l || el.id });
                         }
@@ -2178,12 +2199,12 @@ export default function CanvasStage({
                   } else if (e.key === "ArrowDown") {
                     e.preventDefault();
                     if (filtered.length > 0) {
-                      setSearchIndex((prev) => (prev + 1) % filtered.length);
+                      setSearchIndex((searchIndex + 1) % filtered.length);
                     }
                   } else if (e.key === "ArrowUp") {
                     e.preventDefault();
                     if (filtered.length > 0) {
-                      setSearchIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+                      setSearchIndex((searchIndex - 1 + filtered.length) % filtered.length);
                     }
                   } else if (e.key === "Enter") {
                     e.preventDefault();
@@ -2497,8 +2518,8 @@ export default function CanvasStage({
             callbacks.current.onDrillDown?.(nodeId);
           }}
           drillDownDocId={(() => {
-            const rawId = selected.id ? flowchartNodeId(selected.id) : null;
-            return rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected.id) : null;
+            const rawId = selected?.id ? flowchartNodeId(selected?.id) : null;
+            return rawId ? drillDownLinks?.get(rawId) || drillDownLinks?.get(selected?.id) : null;
           })()}
           isFlowchart={documentFormat === "mermaid"}
         />
