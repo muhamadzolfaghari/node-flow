@@ -54,6 +54,9 @@ import { CANVAS_CONTENT_SELECTOR } from "../lib/canvasContent";
 import { useLensEffect } from "./CanvasStageLens";
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from "./ui.tsx";
 import { useCanvasStore } from "../lib/canvasStore";
+
+// Smallest zoom a phone-sized fit may use before text becomes unreadable.
+const MOBILE_MIN_FIT_ZOOM = 0.6;
 import FlowSimulatorOverlay from "./FlowSimulatorOverlay.tsx";
 import CloudStencilsDrawer from "./CloudStencilsDrawer.tsx";
 import ArchitectureMetricsModal from "./ArchitectureMetricsModal.tsx";
@@ -436,14 +439,19 @@ export default function CanvasStage({
    * drawn and translating by the delta (never re-scaling, so it cannot oscillate) makes
    * the frame self-correcting.
    */
-  const nudgeToDrawnContent = (stage, topInset, bottomInset) => {
+  const nudgeToDrawnContent = (stage, topInset, bottomInset, leftPadding = null) => {
     const MIN_NOTICEABLE_SHIFT = 1;
     const drawn = contentScreenRect(containerRef.current?.querySelector("svg"));
     if (!drawn) return;
     const stageRect = stage.getBoundingClientRect();
     const expectedCx = stageRect.left + stageRect.width / 2;
     const expectedCy = stageRect.top + topInset + (stageRect.height - topInset - bottomInset) / 2;
-    const dx = expectedCx - (drawn.left + drawn.right) / 2;
+    // With a leftPadding the diagram is wider than the stage: pin its left edge there
+    // instead of centering it.
+    const dx =
+      leftPadding === null
+        ? expectedCx - (drawn.left + drawn.right) / 2
+        : stageRect.left + leftPadding - drawn.left;
     const dy = expectedCy - (drawn.top + drawn.bottom) / 2;
     if (Math.abs(dx) <= MIN_NOTICEABLE_SHIFT && Math.abs(dy) <= MIN_NOTICEABLE_SHIFT) return;
     camera.x += dx;
@@ -661,7 +669,7 @@ export default function CanvasStage({
     const availH = Math.max(50, s.clientHeight - topInset - bottomInset);
     // Keep small diagrams crisp and naturally sized (max 1.1x) while allowing larger diagrams to scale nicely
     const maxZ = b.w < 380 && b.h < 280 ? 1.1 : 1.35;
-    const z = Math.max(
+    let z = Math.max(
       0.04,
       Math.min(
         maxZ,
@@ -669,15 +677,22 @@ export default function CanvasStage({
         availH / Math.max(b.h, 10),
       ),
     );
+    // On a phone a wide diagram fit to the screen is too small to read. Keep a
+    // readable minimum zoom and start at the left edge; the user pans for the rest.
+    const readableZ = activeIsMobile ? Math.max(z, MOBILE_MIN_FIT_ZOOM) : z;
+    const overflowsWidth = b.w * readableZ > availW;
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
+    z = readableZ;
     setCamera({
-      x: s.clientWidth / 2 - cx * z,
+      x: overflowsWidth
+        ? paddingX / 2 - b.x * z
+        : s.clientWidth / 2 - cx * z,
       y: topInset + (s.clientHeight - topInset - bottomInset) / 2 - cy * z,
       z,
     });
     apply();
-    nudgeToDrawnContent(s, topInset, bottomInset);
+    nudgeToDrawnContent(s, topInset, bottomInset, overflowsWidth ? paddingX / 2 : null);
     return true;
   };
 

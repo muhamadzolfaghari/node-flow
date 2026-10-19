@@ -10,7 +10,7 @@ export function Menu({ label, children }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs max-md:h-9">
           {label}
         </Button>
       </DropdownMenuTrigger>

@@ -6148,7 +6148,7 @@ export default function Studio() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      className="mr-2"
+                      className="mr-2 max-md:size-9"
                       aria-label={`Close ${d.name}`}
                       onClick={() => closeTab(id)}
                     >
@@ -6162,7 +6162,7 @@ export default function Studio() {
               variant="ghost"
               size="icon-xs"
               aria-label="Add file tab"
-              className="mx-2 shrink-0"
+              className="mx-2 shrink-0 max-md:size-9"
               onClick={() => openNewFile()}
             >
               <FilePlus />
@@ -6191,7 +6191,7 @@ export default function Studio() {
                     aria-pressed={view === id}
                     onClick={() => setView(id)}
                     className={cn(
-                      "rounded px-2 py-1 text-[10px]",
+                      "rounded px-2 py-1 text-[10px] max-md:px-3 max-md:py-2 max-md:text-xs",
                       view === id
                         ? "bg-accent text-foreground"
                         : "text-muted-foreground",
@@ -7153,27 +7153,27 @@ export default function Studio() {
                     setSelected(null);
                   }}
                   className={cn(
-                    "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition active:scale-95 touch-manipulation",
+                    "flex items-center gap-1 rounded-full px-3.5 py-2 text-xs font-medium transition active:scale-95 touch-manipulation",
                     mobileCanvasMode === "preview"
                       ? "bg-primary text-primary-foreground shadow-xs font-semibold"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   title="Preview Mode: Pan & zoom smoothly with zero accidental clicks"
                 >
-                  <Eye className="size-3" />
+                  <Eye className="size-3.5" />
                   <span>Preview</span>
                 </button>
                 <button
                   onClick={() => setMobileCanvasMode("edit")}
                   className={cn(
-                    "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition active:scale-95 touch-manipulation",
+                    "flex items-center gap-1 rounded-full px-3.5 py-2 text-xs font-medium transition active:scale-95 touch-manipulation",
                     mobileCanvasMode === "edit"
                       ? "bg-primary text-primary-foreground shadow-xs font-semibold"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   title="Edit Mode: Tap nodes to inspect, style, or connect"
                 >
-                  <Pencil className="size-3" />
+                  <Pencil className="size-3.5" />
                   <span>Edit</span>
                 </button>
               </div>
@@ -7183,10 +7183,10 @@ export default function Studio() {
               {/* View Source Code Button */}
               <button
                 onClick={() => setView("code")}
-                className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-accent active:scale-95 transition touch-manipulation"
+                className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3.5 py-2 text-xs font-medium text-foreground hover:bg-accent active:scale-95 transition touch-manipulation"
                 title="View & Edit Source Code"
               >
-                <Code2 className="size-3 text-cyan-400" />
+                <Code2 className="size-3.5 text-cyan-400" />
                 <span>Code</span>
               </button>
             </>
@@ -7195,7 +7195,7 @@ export default function Studio() {
               {/* Return to Canvas Button */}
               <button
                 onClick={() => setView("canvas")}
-                className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1 text-[11px] font-semibold text-primary-foreground shadow-xs active:scale-95 transition touch-manipulation"
+                className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs active:scale-95 transition touch-manipulation"
                 title="Back to Canvas View"
               >
                 <Shapes className="size-3" />

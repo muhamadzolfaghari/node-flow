@@ -41,7 +41,7 @@ export default function MobileEditorBar({
       <div className="flex items-center gap-1 pr-1.5 border-r border-border shrink-0">
         <button
           onClick={onUndo}
-          className="flex size-7 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
+          className="flex size-9 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
           title="Undo"
           aria-label="Undo"
         >
@@ -49,7 +49,7 @@ export default function MobileEditorBar({
         </button>
         <button
           onClick={onRedo}
-          className="flex size-7 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
+          className="flex size-9 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
           title="Redo"
           aria-label="Redo"
         >
@@ -57,7 +57,7 @@ export default function MobileEditorBar({
         </button>
         <button
           onClick={onFormat}
-          className="flex size-7 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
+          className="flex size-9 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground hover:bg-accent active:scale-90 transition touch-manipulation"
           title="Format Mermaid Source"
           aria-label="Format source"
         >
@@ -65,7 +65,7 @@ export default function MobileEditorBar({
         </button>
         <button
           onClick={onAiFix}
-          className="flex size-7 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 active:scale-90 transition touch-manipulation"
+          className="flex size-9 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 active:scale-90 transition touch-manipulation"
           title="AI Syntax Repair"
           aria-label="AI Syntax Fix"
         >
