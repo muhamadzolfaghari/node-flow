@@ -1,6 +1,7 @@
 import { describeToDiagram } from "../../utils/importers/describeToDiagram.ts";
 import { optimizeAiPrompt } from "../../utils/aiTokenOptimizer.ts";
 import { fetchWithRetry } from "../../utils/networkRetry.ts";
+import { ollamaResponseSchema, openaiResponseSchema, openaiErrorSchema, parseProviderResponse } from "../../lib/schemas.ts";
 
 const DEFAULT_TEMPERATURE = 0.2;
 const MAX_LOCAL_TOKENS = 2048;
@@ -50,7 +51,8 @@ export const aiProviders = {
         throw new Error(`Could not connect to Ollama at ${baseUrl}. Ensure Ollama is running or switch to offline mode.`);
       }
       if (!response.ok) throw new Error(`Ollama request failed (${response.status}) at ${baseUrl}`);
-      return extractDiagramSource((await response.json()).response || "");
+      const data = parseProviderResponse(ollamaResponseSchema, await response.json().catch(() => null), "Ollama");
+      return extractDiagramSource(data.response);
     },
   },
   openaiCompatible: {
@@ -76,10 +78,11 @@ export const aiProviders = {
       }, { maxRetries: 2, initialDelayMs: 500 });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error?.message || `API request failed with status ${response.status}`);
+        const parsed = openaiErrorSchema.safeParse(await response.json().catch(() => null));
+        throw new Error(parsed.success ? parsed.data.error.message : `API request failed with status ${response.status}`);
       }
-      return extractDiagramSource((await response.json()).choices?.[0]?.message?.content || "");
+      const data = parseProviderResponse(openaiResponseSchema, await response.json().catch(() => null), "The API");
+      return extractDiagramSource(data.choices[0].message.content || "");
     },
   },
   gemini: {

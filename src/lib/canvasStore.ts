@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { persistedCanvasSchema } from "./schemas.ts";
 
 export interface CameraState {
   x: number;
@@ -245,6 +246,10 @@ export const useCanvasStore = create<CanvasStore>()(
     }),
     {
       name: "canvas-storage",
+      merge: (persisted, current) => ({
+        ...current,
+        ...persistedCanvasSchema.parse(persisted ?? {}),
+      }),
       storage: createJSONStorage(() => sessionStorage),
       partialize: (s) => ({
         activeLens: s.activeLens,
