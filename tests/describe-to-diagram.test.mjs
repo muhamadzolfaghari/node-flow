@@ -5,6 +5,7 @@ import {
   describeToDiagram,
   SUPPORTED_DIAGRAM_TYPES,
 } from "../src/utils/importers/describeToDiagram.ts";
+import { testMermaidSyntax } from "../src/utils/aiSyntaxFixer.ts";
 
 test("SUPPORTED_DIAGRAM_TYPES catalog covers 19 diagram types", () => {
   assert.ok(SUPPORTED_DIAGRAM_TYPES.length >= 19);
@@ -82,3 +83,17 @@ test("describeToDiagram handles auto-detection and input validation", () => {
   assert.equal(detectDiagramType("Semester plan and study schedule milestones"), "timeline");
 });
 
+
+test("flowchart turns 'If X, A, otherwise B' into a Yes/No decision that rejoins the flow", async () => {
+  const { code } = describeToDiagram(
+    "User submits the login form. If the password is wrong, show an error, otherwise ask for 2FA. Redirect to the dashboard.",
+    "flowchart",
+  );
+  assert.match(code, /N2\{"The password is wrong\?"\}/);
+  assert.match(code, /N2 -->\|Yes\| N3/);
+  assert.match(code, /N2 -->\|No\| N4/);
+  assert.match(code, /N3 -\.-> N2/);
+  assert.match(code, /N4 --> N5/);
+  const check = await testMermaidSyntax(code);
+  assert.equal(check.valid, true, check.error);
+});

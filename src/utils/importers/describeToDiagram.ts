@@ -307,14 +307,31 @@ function convertToFlowchart(text, opts = {}) {
   if (lines.length === 0) lines.push('Input Request', 'Process Logic', 'Generate Output');
 
   const nodes = [];
+  const classify = (step) => ({
+    isDecision: /\?|check|verify|is valid|authenticate|approved|succeeded|match/i.test(step),
+    isError: /fail|error|reject|invalid|denied|timeout|abort/i.test(step),
+    isSuccess: /success|complete|done|finish|verified|deliver|active/i.test(step),
+  });
+  const addNode = (label, flags, extra = {}) => {
+    const node = { id: `N${nodes.length + 1}`, label: cleanLabel(label), ...flags, ...extra };
+    nodes.push(node);
+    return node;
+  };
 
-  lines.forEach((step, i) => {
-    const id = `N${i + 1}`;
-    const isDecision = /\?|check|verify|is valid|authenticate|approved|succeeded|match/i.test(step);
-    const isError = /fail|error|reject|invalid|denied|timeout|abort/i.test(step);
-    const isSuccess = /success|complete|done|finish|verified|deliver|active/i.test(step);
-
-    nodes.push({ id, label: cleanLabel(step), isDecision, isError, isSuccess });
+  // "If X, do A, otherwise B" becomes a decision with Yes/No branches that
+  // rejoin the main flow; every other sentence is a plain step.
+  const CONDITIONAL = /^if\s+([^,]+),\s*(?:then\s+)?([^,]+?),?\s*(?:otherwise|or else|else)\s+(.+?)\.?$/i;
+  lines.forEach((step) => {
+    const m = CONDITIONAL.exec(step);
+    if (!m) {
+      addNode(step, classify(step));
+      return;
+    }
+    const decision = addNode(`${capitalize(m[1].trim())}?`, { ...classify(''), isDecision: true });
+    const yes = addNode(m[2], classify(m[2]), { branchOf: decision.id });
+    const no = addNode(m[3], classify(m[3]), { branchOf: decision.id });
+    decision.yes = yes.id;
+    decision.no = no.id;
   });
 
   const mmd = [`flowchart ${orientation}`];
@@ -333,9 +350,26 @@ function convertToFlowchart(text, opts = {}) {
 
   mmd.push('');
 
-  for (let i = 0; i < nodes.length - 1; i++) {
+  // The step after a conditional's branches, where both branches rejoin.
+  const nextMain = (from) => nodes.slice(from + 1).find((n) => !n.branchOf);
+
+  for (let i = 0; i < nodes.length; i++) {
     const cur = nodes[i];
+
+    if (cur.yes) {
+      mmd.push(`    ${cur.id} -->|Yes| ${cur.yes}`);
+      mmd.push(`    ${cur.id} -->|No| ${cur.no}`);
+      continue;
+    }
+    if (cur.branchOf) {
+      const after = nextMain(i);
+      if (cur.isError) mmd.push(`    ${cur.id} -.-> ${cur.branchOf}`);
+      else if (after) mmd.push(`    ${cur.id} --> ${after.id}`);
+      continue;
+    }
+
     const next = nodes[i + 1];
+    if (!next) continue;
 
     if (cur.isDecision) {
       mmd.push(`    ${cur.id} -->|Yes| ${next.id}`);

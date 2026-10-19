@@ -182,6 +182,25 @@ async function run() {
     console.log("   ✅ AI Quick Fix automatically fixed single arrow '->' to '-->' and canvas re-rendered!");
     await page.screenshot({ path: `${ARTIFACT_DIR}/step7_ai_quick_fix_resolved.png` });
 
+    console.log("7. Testing one Quick Fix click resolving several broken lines...");
+    await page.evaluate((snippet) => {
+      const v = document.querySelector(".cm-editor")?.parentElement?._editorView;
+      const len = v.state.doc.length;
+      v.dispatch({ changes: { from: len, insert: snippet }, selection: { anchor: len + snippet.length } });
+    }, "\n  TargetStore -> Mirror[Unclosed");
+    const multiBtn = await page.waitForSelector('button[title*="Instant repair"]', { timeout: 8000 });
+    await multiBtn.click();
+    await page.waitForFunction(() => {
+      const editorText = document.querySelector(".cm-content")?.innerText || "";
+      const svg = document.querySelector(".mermaid-stage svg");
+      return (
+        editorText.includes("TargetStore --> Mirror[Unclosed]") &&
+        Boolean(svg && svg.textContent.includes("Unclosed")) &&
+        !document.querySelector('button[title*="Instant repair"]')
+      );
+    }, { timeout: 10000 });
+    console.log("   ✅ A single Quick Fix click repaired both the arrow and the unclosed bracket!");
+
     assert.equal(pageErrors.length, 0, `Page errors occurred: ${pageErrors.join("; ")}`);
     console.log("🎉 All Editor, Canvas, and AI Quick Fix interactions verified in real browser with ZERO errors!");
   } finally {
