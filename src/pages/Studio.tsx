@@ -100,6 +100,7 @@ import {
 } from "../components/ui.tsx";
 import CodeEditor from "../components/CodeEditor.tsx";
 import CanvasStage, { GridToggle } from "../components/CanvasStage.tsx";
+import ErrorBoundary from "../components/ErrorBoundary.tsx";
 import DiagnosticsPanel from "../components/DiagnosticsPanel.tsx";
 import MobileEditorBar from "../components/MobileEditorBar.tsx";
 import ContentMenu from "../components/ContentMenu.tsx";
@@ -6361,6 +6362,7 @@ export default function Studio() {
               )}
               {view !== "code" && (
                 <div className="relative min-h-0 min-w-0 overflow-hidden">
+                  <ErrorBoundary label="The canvas" resetKey={document.id}>
                   <CanvasStage
                     ref={canvasRef}
                     containerRef={preview.containerRef}
@@ -6923,6 +6925,7 @@ export default function Studio() {
                     mobileMode={isMobile ? mobileCanvasMode : "edit"}
                     isMobile={isMobile}
                   />
+                  </ErrorBoundary>
                   {preview.error && (
                     <div
                       role="alert"
