@@ -6191,7 +6191,7 @@ export default function Studio() {
                     aria-pressed={view === id}
                     onClick={() => setView(id)}
                     className={cn(
-                      "rounded px-2 py-1 text-[10px] max-md:px-3 max-md:py-2 max-md:text-xs",
+                      "rounded px-2 py-1 text-[11px] max-md:px-3 max-md:py-2 max-md:text-xs",
                       view === id
                         ? "bg-accent text-foreground"
                         : "text-muted-foreground",
@@ -6205,7 +6205,7 @@ export default function Studio() {
                 aria-label="Diagram theme"
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                className="hidden h-7 rounded border bg-background px-1.5 text-[10px] sm:block font-medium"
+                className="hidden h-7 rounded border bg-background px-1.5 text-[11px] sm:block font-medium"
               >
                 {[
                   { id: "dark", label: "Dark (Studio)" },

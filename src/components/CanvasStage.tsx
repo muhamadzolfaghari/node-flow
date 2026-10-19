@@ -1519,7 +1519,7 @@ export default function CanvasStage({
 
   return (
     <div
-      className={`studio-stage-wrap relative h-full min-h-[260px] w-full overflow-hidden transition-colors duration-300 ${themeClass}`}
+      className={`@container studio-stage-wrap relative h-full min-h-[260px] w-full overflow-hidden transition-colors duration-300 ${themeClass}`}
       onContextMenu={(e) => {
         if (callbacks.current.onContextMenu) {
           e.preventDefault();
@@ -2154,7 +2154,7 @@ export default function CanvasStage({
           ref={minimapRef}
           aria-label="Minimap navigation"
           onPointerDown={handleMinimapPointerDown}
-          className="absolute bottom-16 right-3 hidden h-28 w-44 overflow-hidden rounded-xl border border-slate-700/60 bg-card/95 p-2 md:block shadow-2xl backdrop-blur-xl ring-1 ring-white/10 select-none cursor-pointer"
+          className="absolute bottom-16 right-3 hidden @max-xl:hidden! h-28 w-44 overflow-hidden rounded-xl border border-slate-700/60 bg-card/95 p-2 md:block shadow-2xl backdrop-blur-xl ring-1 ring-white/10 select-none cursor-pointer"
         >
           <div className="relative size-full overflow-hidden rounded-lg bg-black/40">
             <img
@@ -2282,7 +2282,7 @@ export default function CanvasStage({
         </div>
       )}
 
-      <div role="toolbar" aria-label="Canvas controls" className={`hidden md:flex absolute bottom-3.5 left-1/2 -translate-x-1/2 items-center gap-0.5 rounded-2xl border p-1 shadow-2xl backdrop-blur-xl ${
+      <div role="toolbar" aria-label="Canvas controls" className={`hidden md:flex absolute bottom-3.5 left-1/2 -translate-x-1/2 max-w-[calc(100%-1.5rem)] flex-wrap justify-center items-center gap-0.5 rounded-2xl border p-1 shadow-2xl backdrop-blur-xl ${
         isLight
           ? "border-slate-200/90 bg-white/95 text-slate-800 shadow-slate-300/50 ring-1 ring-black/5"
           : "border-slate-700/60 bg-slate-900/90 text-slate-200 shadow-black/60 ring-1 ring-white/10"
@@ -2406,6 +2406,7 @@ export default function CanvasStage({
         >
           <Mouse />
         </Tool>
+        <span aria-hidden="true" className="mx-1 h-4 border-l border-border/80" />
         <Tool
           title={isSimulating ? "Stop flow simulator" : "Run flow simulator"}
           aria-pressed={isSimulating}
@@ -2468,6 +2469,7 @@ export default function CanvasStage({
           <Compass className="text-cyan-400" />
         </Tool>
         <span className="mx-1 h-4 border-l border-border/80" />
+        <span aria-hidden="true" className="mx-1 h-4 border-l border-border/80" />
         <Tool title="Find a node (⌘/Ctrl+P)" onClick={() => setSearchOpen(true)}>
           <Search />
         </Tool>
