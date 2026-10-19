@@ -3,7 +3,7 @@
 import puppeteer from "puppeteer";
 import { spawn } from "node:child_process";
 import { writeFile } from "node:fs/promises";
-import { DIAGRAM_TEMPLATES } from "../src/components/templates.js";
+import { DIAGRAM_TEMPLATES } from "../src/components/templates.ts";
 
 const base = "http://127.0.0.1:4177";
 const server = spawn("npx", ["vite", "--host", "127.0.0.1", "--port", "4177", "--strictPort"], {

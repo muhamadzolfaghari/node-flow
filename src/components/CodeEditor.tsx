@@ -1,3 +1,4 @@
+import { minimalTextChange } from "../utils/textDiff.ts";
 import { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
 import { basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
@@ -23,7 +24,7 @@ import { getFormat } from "../lib/formats.ts";
 import { testMermaidSyntax, parseErrorDetails } from "../utils/universalFixer.ts";
 import { formatMermaidCode } from "../utils/mermaidFormatter.ts";
 import { CLOUD_STENCILS } from "../lib/indexedDBStorage.ts";
-import { scanNodeDeclarations } from "../lib/visualediting.ts";
+import { scanNodeDeclarations } from "../lib/visualEditing.ts";
 import { useEditorDiagnostics } from "../hooks/useEditorDiagnostics.ts";
 import { EditorDiagnosticsBanner } from "./editor/EditorDiagnosticsBanner.tsx";
 
@@ -820,18 +821,14 @@ const CodeEditor = forwardRef(function CodeEditor(
     const curSel = view.state.selection;
     const { anchor, head } = curSel.main;
 
-    // Compute the minimal differing range so we don't clobber the whole
+    // Replace only the differing range so we don't clobber the whole
     // document (which would reset cursor/selection to the start).
-    let start = 0;
-    let end = Math.min(currentDocText.length, document.source.length);
-    while (start < end && currentDocText[start] === document.source[start]) start++;
-    while (end > start && currentDocText[end - 1] === document.source[end - 1]) end--;
-
+    const change = minimalTextChange(currentDocText, document.source);
     const clampedAnchor = Math.min(anchor, document.source.length);
     const clampedHead = Math.min(head, document.source.length);
 
     view.dispatch({
-      changes: { from: start, to: end, insert: document.source.slice(start, end) },
+      ...(change ? { changes: change } : {}),
       selection: { anchor: clampedAnchor, head: clampedHead },
       effects: EditorView.scrollIntoView(clampedAnchor, { y: "nearest" }),
     });

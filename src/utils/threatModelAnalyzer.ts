@@ -2,7 +2,7 @@
  * Enterprise STRIDE Threat Model & Security Compliance Analyzer
  * 100% Client-Side Engine for Architecture Topology Auditing
  */
-import { scanNodeDeclarations, flowchartEdges } from "../lib/visualediting.ts";
+import { scanNodeDeclarations, flowchartEdges } from "../lib/visualEditing.ts";
 
 export const STRIDE_CATEGORIES = {
   S: { name: "Spoofing", title: "Spoofing Identity", desc: "Pretending to be something or someone other than the intended identity." },

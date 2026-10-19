@@ -7,10 +7,10 @@
 import puppeteer from "puppeteer";
 import { spawn } from "node:child_process";
 import { writeFile } from "node:fs/promises";
-import { DIAGRAM_TEMPLATES } from "../src/components/templates.js";
+import { DIAGRAM_TEMPLATES } from "../src/components/templates.ts";
 // Same definition of "content" the canvas fit uses, so the check cannot drift from
 // the implementation it verifies.
-import { CANVAS_CONTENT_SELECTOR } from "../src/lib/canvas-content.js";
+import { CANVAS_CONTENT_SELECTOR } from "../src/lib/canvasContent.ts";
 
 const base = "http://127.0.0.1:4183";
 const server = spawn("npx", ["vite", "--host", "127.0.0.1", "--port", "4183", "--strictPort"], {

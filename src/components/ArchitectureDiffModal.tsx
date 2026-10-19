@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "./ui.tsx";
-import { scanNodeDeclarations } from "../lib/visualediting.ts";
+import { scanNodeDeclarations } from "../lib/visualEditing.ts";
 
 function parseEdges(source = "") {
   const edgeRegex = /([a-zA-Z0-9_-]+)\s*(?:-->|-.->|==>|-->>|->>|--)\s*(?:\|([^|\n]*)\|\s*)?([a-zA-Z0-9_-]+)/g;

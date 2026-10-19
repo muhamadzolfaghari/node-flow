@@ -271,7 +271,7 @@ import {
   addArchitectureEdge,
   deleteArchitectureEdge,
   flowchartNodeId,
-} from "../lib/visualediting.ts";
+} from "../lib/visualEditing.ts";
 import { BLANK, AI_STARTERS } from "./StudioConstants.ts";
 import { cn } from "../lib/utils.ts";
 import { Menu, Item } from "../features/studio/components/Menu.tsx";

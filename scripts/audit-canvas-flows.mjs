@@ -3,7 +3,7 @@
 // Usage: node scripts/audit-canvas-flows.mjs
 import puppeteer from "puppeteer";
 import { spawn } from "node:child_process";
-import { SHAPES } from "../src/lib/visual-editing.js";
+import { SHAPES } from "../src/lib/visualEditing.ts";
 
 const port = 4182;
 const base = `http://127.0.0.1:${port}`;

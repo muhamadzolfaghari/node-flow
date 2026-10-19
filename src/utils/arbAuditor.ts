@@ -9,7 +9,7 @@
  * 6. Governance & Traceability
  */
 
-import { scanNodeDeclarations, flowchartEdges } from "../lib/visualediting.ts";
+import { scanNodeDeclarations, flowchartEdges } from "../lib/visualEditing.ts";
 
 export function runArbAudit(source = "") {
   const nodes = scanNodeDeclarations(source);

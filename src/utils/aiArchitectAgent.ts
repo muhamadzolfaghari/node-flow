@@ -8,7 +8,7 @@
  * 3. Markdown Technical Architecture Design Document Generator
  * 4. Anti-Pattern Detection & One-Click AI Refactor Suggestions
  */
-import { scanNodeDeclarations, flowchartEdges } from "../lib/visualediting.ts";
+import { scanNodeDeclarations, flowchartEdges } from "../lib/visualEditing.ts";
 
 /**
  * Analyzes architectural components, topology, and graph complexity

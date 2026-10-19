@@ -4,7 +4,7 @@
  * and Docker Compose (docker-compose.yml) configurations from architecture diagrams.
  */
 
-import { scanNodeDeclarations } from "../lib/visualediting.ts";
+import { scanNodeDeclarations } from "../lib/visualEditing.ts";
 
 function sanitizeIdentifier(id) {
   return (id || "resource")

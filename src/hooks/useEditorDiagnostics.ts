@@ -1,3 +1,4 @@
+import { minimalTextChange } from "../utils/textDiff.ts";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { EditorView } from "@codemirror/view";
 import { fixAnySyntax, parseErrorDetails } from "../utils/universalFixer.ts";
@@ -27,6 +28,10 @@ export function useEditorDiagnostics({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const syntaxStatusRef = useRef(syntaxStatus);
   syntaxStatusRef.current = syntaxStatus;
+  // runAiFix is baked into the CodeMirror state, so it must keep a stable identity;
+  // read the changing inputs through a ref instead of closing over them.
+  const fixInputsRef = useRef({ document, previewError, onChange });
+  fixInputsRef.current = { document, previewError, onChange };
 
   const setSyntaxStatusSafe = useCallback((newStatusOrFn) => {
     setSyntaxStatus((prev) => {
@@ -105,6 +110,7 @@ export function useEditorDiagnostics({
 
   // Run AI Quick Fix
   const runAiFix = useCallback(async () => {
+    const { document, previewError, onChange } = fixInputsRef.current;
     if (!editorRef.current || !document) return;
     const view = editorRef.current;
     const docText = view.state.doc.toString();
@@ -119,19 +125,11 @@ export function useEditorDiagnostics({
       if (result.success && result.fixedCode && result.fixedCode !== docText) {
         // Compute minimal diff range instead of replacing entire document
         const fixed: string = result.fixedCode;
-        let start = 0;
-        const minLen = Math.min(docText.length, fixed.length);
-        while (start < minLen && docText[start] === fixed[start]) start++;
-        let oldEnd = docText.length;
-        let newEnd = fixed.length;
-        while (oldEnd > start && newEnd > start && docText[oldEnd - 1] === fixed[newEnd - 1]) {
-          oldEnd--;
-          newEnd--;
-        }
-        const cursor = newEnd;
+        const change = minimalTextChange(docText, fixed);
+        const cursor = change ? change.from + change.insert.length : fixed.length;
 
         view.dispatch({
-          changes: { from: start, to: oldEnd, insert: fixed.slice(start, newEnd) },
+          ...(change ? { changes: change } : {}),
           selection: { anchor: cursor, head: cursor },
         });
         if (onChange) {
@@ -154,7 +152,7 @@ export function useEditorDiagnostics({
     } finally {
       setFixBusy(false);
     }
-  }, [editorRef, document, previewError, onChange, currentIdRef]);
+  }, [editorRef, currentIdRef]);
 
   // Apply single line repair
   const applyLineRepair = useCallback(async () => {
